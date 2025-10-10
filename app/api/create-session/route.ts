@@ -11,6 +11,10 @@ interface CreateSessionRequestBody {
       enabled?: boolean;
     };
   };
+  session_config?: {
+    inputs?: Record<string, unknown>;
+    thread?: { messages?: unknown[] };
+  };
 }
 
 const DEFAULT_CHATKIT_BASE = "https://api.openai.com";
@@ -59,8 +63,11 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const apiBase = process.env.CHATKIT_API_BASE ?? DEFAULT_CHATKIT_BASE;
-    const url = `${apiBase}/v1/chatkit/sessions`;
+    const configuredBase = process.env.CHATKIT_API_BASE ?? DEFAULT_CHATKIT_BASE;
+    const apiBase = configuredBase.match(/^https?:\/\//i)
+      ? configuredBase
+      : `https://${configuredBase.replace(/^\/+/, "")}`;
+    const url = `${apiBase.replace(/\/+$/, "")}/v1/chatkit/sessions`;
     const upstreamResponse = await fetch(url, {
       method: "POST",
       headers: {
@@ -77,6 +84,9 @@ export async function POST(request: Request): Promise<Response> {
               parsedBody?.chatkit_configuration?.file_upload?.enabled ?? false,
           },
         },
+        ...(parsedBody?.session_config
+          ? { session_config: parsedBody.session_config }
+          : {}),
       }),
     });
 
