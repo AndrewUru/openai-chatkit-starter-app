@@ -35,6 +35,9 @@ type ErrorState = {
 
 const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV !== "production";
+const chatKitScriptUrl =
+  process.env.NEXT_PUBLIC_CHATKIT_SCRIPT_URL?.trim() ??
+  "https://cdn.platform.openai.com/deployments/chatkit/chatkit.js";
 
 const createInitialErrors = (): ErrorState => ({
   script: null,
@@ -130,6 +133,68 @@ export function ChatKitPanel({
       }
     };
   }, [scriptStatus, setErrorState]);
+
+  useEffect(() => {
+    if (!isBrowser) {
+      return;
+    }
+
+    if (window.customElements?.get("openai-chatkit")) {
+      window.dispatchEvent(new Event("chatkit-script-loaded"));
+      return;
+    }
+
+    const selector = "script[data-chatkit-loader]";
+    let script = document.querySelector<HTMLScriptElement>(selector);
+
+    if (script?.dataset.chatkitLoaderStatus === "loaded") {
+      window.dispatchEvent(new Event("chatkit-script-loaded"));
+      return;
+    }
+
+    if (script?.dataset.chatkitLoaderStatus === "error") {
+      window.dispatchEvent(
+        new CustomEvent("chatkit-script-error", {
+          detail: `Failed to load script from ${chatKitScriptUrl}`,
+        })
+      );
+      return;
+    }
+
+    if (!script) {
+      script = document.createElement("script");
+      script.src = chatKitScriptUrl;
+      script.async = true;
+      script.dataset.chatkitLoader = "true";
+    }
+
+    const handleLoad = () => {
+      script!.dataset.chatkitLoaderStatus = "loaded";
+      window.dispatchEvent(new Event("chatkit-script-loaded"));
+    };
+
+    const handleError = () => {
+      script!.dataset.chatkitLoaderStatus = "error";
+      window.dispatchEvent(
+        new CustomEvent("chatkit-script-error", {
+          detail: `Failed to load script from ${chatKitScriptUrl}`,
+        })
+      );
+    };
+
+    script.addEventListener("load", handleLoad);
+    script.addEventListener("error", handleError);
+
+    if (!script.dataset.chatkitLoaderMounted) {
+      document.head.appendChild(script);
+      script.dataset.chatkitLoaderMounted = "true";
+    }
+
+    return () => {
+      script?.removeEventListener("load", handleLoad);
+      script?.removeEventListener("error", handleError);
+    };
+  }, []);
 
   const isWorkflowConfigured = Boolean(
     WORKFLOW_ID && !WORKFLOW_ID.startsWith("wf_replace")
