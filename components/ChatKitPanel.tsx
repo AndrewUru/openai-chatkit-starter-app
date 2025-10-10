@@ -1,7 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ChatKit, useChatKit } from "@openai/chatkit-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  ChatKit,
+  useChatKit,
+  type UseChatKitOptions,
+} from "@openai/chatkit-react";
 import {
   STARTER_PROMPTS,
   PLACEHOLDER_INPUT,
@@ -64,6 +74,7 @@ export function ChatKitPanel({
       : "pending"
   );
   const [widgetInstanceKey, setWidgetInstanceKey] = useState(0);
+  const [userInput, setUserInput] = useState("");
 
   const setErrorState = useCallback((updates: Partial<ErrorState>) => {
     setErrors((current) => ({ ...current, ...updates }));
@@ -256,6 +267,7 @@ export function ChatKitPanel({
     setIsInitializingSession(true);
     setErrors(createInitialErrors());
     setWidgetInstanceKey((prev) => prev + 1);
+    setUserInput("");
   }, []);
 
   const getClientSecret = useCallback(
@@ -362,6 +374,42 @@ export function ChatKitPanel({
     [isWorkflowConfigured, setErrorState]
   );
 
+  type SessionConfig = {
+    thread: { messages: unknown[] };
+    inputs?: { input_as_text: string };
+  };
+
+  type PatchedChatKitOptions = UseChatKitOptions & {
+    sessionConfig: SessionConfig;
+  };
+
+  type ChatKitElement = HTMLElement & {
+    sendUserMessage?: (params: {
+      text: string;
+      reply?: string;
+      attachments?: unknown[];
+      newThread?: boolean;
+    }) => Promise<void>;
+    setOptions?: (options: UseChatKitOptions) => void;
+    __chatkitPatchedUserInput__?: boolean;
+    __chatkitOriginalSendUserMessage__?: (params: {
+      text: string;
+      reply?: string;
+      attachments?: unknown[];
+      newThread?: boolean;
+    }) => Promise<void>;
+  };
+
+  const sessionConfig = useMemo<SessionConfig>(() => {
+    if (!userInput) {
+      return { thread: { messages: [] } };
+    }
+    return {
+      thread: { messages: [] },
+      inputs: { input_as_text: userInput },
+    };
+  }, [userInput]);
+
   const chatkit = useChatKit({
     api: { getClientSecret },
     theme: {
@@ -423,13 +471,74 @@ export function ChatKitPanel({
     },
     onThreadChange: () => {
       processedFacts.current.clear();
+      setUserInput("");
     },
     onError: ({ error }: { error: unknown }) => {
       // Note that Chatkit UI handles errors for your users.
       // Thus, your app code doesn't need to display errors on UI.
       console.error("ChatKit error", error);
     },
-  });
+    sessionConfig,
+  } as unknown as UseChatKitOptions);
+
+  useEffect(() => {
+    if (!isBrowser) {
+      return;
+    }
+
+    const instance = chatkit.ref.current as ChatKitElement | null;
+
+    if (!instance || instance.__chatkitPatchedUserInput__) {
+      return;
+    }
+
+    const originalSendUserMessage = instance.sendUserMessage;
+
+    if (typeof originalSendUserMessage !== "function") {
+      return;
+    }
+
+    instance.__chatkitPatchedUserInput__ = true;
+    instance.__chatkitOriginalSendUserMessage__ = originalSendUserMessage;
+
+    instance.sendUserMessage = async function patchedSendUserMessage(params) {
+      const messageText =
+        params && typeof params.text === "string" ? params.text : "";
+
+      const nextSessionConfig: SessionConfig = messageText
+        ? {
+            thread: { messages: [] },
+            inputs: { input_as_text: messageText },
+          }
+        : { thread: { messages: [] } };
+
+      const nextOptions: PatchedChatKitOptions = {
+        ...(chatkit.control.options as UseChatKitOptions),
+        sessionConfig: nextSessionConfig,
+      };
+
+      (chatkit.control as unknown as { options: PatchedChatKitOptions }).options =
+        nextOptions;
+
+      if (typeof instance.setOptions === "function") {
+        instance.setOptions(nextOptions as unknown as UseChatKitOptions);
+      }
+
+      setUserInput((current) =>
+        current === messageText ? current : messageText
+      );
+
+      return originalSendUserMessage.call(this, params);
+    };
+
+    return () => {
+      if (instance.__chatkitOriginalSendUserMessage__) {
+        instance.sendUserMessage = instance.__chatkitOriginalSendUserMessage__;
+        delete instance.__chatkitOriginalSendUserMessage__;
+      }
+      delete instance.__chatkitPatchedUserInput__;
+    };
+  }, [chatkit, widgetInstanceKey]);
 
   const activeError = errors.session ?? errors.integration;
   const blockingError = errors.script ?? activeError;
