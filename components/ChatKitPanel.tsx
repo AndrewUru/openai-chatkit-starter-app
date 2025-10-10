@@ -37,7 +37,7 @@ const isBrowser = typeof window !== "undefined";
 const isDev = process.env.NODE_ENV !== "production";
 const chatKitScriptUrl =
   process.env.NEXT_PUBLIC_CHATKIT_SCRIPT_URL?.trim() ??
-  "https://cdn.platform.openai.com/deployments/chatkit/chatkit.js";
+  "/api/chatkit-script";
 
 const createInitialErrors = (): ErrorState => ({
   script: null,
@@ -91,12 +91,12 @@ export function ChatKitPanel({
     };
 
     const handleError = (event: Event) => {
-      console.error("Failed to load chatkit.js for some reason", event);
+      const detail = (event as CustomEvent<unknown>)?.detail ?? "unknown error";
+      console.error("Failed to load chatkit.js for some reason", detail, event);
       if (!isMountedRef.current) {
         return;
       }
       setScriptStatus("error");
-      const detail = (event as CustomEvent<unknown>)?.detail ?? "unknown error";
       setErrorState({ script: `Error: ${detail}`, retryable: false });
       setIsInitializingSession(false);
     };
@@ -144,8 +144,25 @@ export function ChatKitPanel({
       return;
     }
 
-    const selector = "script[data-chatkit-loader]";
+    const resolvedScriptUrl = (() => {
+      try {
+        return new URL(chatKitScriptUrl, window.location.href).href;
+      } catch {
+        return chatKitScriptUrl;
+      }
+    })();
+
+    const selector = "script[data-chatkit-loader='true']";
     let script = document.querySelector<HTMLScriptElement>(selector);
+
+    if (
+      script &&
+      script.dataset.chatkitLoaderSource &&
+      script.dataset.chatkitLoaderSource !== resolvedScriptUrl
+    ) {
+      script.remove();
+      script = null;
+    }
 
     if (script?.dataset.chatkitLoaderStatus === "loaded") {
       window.dispatchEvent(new Event("chatkit-script-loaded"));
@@ -153,9 +170,12 @@ export function ChatKitPanel({
     }
 
     if (script?.dataset.chatkitLoaderStatus === "error") {
+      const detail =
+        script.dataset.chatkitLoaderError ??
+        `Failed to load script from ${resolvedScriptUrl}`;
       window.dispatchEvent(
         new CustomEvent("chatkit-script-error", {
-          detail: `Failed to load script from ${chatKitScriptUrl}`,
+          detail,
         })
       );
       return;
@@ -163,22 +183,38 @@ export function ChatKitPanel({
 
     if (!script) {
       script = document.createElement("script");
-      script.src = chatKitScriptUrl;
       script.async = true;
       script.dataset.chatkitLoader = "true";
+      script.dataset.chatkitLoaderStatus = "loading";
+      script.dataset.chatkitLoaderSource = resolvedScriptUrl;
+      script.src = resolvedScriptUrl;
+    } else if (script.src !== resolvedScriptUrl) {
+      script.dataset.chatkitLoaderStatus = "loading";
+      script.dataset.chatkitLoaderSource = resolvedScriptUrl;
+      script.src = resolvedScriptUrl;
     }
 
     const handleLoad = () => {
-      script!.dataset.chatkitLoaderStatus = "loaded";
+      if (!script) {
+        return;
+      }
+      script.dataset.chatkitLoaderStatus = "loaded";
+      delete script.dataset.chatkitLoaderError;
       window.dispatchEvent(new Event("chatkit-script-loaded"));
     };
 
-    const handleError = () => {
-      script!.dataset.chatkitLoaderStatus = "error";
+    const handleError = (event?: Event | string) => {
+      if (!script) {
+        return;
+      }
+      script.dataset.chatkitLoaderStatus = "error";
+      const message =
+        typeof event === "string"
+          ? event
+          : `Failed to load script from ${resolvedScriptUrl}`;
+      script.dataset.chatkitLoaderError = message;
       window.dispatchEvent(
-        new CustomEvent("chatkit-script-error", {
-          detail: `Failed to load script from ${chatKitScriptUrl}`,
-        })
+        new CustomEvent("chatkit-script-error", { detail: message })
       );
     };
 
