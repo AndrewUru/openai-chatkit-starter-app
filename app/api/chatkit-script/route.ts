@@ -1,5 +1,6 @@
-const DEFAULT_SOURCE =
-  "https://cdn.platform.openai.com/deployments/chatkit/chatkit.js";
+//C:\openai-chatkit-starter-app2\app\api\chatkit-script\route.ts
+
+const DEFAULT_SOURCE = "http://localhost:3000/chatkit.js";
 
 const FORWARDED_HEADERS: Record<string, string> = {
   accept:
@@ -64,12 +65,7 @@ export async function GET(): Promise<Response> {
     });
   }
 
-  headers.set(
-    "content-type",
-    contentType && contentType.includes("javascript")
-      ? contentType
-      : "application/javascript; charset=utf-8"
-  );
+  headers.set("content-type", "application/javascript; charset=utf-8");
 
   for (const key of PASS_THROUGH_HEADERS) {
     const value = upstreamResponse.headers.get(key);

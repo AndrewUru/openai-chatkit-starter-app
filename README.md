@@ -38,9 +38,14 @@ You can get your OpenAI API key from the [OpenAI API Keys](https://platform.open
 
 Update `.env.local` with the variables that match your setup.
 
-- `OPENAI_API_KEY` — API key created **within the same org & project as your Agent Builder**
-- `NEXT_PUBLIC_CHATKIT_WORKFLOW_ID` — the workflow you created in [Agent Builder](https://platform.openai.com/agent-builder)
+- `OPENAI_API_KEY` - API key created **within the same org & project as your Agent Builder**
+- `NEXT_PUBLIC_CHATKIT_WORKFLOW_ID` - the workflow you created in [Agent Builder](https://platform.openai.com/agent-builder)
 - (optional) `CHATKIT_API_BASE` - customizable base URL for the ChatKit API endpoint
+- `WORDPRESS_BASE_URL` - dominio de tu WordPress (por ejemplo `https://tusitio.com`)
+- `WORDPRESS_USERNAME` - usuario con permisos de autor para publicar mediante la API
+- `WORDPRESS_APP_PASSWORD` - contraseña de aplicación generada en WordPress
+- (optional) `PUBLIC_EXPERIMENT_KEY` - token temporal que autoriza publicaciones durante el experimento
+- (optional) `NEXT_PUBLIC_PUBLIC_EXPERIMENT_KEY` - clave pública que la UI envía al endpoint; debe coincidir con `PUBLIC_EXPERIMENT_KEY`
 
 ### 4. Run the app
 

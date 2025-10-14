@@ -1,6 +1,6 @@
-import { WORKFLOW_ID } from "@/lib/config";
+//C:\openai-chatkit-starter-app2\app\api\create-session\route.ts
 
-export const runtime = "edge";
+import { WORKFLOW_ID } from "@/lib/config";
 
 interface CreateSessionRequestBody {
   workflow?: { id?: string | null } | null;
@@ -76,7 +76,7 @@ export async function POST(request: Request): Promise<Response> {
         "OpenAI-Beta": "chatkit_beta=v1",
       },
       body: JSON.stringify({
-        workflow: { id: resolvedWorkflowId },
+        workflow: { id: resolvedWorkflowId, version: "5" },
         user: userId,
         chatkit_configuration: {
           file_upload: {
