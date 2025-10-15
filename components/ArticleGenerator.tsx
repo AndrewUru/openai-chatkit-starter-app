@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Navbar } from "./Navbar";
 
 type WorkflowState = "idle" | "loading" | "success" | "error";
 
@@ -133,8 +134,10 @@ export function ArticleGenerator() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_50%_-20%,rgba(56,189,248,0.35),transparent)]" />
       </div>
 
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-between px-6 pb-16 pt-14 sm:pt-20">
-        <section className="space-y-12">
+      <Navbar />
+
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-between px-6 pb-16 pt-10 sm:pt-14">
+        <section id="inicio" className="space-y-12">
           <div className="space-y-6 text-center">
             <span className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-emerald-400/10 px-4 py-1 text-xs font-medium uppercase tracking-[0.24em] text-emerald-200">
               Experimento abierto
@@ -155,7 +158,10 @@ export function ArticleGenerator() {
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-800/60 bg-slate-900/60 p-8 shadow-2xl backdrop-blur transition hover:border-emerald-400/40 hover:shadow-[0_0_55px_rgba(45,212,191,0.25)]">
+          <div
+            id="flujo"
+            className="mx-auto w-full max-w-3xl rounded-3xl border border-slate-800/60 bg-slate-900/60 p-8 shadow-2xl backdrop-blur transition hover:border-emerald-400/40 hover:shadow-[0_0_55px_rgba(45,212,191,0.25)]"
+          >
             <form className="space-y-4" onSubmit={handleSubmit}>
               <label className="flex flex-col gap-3 text-left">
                 <span className="text-sm font-semibold uppercase tracking-wide text-slate-300">
@@ -215,8 +221,8 @@ export function ArticleGenerator() {
           </div>
         </section>
 
-        {state === "success" ? (
-          <section className="relative mt-12 space-y-6">
+        <section id="resultado" className="relative mt-12 space-y-6">
+          {state === "success" ? (
             <div className="mx-auto w-full max-w-4xl space-y-4 rounded-3xl border border-emerald-500/30 bg-slate-900/60 p-8 shadow-[0_0_65px_rgba(16,185,129,0.25)] backdrop-blur">
               <div className="space-y-3 text-center sm:text-left">
                 <h2 className="text-2xl font-semibold text-emerald-200">
@@ -232,7 +238,7 @@ export function ArticleGenerator() {
                   >
                     Ver articulo publicado
                     <span aria-hidden="true" className="text-base">
-                      →
+                      {"->"}
                     </span>
                   </a>
                 ) : (
@@ -249,8 +255,13 @@ export function ArticleGenerator() {
                 />
               </div>
             </div>
-          </section>
-        ) : null}
+          ) : (
+            <div className="mx-auto w-full max-w-3xl rounded-3xl border border-dashed border-emerald-500/20 bg-slate-900/40 px-6 py-12 text-center text-sm text-slate-400">
+              Genera un articulo para previsualizar aqui el contenido completo
+              antes de publicarlo en WordPress.
+            </div>
+          )}
+        </section>
 
         {state === "error" ? (
           <section className="mt-10">
@@ -260,7 +271,10 @@ export function ArticleGenerator() {
           </section>
         ) : null}
 
-        <footer className="relative z-10 mt-16 flex flex-col items-center gap-2 text-center text-xs text-slate-500 sm:flex-row sm:justify-center sm:gap-4">
+        <footer
+          id="recursos"
+          className="relative z-10 mt-16 flex flex-col items-center gap-2 text-center text-xs text-slate-500 sm:flex-row sm:justify-center sm:gap-4"
+        >
           <span>Experimento abierto</span>
           <span className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block" />
           <span>Powered by El Salto Web</span>
