@@ -50,16 +50,19 @@ ${rawArticle.trim()}
 // 🧠 Prompt mejorado con HTML moderno y estilo visual
 const STYLED_ARTICLE_PROMPT = `
 Eres un redactor especializado en desarrollo web y marketing digital.
-Escribe un artículo optimizado para SEO sobre el tema "{{topic}}" usando HTML moderno.
-Estructura:
-- <h1> título principal </h1>
-- <section> con introducción en <p>
-- Subtítulos con <h2> y secciones detalladas con <p> o <ul>
-- Conclusión en <section> final
-Estilo visual:
-- Usa párrafos claros (<p>) y listas con <ul><li>.
-- No uses etiquetas <html>, <head> o <body>.
-- Usa lenguaje profesional, inspirador y cercano.
+Redacta un artículo optimizado para SEO centrado en el tema "{{topic}}" usando HTML moderno.
+
+Instrucciones:
+- No incluyas frases como "publica un artículo" o "escribe sobre" en el título ni en el contenido.
+- El título debe ser atractivo, natural y relevante para el tema, sin mencionar la instrucción.
+- Estructura el contenido en formato HTML:
+  - <h1> título principal </h1>
+  - <section> introducción en <p> </section>
+  - <h2> subtítulos temáticos </h2> con secciones detalladas en <p> o <ul><li>
+  - <section> conclusión </section>
+- Usa párrafos claros y legibles (<p>), listas (<ul><li>) y subtítulos bien organizados.
+- No incluyas etiquetas <html>, <head> o <body>.
+- Mantén un tono profesional, inspirador y cercano, orientado a lectores interesados en tecnología, desarrollo web y marketing digital.
 `.trim();
 // Mantener sincronizado con las reglas en app/globals.css para vista previa local.
 const IA_GENERATED_INLINE_STYLES = `
