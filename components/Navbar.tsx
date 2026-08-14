@@ -23,7 +23,7 @@ export function Navbar() {
           <span className="grid h-8 w-8 place-items-center rounded-full bg-[#11110f] text-xs text-[#d7ff52]">
             ES
           </span>
-          <span>Laboratorio de futuros</span>
+          <span>Laboratorio Web + IA</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">

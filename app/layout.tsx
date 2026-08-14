@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Laboratorio de Futuros | El Salto Web",
+  title: "Laboratorio Web + IA | El Salto Web",
   description:
-    "Una experiencia interactiva para imaginar futuros humanos con tecnología e inteligencia artificial.",
+    "Una experiencia interactiva para imaginar productos, interfaces y agentes de inteligencia artificial para la web.",
   openGraph: {
-    title: "Laboratorio de Futuros | El Salto Web",
+    title: "Laboratorio Web + IA | El Salto Web",
     description:
-      "Gira la ruleta, aporta tu mirada y crea una historia sobre nuestros futuros con inteligencia artificial.",
+      "Gira la ruleta y convierte una idea humana en un caso de desarrollo web con inteligencia artificial.",
     url: "https://elsaltoweb.es/laboratorio-ia/",
     siteName: "El Salto Web",
     images: [
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
         url: "https://elsaltoweb.es/wp-content/uploads/2025/10/laboratorio-ia.webp",
         width: 1200,
         height: 630,
-        alt: "Laboratorio de Futuros de El Salto Web",
+        alt: "Laboratorio de desarrollo web e inteligencia artificial de El Salto Web",
       },
     ],
     locale: "es_ES",
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Laboratorio de Futuros | El Salto Web",
+    title: "Laboratorio Web + IA | El Salto Web",
     description:
-      "Una experiencia interactiva para imaginar futuros humanos con inteligencia artificial.",
+      "Una experiencia interactiva para diseñar la próxima generación de productos web con inteligencia artificial.",
     images: [
       "https://elsaltoweb.es/wp-content/uploads/2025/10/laboratorio-ia.webp",
     ],

@@ -42,45 +42,45 @@ type HumanLens = {
 const TERRITORIES: Territory[] = [
   {
     number: "01",
-    title: "Mentes híbridas",
-    signal: "IA + intuición",
+    title: "Interfaces inteligentes",
+    signal: "UX + IA generativa",
     prompt:
-      "cómo la inteligencia artificial puede ampliar la intuición humana sin sustituirla",
+      "cómo diseñar interfaces web que colaboren con inteligencia artificial sin quitar control, contexto ni autonomía a quien las usa",
   },
   {
     number: "02",
-    title: "Tecnología invisible",
-    signal: "Interfaces + calma",
+    title: "Agentes en la web",
+    signal: "Agentes + herramientas",
     prompt:
-      "un futuro donde la mejor tecnología desaparece del camino y devuelve atención a las personas",
+      "aplicaciones web donde agentes de IA entienden objetivos, utilizan herramientas y explican cada acción antes de ejecutarla",
   },
   {
     number: "03",
-    title: "Ciudades sensibles",
-    signal: "Datos + comunidad",
+    title: "Código aumentado",
+    signal: "Desarrollo + copilotos",
     prompt:
-      "ciudades que usan datos e inteligencia artificial para escuchar y cuidar a sus comunidades",
+      "cómo cambia el oficio de desarrollar para la web cuando los copilotos de IA participan en arquitectura, código, pruebas y revisión",
   },
   {
     number: "04",
-    title: "Creatividad expandida",
-    signal: "Máquinas + imaginación",
+    title: "Web para todas las personas",
+    signal: "Accesibilidad + IA",
     prompt:
-      "la relación creativa entre personas y máquinas cuando ambas participan en una misma obra",
+      "cómo usar inteligencia artificial para crear experiencias web más accesibles sin automatizar decisiones que requieren criterio humano",
   },
   {
     number: "05",
-    title: "Futuros del cuidado",
-    signal: "Robótica + empatía",
+    title: "Datos con criterio",
+    signal: "APIs + privacidad",
     prompt:
-      "qué lugar deben ocupar la robótica y la IA en una sociedad que pone los cuidados en el centro",
+      "productos web que personalizan con IA y datos propios manteniendo privacidad, trazabilidad y límites comprensibles",
   },
   {
     number: "06",
-    title: "Identidades digitales",
-    signal: "Avatares + verdad",
+    title: "Experiencias generativas",
+    signal: "WebGL + modelos",
     prompt:
-      "cómo cambia nuestra identidad cuando convivimos con avatares, algoritmos y versiones digitales de nosotros mismos",
+      "nuevas experiencias web que combinan código creativo, WebGL y modelos generativos para responder en tiempo real a cada persona",
   },
 ];
 
@@ -88,28 +88,32 @@ const TERRITORY_NUMBERS = TERRITORIES.map((territory) => territory.number);
 
 const HUMAN_LENSES: HumanLens[] = [
   {
-    id: "asombro",
-    label: "Asombro",
-    description: "Mirar como si fuera la primera vez.",
-    instruction: "desde el asombro, buscando posibilidades inesperadas",
+    id: "utilidad",
+    label: "Utilidad",
+    description: "Resolver un problema real antes de añadir tecnología.",
+    instruction:
+      "desde la utilidad, partiendo de un problema verificable y una persona concreta",
   },
   {
-    id: "cuidado",
-    label: "Cuidado",
-    description: "Preguntar a quién sirve el progreso.",
-    instruction: "desde el cuidado, atendiendo a las personas y sus límites",
+    id: "accesibilidad",
+    label: "Accesibilidad",
+    description: "Diseñar para capacidades, contextos y dispositivos diversos.",
+    instruction:
+      "desde la accesibilidad, atendiendo a capacidades, contextos, rendimiento y dispositivos diversos",
   },
   {
-    id: "rebeldia",
-    label: "Rebeldía",
-    description: "Cuestionar lo que parece inevitable.",
-    instruction: "desde una mirada crítica y rebelde que cuestione lo establecido",
+    id: "criterio",
+    label: "Criterio",
+    description: "Cuestionar la automatización antes de darla por buena.",
+    instruction:
+      "desde una mirada crítica que evalúe riesgos, límites y decisiones que no deben automatizarse",
   },
   {
-    id: "juego",
-    label: "Juego",
-    description: "Probar sin miedo a equivocarse.",
-    instruction: "desde el juego, la experimentación y el humor inteligente",
+    id: "experimentacion",
+    label: "Experimentación",
+    description: "Prototipar, medir y aprender con rapidez.",
+    instruction:
+      "desde la experimentación, proponiendo un prototipo pequeño, medible y técnicamente plausible",
   },
 ];
 
@@ -197,14 +201,16 @@ export function ArticleGenerator() {
 
       const humanContribution = topic.trim();
       const creativeBrief = [
+        "Ámbito obligatorio: desarrollo web e inteligencia artificial.",
         `Tema central: ${selectedTerritory.prompt}.`,
         `Enfoque humano: escribe ${selectedLens.instruction}.`,
         humanContribution
           ? `Chispa aportada por la persona: ${humanContribution}.`
           : "Busca una historia cotidiana y concreta que permita comprender el tema.",
-        "La pieza debe conectar tecnología e inteligencia artificial con experiencias humanas reales, evitar el tecnosolucionismo y terminar con una pregunta abierta para la comunidad.",
+        "La pieza debe convertir la chispa humana en un reto concreto de producto o desarrollo web, explicar qué papel cumple la IA, evitar el tecnosolucionismo y terminar con una pregunta abierta para la comunidad desarrolladora.",
       ].join(" ");
       const visualBrief = [
+        "Desarrollo web e inteligencia artificial",
         selectedTerritory.title,
         selectedTerritory.signal,
         selectedLens.label,
@@ -365,10 +371,10 @@ export function ArticleGenerator() {
       : null;
 
   const loadingMessage = (() => {
-    if (progress < 28) return "Escuchando tu chispa";
-    if (progress < 56) return "Conectando señales humanas";
-    if (progress < 78) return "Dando forma a la historia";
-    return "Abriendo una ventana al futuro";
+    if (progress < 28) return "Interpretando el reto";
+    if (progress < 56) return "Conectando usuario, web e IA";
+    if (progress < 78) return "Diseñando la solución";
+    return "Preparando el caso de producto";
   })();
 
   return (
@@ -381,20 +387,20 @@ export function ArticleGenerator() {
           <div>
             <p className="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.24em]">
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#ff5c35]" />
-              Experimento interactivo · Humano + IA
+              Experimento interactivo · Desarrollo web + IA
             </p>
             <h1 className="max-w-5xl font-serif text-[clamp(4.25rem,10vw,9.5rem)] leading-[0.76] tracking-[-0.075em]">
-              El futuro no se predice.
+              La próxima web no se predice.
               <span className="mt-3 block pl-[8vw] italic text-[#4468ff]">
-                Se imagina.
+                Se construye.
               </span>
             </h1>
           </div>
 
           <div className="border-l-2 border-[#11110f] pl-6 lg:mb-2">
             <p className="text-xl leading-snug">
-              Una experiencia para crear relatos sobre tecnología e inteligencia
-              artificial partiendo de algo que ninguna máquina posee:
+              Una experiencia para imaginar productos, interfaces y agentes web
+              con inteligencia artificial, partiendo de algo irremplazable:
               <strong className="font-semibold"> tu manera de mirar.</strong>
             </p>
             <a
@@ -409,7 +415,7 @@ export function ArticleGenerator() {
 
         <div className="marquee-band" aria-hidden="true">
           <div>
-            IMAGINAR · JUGAR · CUESTIONAR · CUIDAR · CREAR · IMAGINAR · JUGAR · CUESTIONAR · CUIDAR · CREAR ·
+            DISEÑAR · PROGRAMAR · PROTOTIPAR · PROBAR · APRENDER · DISEÑAR · PROGRAMAR · PROTOTIPAR · PROBAR · APRENDER ·
           </div>
         </div>
 
@@ -418,11 +424,11 @@ export function ArticleGenerator() {
             <p className="step-label">01 / Tu pulso</p>
             <div>
               <h2 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-[-0.045em] sm:text-7xl">
-                Toda tecnología nace desde una intención.
+                Todo producto digital nace desde una decisión.
               </h2>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-black/65">
-                Elige la mirada desde la que quieres explorar. No hay una opción
-                correcta; hay una que se parece más a ti hoy.
+                Elige el principio desde el que quieres construir. No define una
+                tecnología: define cómo tomarás decisiones con ella.
               </p>
             </div>
           </header>
@@ -467,11 +473,11 @@ export function ArticleGenerator() {
               <div>
                 <p className="step-label text-[#d7ff52]">02 / El azar</p>
                 <h2 className="mt-8 max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                  Deja que el azar abra una puerta.
+                  Deja que el azar defina el reto.
                 </h2>
                 <p className="mt-7 max-w-lg text-lg leading-relaxed text-white/60">
-                  La ruleta combina tu intención con uno de seis territorios del
-                  presente. La fricción entre ambos será el punto de partida.
+                  La ruleta combina tu principio con uno de seis territorios del
+                  desarrollo web con IA. La intersección será el punto de partida.
                 </p>
               </div>
 
@@ -494,7 +500,7 @@ export function ArticleGenerator() {
                   onClick={spinWheel}
                   disabled={isSpinning || !selectedLensId}
                   className="wheel-trigger"
-                  aria-label="Girar la ruleta de futuros"
+                  aria-label="Girar la ruleta de desarrollo web e inteligencia artificial"
                 >
                   <span>{isSpinning ? "Girando" : "Girar"}</span>
                   <span aria-hidden="true" className="text-xl">↻</span>
@@ -526,7 +532,7 @@ export function ArticleGenerator() {
                   <p className="border-t border-white/25 pt-5 text-center text-sm text-white/40">
                     {isSpinning
                       ? "Las señales se están alineando…"
-                      : "Aquí aparecerá tu territorio de exploración."}
+                      : "Aquí aparecerá tu reto de desarrollo web e IA."}
                   </p>
                 )}
               </div>
@@ -539,19 +545,19 @@ export function ArticleGenerator() {
             <div>
               <p className="step-label">03 / Tu huella</p>
               <h2 className="mt-8 font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                Ahora entra lo que solo tú sabes.
+                Ahora entra el problema que quieres resolver.
               </h2>
             </div>
 
             <form onSubmit={handleSubmit} className="self-end">
               <label htmlFor="human-spark" className="block text-sm font-bold uppercase tracking-[0.16em]">
-                Añade un recuerdo, una pregunta o una obsesión
+                Añade un reto, una idea, un usuario o una obsesión
               </label>
               <textarea
                 id="human-spark"
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
-                placeholder="Por ejemplo: mi abuela aprendiendo a hablar con un asistente de voz…"
+                placeholder="Por ejemplo: un portfolio que converse con cada visitante sin perder accesibilidad…"
                 disabled={state === "loading"}
                 rows={4}
                 className="mt-5 w-full resize-none border-0 border-b-2 border-[#11110f] bg-transparent px-0 py-4 font-serif text-3xl leading-tight outline-none placeholder:text-black/35 focus:border-white disabled:opacity-60 sm:text-4xl"
@@ -561,7 +567,7 @@ export function ArticleGenerator() {
                 <p className="max-w-sm text-sm leading-relaxed text-black/65">
                   {selectedTerritory && selectedLens
                     ? `${selectedLens.label} × ${selectedTerritory.title}. La combinación está lista.`
-                    : "Completa los dos primeros pasos para desbloquear la creación."}
+                    : "Completa los dos primeros pasos para diseñar tu caso web con IA."}
                 </p>
                 <button
                   type="submit"
@@ -606,7 +612,7 @@ export function ArticleGenerator() {
                 <div>
                   <p className="step-label text-[#4468ff]">04 / La pieza</p>
                   <h2 className="mt-5 font-serif text-5xl tracking-[-0.045em] sm:text-7xl">
-                    Una posibilidad ya existe.
+                    Tu caso de producto ya existe.
                   </h2>
                 </div>
                 <div className="max-w-xs text-sm leading-relaxed text-black/60">
@@ -800,8 +806,8 @@ export function ArticleGenerator() {
       </main>
 
       <footer className="flex flex-col justify-between gap-5 border-t border-white/20 bg-[#11110f] px-5 py-8 text-xs uppercase tracking-[0.16em] text-white/50 sm:flex-row sm:px-8 lg:px-14">
-        <span>El Salto Web · Laboratorio de futuros</span>
-        <span>Creado entre inteligencias · 2026</span>
+        <span>El Salto Web · Laboratorio Web + IA</span>
+        <span>Diseñado por humanos · Ampliado con IA · 2026</span>
       </footer>
     </div>
   );

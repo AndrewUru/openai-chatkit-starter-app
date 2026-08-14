@@ -95,27 +95,30 @@ type EditorialPackage = {
 };
 
 const EDITORIAL_PACKAGE_PROMPT = `
-Crea una pieza editorial cultural en español y su dirección visual a partir del briefing proporcionado.
+Crea una pieza editorial técnica y cultural en español sobre desarrollo web e inteligencia artificial, junto con su dirección visual, a partir del briefing proporcionado.
 
 Principio central:
 - La "chispa aportada por la persona" es el corazón concreto de la historia. No puede aparecer como chiste, ejemplo lateral, mención forzada o simple palabra clave.
-- Interpreta esa chispa con el territorio tecnológico y el enfoque humano indicados. Si expresa un deseo material, una preocupación o un recuerdo, explora lo que revela sobre identidad, deseo, autonomía, cuidado, poder o vida cotidiana.
+- Interpreta esa chispa como un problema, necesidad o comportamiento humano que podría abordarse mediante una experiencia web con IA. No cambies ni trivialices su significado.
+- El desarrollo web y la inteligencia artificial deben ser estructurales en la propuesta: concreta la interfaz, el flujo, los datos, la automatización o la arquitectura implicada. No los añadas como una mención decorativa.
 - Artículo e imagen deben compartir el mismo sujeto, objeto central, conflicto emocional y mundo narrativo.
 
 Artículo:
-- Escribe entre 700 y 1.000 palabras con mirada humana, curiosa y crítica; evita el tono genérico de marketing y el tecnosolucionismo.
+- Escribe entre 700 y 1.000 palabras con mirada humana, técnica, curiosa y crítica; evita el tono genérico de marketing y el tecnosolucionismo.
 - Abre con una escena concreta construida alrededor de la aportación humana.
-- Relaciona esa escena de forma natural con tecnología e inteligencia artificial.
+- Convierte esa escena en un caso de producto web: explica quién lo usaría, qué problema resuelve, cómo sería la interacción y qué función específica desempeña la IA.
+- Incluye decisiones de desarrollo plausibles —interfaz, frontend, backend, APIs, datos, accesibilidad, privacidad, evaluación o despliegue— solo cuando ayuden a comprender el caso.
+- Distingue con claridad entre capacidades disponibles hoy y posibilidades especulativas. No inventes herramientas, métricas ni resultados.
 - No inventes que la aportación sucede en un videojuego, metaverso o simulador salvo que el briefing lo diga.
-- Termina con una pregunta abierta para la comunidad.
+- Termina con una pregunta abierta para la comunidad de diseño y desarrollo web.
 - Devuelve HTML semántico: un solo <h1>, <section>, <h2>, <p> y, cuando ayude, <ul><li>.
 - No incluyas <html>, <head>, <body>, <style>, Markdown ni bloques de código.
 
 Dirección visual:
 - Describe una sola escena editorial horizontal, concreta y fotografiable que represente el núcleo del artículo.
-- Incluye explícitamente la persona, el objeto o deseo central, el entorno, el gesto y la tensión emocional.
+- Incluye explícitamente la persona, el objeto o deseo central, un entorno real de creación o uso web, el gesto y la tensión emocional.
 - La conexión con el artículo debe entenderse sin depender de un pie de foto.
-- No pidas texto, letras, logotipos, marcas de agua, interfaces flotantes ni robots humanoides.
+- Evita clichés de IA: no pidas texto legible, logotipos, marcas de agua, interfaces flotantes, cerebros luminosos ni robots humanoides.
 `.trim();
 // Mantener sincronizado con las reglas en app/globals.css para vista previa local.
 const IA_GENERATED_INLINE_STYLES = `
