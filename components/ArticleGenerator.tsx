@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CSSProperties,
   FormEvent,
   useCallback,
   useEffect,
@@ -14,6 +13,7 @@ import type {
   CreativeWorkflowResponse,
 } from "@/lib/creative-assets";
 import { Navbar } from "./Navbar";
+import { FutureWheelWebGL } from "./FutureWheelWebGL";
 
 type WorkflowState = "idle" | "loading" | "success" | "error";
 type PublishState = "idle" | "publishing" | "published" | "error";
@@ -82,6 +82,8 @@ const TERRITORIES: Territory[] = [
       "cómo cambia nuestra identidad cuando convivimos con avatares, algoritmos y versiones digitales de nosotros mismos",
   },
 ];
+
+const TERRITORY_NUMBERS = TERRITORIES.map((territory) => territory.number);
 
 const HUMAN_LENSES: HumanLens[] = [
   {
@@ -480,28 +482,11 @@ export function ArticleGenerator() {
             <div className="flex flex-col items-center">
               <div className="wheel-stage">
                 <div className="wheel-pointer" aria-hidden="true" />
-                <div
-                  className="future-wheel"
-                  style={{ transform: `rotate(${wheelRotation}deg)` }}
-                  aria-hidden="true"
-                >
-                  {TERRITORIES.map((territory, index) => {
-                    const angle = index * 60 + 30;
-                    return (
-                      <span
-                        key={territory.number}
-                        className="wheel-number"
-                        style={
-                          {
-                            "--wheel-angle": `${angle}deg`,
-                          } as CSSProperties
-                        }
-                      >
-                        {territory.number}
-                      </span>
-                    );
-                  })}
-                </div>
+                <FutureWheelWebGL
+                  labels={TERRITORY_NUMBERS}
+                  rotation={wheelRotation}
+                  spinning={isSpinning}
+                />
                 <button
                   type="button"
                   onClick={spinWheel}
