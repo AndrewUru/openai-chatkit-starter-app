@@ -44,10 +44,47 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 }
 
 .experience-shell {
+  position: relative;
+  isolation: isolate;
   background-color: #f4f0e6;
   background-image: radial-gradient(rgba(17,17,15,.075) .65px,transparent .65px), radial-gradient(rgba(17,17,15,.04) .55px,transparent .55px);
   background-position: 0 0, 5px 7px;
   background-size: 11px 11px, 13px 13px;
+}
+
+.experience-shell > main,
+.experience-shell > footer {
+  position: relative;
+  z-index: 10;
+}
+
+.fluid-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: .72;
+  mix-blend-mode: soft-light;
+}
+
+.fluid-atmosphere::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  background:
+    radial-gradient(circle at 14% 22%,rgba(68,104,255,.11),transparent 30%),
+    radial-gradient(circle at 82% 34%,rgba(255,92,53,.1),transparent 27%),
+    radial-gradient(circle at 50% 82%,rgba(215,255,82,.075),transparent 34%);
+  filter: blur(44px);
+}
+
+.fluid-atmosphere-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .nav-link {
@@ -361,12 +398,14 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 .generated-story .ia-generated p, .generated-story .ia-generated li { color: #272722; font-size: 1.08rem; line-height: 1.82; }
 
 @media (max-width: 520px) {
+  .fluid-atmosphere { opacity: .55; }
   .wheel-number { --wheel-radius: 31vw; width: 2.1rem; height: 2.1rem; }
   .wheel-pointer { top: -.7rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .fluid-atmosphere { opacity: .4; }
   .marquee-band > div { animation: none; }
   .territory-reveal { animation: none; }
 }

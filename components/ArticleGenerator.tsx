@@ -14,6 +14,7 @@ import type {
 } from "@/lib/creative-assets";
 import { Navbar } from "./Navbar";
 import { FutureWheelWebGL } from "./FutureWheelWebGL";
+import { FluidAtmosphereWebGL } from "./FluidAtmosphereWebGL";
 
 type WorkflowState = "idle" | "loading" | "success" | "error";
 type PublishState = "idle" | "publishing" | "published" | "error";
@@ -372,6 +373,7 @@ export function ArticleGenerator() {
 
   return (
     <div className="experience-shell min-h-screen text-[#11110f]">
+      <FluidAtmosphereWebGL />
       <Navbar />
 
       <main>

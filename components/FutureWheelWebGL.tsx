@@ -33,6 +33,29 @@ float hash(vec2 point) {
   return fract(sin(dot(point, vec2(127.1, 311.7))) * 43758.5453123);
 }
 
+float noise(vec2 point) {
+  vec2 cell = floor(point);
+  vec2 local = fract(point);
+  local = local * local * (3.0 - 2.0 * local);
+  float a = hash(cell);
+  float b = hash(cell + vec2(1.0, 0.0));
+  float c = hash(cell + vec2(0.0, 1.0));
+  float d = hash(cell + vec2(1.0, 1.0));
+  return mix(mix(a, b, local.x), mix(c, d, local.x), local.y);
+}
+
+float fbm(vec2 point) {
+  float value = 0.0;
+  value += noise(point) * 0.5;
+  point = point * 2.03 + vec2(13.7, 9.2);
+  value += noise(point) * 0.25;
+  point = point * 2.01 + vec2(8.3, 17.1);
+  value += noise(point) * 0.125;
+  point = point * 2.04 + vec2(19.4, 4.7);
+  value += noise(point) * 0.0625;
+  return value / 0.9375;
+}
+
 vec3 sectorColor(float sector) {
   if (sector < 0.5) return vec3(1.0, 0.36, 0.21);
   if (sector < 1.5) return vec3(0.84, 1.0, 0.32);
@@ -48,7 +71,15 @@ void main() {
   float radius = length(point);
   if (radius > 1.0) discard;
 
-  float visualAngle = mod(atan(point.x, point.y) + TAU, TAU);
+  float flowTime = u_time * (0.18 + u_spinning * 0.82);
+  float flowA = fbm(point * 2.35 + vec2(flowTime, -flowTime * 0.54));
+  float flowB = fbm(point.yx * 2.7 + vec2(-flowTime * 0.67, flowTime));
+  vec2 flow = vec2(flowA - 0.5, flowB - 0.5);
+  vec2 liquidPoint = point + flow * (0.04 + u_spinning * 0.19);
+  float liquidSwirl = sin(radius * 10.0 - u_time * 3.1 + flowA * 5.0)
+    * u_spinning * (0.025 + (1.0 - radius) * 0.055);
+
+  float visualAngle = mod(atan(liquidPoint.x, liquidPoint.y) + TAU + liquidSwirl, TAU);
   float sourceAngle = mod(visualAngle - u_rotation + TAU * 2.0, TAU);
   float sectorSize = TAU / 6.0;
   float sector = floor(sourceAngle / sectorSize);
@@ -56,12 +87,17 @@ void main() {
 
   vec3 color = sectorColor(sector);
   float paper = hash(floor(gl_FragCoord.xy * 0.58)) - 0.5;
-  float pulse = sin(u_time * (0.65 + u_spinning * 1.8) + radius * 14.0) * 0.018;
+  float pulse = sin(u_time * (0.65 + u_spinning * 1.8) + radius * 14.0 + flowA * 3.0) * 0.018;
   float sweep = pow(max(cos(visualAngle - u_time * (0.22 + u_spinning * 0.9)), 0.0), 18.0);
   float radialLight = 1.0 - smoothstep(0.08, 1.12, radius);
+  float liquidRidge = pow(
+    max(0.0, 1.0 - abs(sin((flowA * 1.8 + flowB + radius * 1.7 - u_time * 0.42) * 7.0))),
+    6.0
+  );
 
   color *= 0.91 + radialLight * 0.12 + pulse;
   color += sweep * (0.035 + u_spinning * 0.08);
+  color += vec3(0.72, 0.88, 1.0) * liquidRidge * u_spinning * 0.13;
   color += paper * 0.026;
 
   float edgeDistance = min(localAngle, 1.0 - localAngle);
@@ -70,6 +106,21 @@ void main() {
 
   float innerHalo = 1.0 - smoothstep(0.30, 0.39, radius);
   color = mix(color, vec3(0.96, 0.94, 0.88), innerHalo * 0.08);
+
+  float smokeField = fbm(point * 3.25 + vec2(flowTime * 0.42, -flowTime));
+  float smokeWisp = smoothstep(
+    0.48,
+    0.78,
+    smokeField + sin(point.y * 7.0 + flowA * 5.0 - u_time * 0.9) * 0.14
+  );
+  float smokeMask = smokeWisp * u_spinning
+    * (1.0 - smoothstep(0.72, 1.02, radius)) * 0.42;
+  vec3 smokeTint = mix(
+    vec3(0.95, 0.93, 0.86),
+    vec3(0.54, 0.66, 0.82),
+    flowB
+  );
+  color = mix(color, smokeTint, smokeMask);
 
   float alpha = 1.0 - smoothstep(0.985, 1.0, radius);
   gl_FragColor = vec4(color, alpha);
@@ -164,6 +215,8 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
     let frame = 0;
     let isOnScreen = true;
     let isDocumentVisible = !document.hidden;
+    let effectStrength = 0;
+    let previousFrame = performance.now();
     let positionLocation = -1;
     let resolutionLocation: WebGLUniformLocation | null = null;
     let rotationLocation: WebGLUniformLocation | null = null;
@@ -201,6 +254,12 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
       }
 
       const animation = animationRef.current;
+      const delta = Math.min(0.05, Math.max(0, (now - previousFrame) / 1000));
+      previousFrame = now;
+      const effectTarget = reduceMotion ? 0 : spinningRef.current ? 1 : 0;
+      const response = effectTarget > effectStrength ? 7.5 : 2.8;
+      effectStrength +=
+        (effectTarget - effectStrength) * (1 - Math.exp(-response * delta));
       const progress = Math.min(
         1,
         Math.max(0, (now - animation.startedAt) / animation.duration)
@@ -229,7 +288,7 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
         gl.uniform2f(resolutionLocation, width, height);
         gl.uniform1f(rotationLocation, (displayedRotation * Math.PI) / 180);
         gl.uniform1f(timeLocation, reduceMotion ? 0 : now / 1000);
-        gl.uniform1f(spinningLocation, spinningRef.current ? 1 : 0);
+        gl.uniform1f(spinningLocation, effectStrength);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
 
