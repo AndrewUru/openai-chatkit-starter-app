@@ -95,30 +95,403 @@ type EditorialPackage = {
 };
 
 const EDITORIAL_PACKAGE_PROMPT = `
-Crea una pieza editorial técnica y cultural en español sobre desarrollo web e inteligencia artificial, junto con su dirección visual, a partir del briefing proporcionado.
+Crea un artículo técnico editorial en español sobre desarrollo web e inteligencia artificial, acompañado de una dirección visual, a partir del briefing proporcionado.
 
-Principio central:
-- La "chispa aportada por la persona" es el corazón concreto de la historia. No puede aparecer como chiste, ejemplo lateral, mención forzada o simple palabra clave.
-- Interpreta esa chispa como un problema, necesidad o comportamiento humano que podría abordarse mediante una experiencia web con IA. No cambies ni trivialices su significado.
-- El desarrollo web y la inteligencia artificial deben ser estructurales en la propuesta: concreta la interfaz, el flujo, los datos, la automatización o la arquitectura implicada. No los añadas como una mención decorativa.
-- Artículo e imagen deben compartir el mismo sujeto, objeto central, conflicto emocional y mundo narrativo.
+OBJETIVO
 
-Artículo:
-- Escribe entre 700 y 1.000 palabras con mirada humana, técnica, curiosa y crítica; evita el tono genérico de marketing y el tecnosolucionismo.
-- Abre con una escena concreta construida alrededor de la aportación humana.
-- Convierte esa escena en un caso de producto web: explica quién lo usaría, qué problema resuelve, cómo sería la interacción y qué función específica desempeña la IA.
-- Incluye decisiones de desarrollo plausibles —interfaz, frontend, backend, APIs, datos, accesibilidad, privacidad, evaluación o despliegue— solo cuando ayuden a comprender el caso.
-- Distingue con claridad entre capacidades disponibles hoy y posibilidades especulativas. No inventes herramientas, métricas ni resultados.
-- No inventes que la aportación sucede en un videojuego, metaverso o simulador salvo que el briefing lo diga.
-- Termina con una pregunta abierta para la comunidad de diseño y desarrollo web.
-- Devuelve HTML semántico: un solo <h1>, <section>, <h2>, <p> y, cuando ayude, <ul><li>.
-- No incluyas <html>, <head>, <body>, <style>, Markdown ni bloques de código.
+Transforma la aportación humana del briefing en un caso técnico de producto web plausible.
 
-Dirección visual:
-- Describe una sola escena editorial horizontal, concreta y fotografiable que represente el núcleo del artículo.
-- Incluye explícitamente la persona, el objeto o deseo central, un entorno real de creación o uso web, el gesto y la tensión emocional.
-- La conexión con el artículo debe entenderse sin depender de un pie de foto.
-- Evita clichés de IA: no pidas texto legible, logotipos, marcas de agua, interfaces flotantes, cerebros luminosos ni robots humanoides.
+La pieza debe analizar:
+- el problema;
+- el contexto de uso;
+- la solución propuesta;
+- la arquitectura;
+- la interacción;
+- el papel específico de la IA;
+- las decisiones de implementación;
+- las limitaciones;
+- los riesgos.
+
+No escribas una historia ni una pieza narrativa.
+No construyas personajes ficticios, escenas dramatizadas ni situaciones noveladas.
+
+La aportación humana debe funcionar como requisito, problema o caso de uso real que estructura todo el artículo.
+
+PRINCIPIO CENTRAL
+
+La "chispa aportada por la persona" es el punto de partida técnico del análisis.
+
+Debes interpretar esa aportación como uno o varios de estos elementos:
+
+- problema de usuario;
+- necesidad;
+- requisito funcional;
+- comportamiento;
+- fricción;
+- oportunidad de automatización;
+- hipótesis de producto;
+- caso de uso.
+
+Preserva su significado original.
+
+No la conviertas en:
+- una metáfora;
+- una anécdota;
+- un recurso narrativo;
+- una keyword añadida artificialmente;
+- una excusa para hablar genéricamente de IA.
+
+CASO DE PRODUCTO
+
+A partir del briefing, define un producto o experiencia web concreta.
+
+El artículo debe permitir entender:
+
+- qué problema aborda;
+- quién podría utilizarlo;
+- en qué contexto;
+- cuál sería el flujo principal;
+- qué información introduce el usuario;
+- qué procesa el sistema;
+- qué resultado devuelve;
+- qué parte corresponde a lógica convencional;
+- qué parte corresponde a IA;
+- qué decisiones siguen dependiendo de una persona.
+
+Evita expresiones vagas como:
+
+"plataforma inteligente"
+"experiencia impulsada por IA"
+"sistema revolucionario"
+"solución personalizada"
+
+si no explicas inmediatamente qué hacen técnicamente.
+
+ESTRUCTURA DEL ARTÍCULO
+
+Organiza el contenido alrededor de una estructura técnica similar a esta:
+
+1. Problema
+
+Explica con precisión qué necesidad plantea el briefing y por qué puede convertirse en un problema de producto web.
+
+2. Propuesta de producto
+
+Define qué podría construirse.
+
+Describe:
+- objetivo;
+- usuarios;
+- funcionalidad principal;
+- flujo de interacción;
+- estados importantes de la interfaz.
+
+3. Arquitectura de la solución
+
+Explica una arquitectura plausible.
+
+Cuando sea relevante, aborda:
+
+- frontend;
+- backend;
+- APIs;
+- almacenamiento;
+- autenticación;
+- procesamiento de datos;
+- servicios externos;
+- infraestructura;
+- despliegue.
+
+No añadas tecnologías únicamente para aparentar profundidad técnica.
+
+Cada decisión debe estar relacionada con una necesidad concreta del producto.
+
+4. Papel de la inteligencia artificial
+
+Define exactamente para qué se utiliza IA.
+
+Puede incluir, cuando tenga sentido:
+
+- clasificación;
+- extracción;
+- generación;
+- embeddings;
+- búsqueda semántica;
+- RAG;
+- recomendación;
+- resumen;
+- transformación;
+- visión;
+- análisis de texto;
+- detección de patrones;
+- asistencia contextual.
+
+Explica también qué NO debería delegarse a la IA.
+
+Diferencia entre:
+- reglas deterministas;
+- lógica de aplicación;
+- procesamiento con modelos;
+- decisiones humanas.
+
+5. Flujo de datos
+
+Cuando sea relevante, explica de forma comprensible:
+
+entrada del usuario → validación → procesamiento → modelo → resultado → interfaz
+
+Indica qué datos se almacenan y cuáles podrían procesarse temporalmente.
+
+6. Interfaz y experiencia de usuario
+
+Describe cómo se materializaría la solución en una interfaz web.
+
+Puedes tratar aspectos como:
+
+- formularios;
+- dashboards;
+- edición;
+- estados de carga;
+- streaming;
+- feedback;
+- errores;
+- historial;
+- confirmaciones;
+- accesibilidad;
+- diseño responsive.
+
+La interfaz debe responder al funcionamiento real del sistema.
+
+7. Limitaciones y riesgos
+
+Analiza al menos una limitación importante.
+
+Por ejemplo:
+
+- errores del modelo;
+- alucinaciones;
+- privacidad;
+- coste;
+- latencia;
+- dependencia de proveedores;
+- seguridad;
+- sesgos;
+- accesibilidad;
+- calidad de datos;
+- mantenimiento;
+- escalabilidad.
+
+No presentes la IA como una solución automática o infalible.
+
+8. Implementación viable hoy
+
+Aclara qué partes del producto podrían desarrollarse actualmente con tecnologías existentes.
+
+Distingue claramente cualquier elemento experimental o especulativo.
+
+No inventes:
+- métricas;
+- resultados;
+- estudios;
+- usuarios;
+- herramientas inexistentes;
+- APIs inexistentes;
+- capacidades técnicas no disponibles.
+
+ENFOQUE TÉCNICO
+
+El desarrollo web debe tener peso real en el artículo.
+
+Cuando ayude al caso, puedes discutir decisiones como:
+
+- React;
+- Next.js;
+- Server Components;
+- APIs REST;
+- Server Actions;
+- WebSockets;
+- streaming;
+- bases de datos;
+- almacenamiento vectorial;
+- caché;
+- autenticación;
+- colas;
+- edge functions;
+- observabilidad;
+- rate limiting;
+- arquitectura serverless.
+
+No es obligatorio utilizar estas tecnologías.
+
+Selecciona únicamente las que tengan sentido para el producto descrito.
+
+Evita convertir el artículo en una lista de tecnologías.
+
+IA Y ARQUITECTURA
+
+Si utilizas un modelo generativo, explica:
+
+- qué contexto recibe;
+- qué información proporciona el usuario;
+- qué información recupera el sistema;
+- qué resultado genera;
+- cómo se valida;
+- qué ocurre cuando falla.
+
+Cuando tenga sentido, explica si sería preferible utilizar:
+
+- prompting;
+- structured outputs;
+- function calling;
+- embeddings;
+- RAG;
+- modelos especializados;
+- clasificación convencional;
+- reglas deterministas.
+
+No presupongas que un LLM es siempre la mejor solución.
+
+ESTILO EDITORIAL
+
+Escribe entre 700 y 1.000 palabras.
+
+El tono debe ser:
+
+- técnico;
+- claro;
+- crítico;
+- preciso;
+- accesible para desarrolladores web;
+- editorial, no académico.
+
+Evita:
+
+- storytelling;
+- escenas ficticias;
+- dramatización;
+- metáforas excesivas;
+- introducciones genéricas;
+- lenguaje de marketing;
+- hype sobre inteligencia artificial;
+- tecnosolucionismo;
+- frases como "la IA está revolucionando...";
+- conclusiones grandilocuentes.
+
+El artículo debe parecer escrito por alguien que analiza cómo construir el producto, no por alguien intentando venderlo.
+
+APERTURA
+
+Empieza directamente explicando el problema planteado por el briefing.
+
+No empieces con una historia.
+
+Puedes abrir con:
+- una observación;
+- una limitación;
+- un problema técnico;
+- una necesidad de producto;
+- una contradicción;
+- una pregunta técnica.
+
+FORMATO HTML
+
+Devuelve exclusivamente HTML semántico válido para insertar dentro de una página existente.
+
+Utiliza:
+
+- un único <h1>;
+- <section>;
+- <h2>;
+- <p>;
+- <ul><li> cuando ayude a estructurar información técnica.
+
+No incluyas:
+
+- <html>;
+- <head>;
+- <body>;
+- <style>;
+- <script>;
+- Markdown;
+- bloques de código;
+- comentarios HTML.
+
+No añadas explicaciones fuera del HTML.
+
+CIERRE
+
+Termina con una pregunta técnica o de producto dirigida a la comunidad de desarrollo web.
+
+Debe surgir de alguna decisión o tensión real del caso.
+
+Por ejemplo:
+
+- cuánto automatizar;
+- qué debe seguir bajo control humano;
+- dónde almacenar determinados datos;
+- cuándo utilizar un modelo;
+- cuándo una solución determinista sería mejor.
+
+DIRECCIÓN VISUAL
+
+Después del artículo incluye:
+
+<section>
+  <h2>Dirección visual</h2>
+  <p>...</p>
+</section>
+
+Describe una única imagen editorial horizontal relacionada directamente con el producto analizado.
+
+La escena debe mostrar un entorno real de desarrollo, diseño o uso del producto.
+
+Puede incluir:
+
+- una persona trabajando;
+- un portátil o monitor;
+- prototipos;
+- componentes físicos relacionados con el caso;
+- una interfaz web visible de forma no legible;
+- elementos del contexto real de uso.
+
+La imagen debe comunicar visualmente qué tipo de producto se está construyendo.
+
+No necesita representar una historia ni una escena emocional.
+
+Prioriza:
+- claridad;
+- contexto técnico;
+- realismo;
+- composición editorial;
+- coherencia con el artículo.
+
+Evita clichés visuales de IA:
+
+- robots humanoides;
+- cerebros luminosos;
+- hologramas;
+- interfaces flotantes;
+- código binario decorativo;
+- circuitos sobre rostros;
+- estética cyberpunk genérica;
+- texto legible;
+- logotipos;
+- marcas de agua.
+
+CRITERIO FINAL
+
+Antes de responder, comprueba internamente:
+
+- ¿El artículo analiza un producto concreto?
+- ¿El problema proviene directamente de la aportación humana?
+- ¿Se entiende cómo funcionaría técnicamente?
+- ¿La IA tiene una función específica y justificada?
+- ¿Se distingue entre IA y lógica convencional?
+- ¿La arquitectura es plausible?
+- ¿Se explican limitaciones reales?
+- ¿Podría un desarrollador imaginar cómo empezar a construirlo?
+
+Si alguna respuesta es no, corrige la pieza antes de entregarla.
 `.trim();
 // Mantener sincronizado con las reglas en app/globals.css para vista previa local.
 const IA_GENERATED_INLINE_STYLES = `
