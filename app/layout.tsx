@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Laboratorio IA – ChatKit Demo",
+  title: "Laboratorio de Futuros | El Salto Web",
   description:
-    "Explora mi automatización con ChatKit de OpenAI y genera contenido con inteligencia artificial.",
+    "Una experiencia interactiva para imaginar futuros humanos con tecnología e inteligencia artificial.",
   openGraph: {
-    title: "Laboratorio IA – ChatKit Demo",
+    title: "Laboratorio de Futuros | El Salto Web",
     description:
-      "Explora mi automatización con ChatKit de OpenAI y genera contenido con inteligencia artificial.",
+      "Gira la ruleta, aporta tu mirada y crea una historia sobre nuestros futuros con inteligencia artificial.",
     url: "https://elsaltoweb.es/laboratorio-ia/",
     siteName: "El Salto Web",
     images: [
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
         url: "https://elsaltoweb.es/wp-content/uploads/2025/10/laboratorio-ia.webp",
         width: 1200,
         height: 630,
-        alt: "Laboratorio IA – ChatKit Demo",
+        alt: "Laboratorio de Futuros de El Salto Web",
       },
     ],
     locale: "es_ES",
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Laboratorio IA – ChatKit Demo",
+    title: "Laboratorio de Futuros | El Salto Web",
     description:
-      "Explora mi automatización con ChatKit de OpenAI y genera contenido con inteligencia artificial.",
+      "Una experiencia interactiva para imaginar futuros humanos con inteligencia artificial.",
     images: [
       "https://elsaltoweb.es/wp-content/uploads/2025/10/laboratorio-ia.webp",
     ],

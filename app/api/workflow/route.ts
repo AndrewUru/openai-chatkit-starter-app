@@ -1,5 +1,14 @@
-// C:\openai-chatkit-starter-app2\app\api\workflow\route.ts
-type WorkflowInput = { input_as_text: string };
+import type { CoverAsset, UnsplashCover } from "@/lib/creative-assets";
+
+export const runtime = "nodejs";
+export const maxDuration = 180;
+
+type WorkflowInput = {
+  input_as_text: string;
+  cover_prompt?: string;
+  action?: "create" | "cover";
+  cover_source?: "generated" | "unsplash";
+};
 export async function POST(req: Request) {
   try {
     const publicKey = process.env.PUBLIC_EXPERIMENT_KEY;
@@ -13,7 +22,10 @@ export async function POST(req: Request) {
     const result = await runWorkflow(body);
     return Response.json({
       success: true,
-      message: "Art\u00edculo publicado con \u00e9xito",
+      message:
+        body.action === "cover"
+          ? "Nueva portada preparada para revisar."
+          : "Tu pieza está lista. Revísala antes de publicarla.",
       ...result,
     });
   } catch (error: unknown) {
@@ -31,42 +43,102 @@ export async function POST(req: Request) {
 }
 
 async function runWorkflow(workflow: WorkflowInput) {
-  const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!openaiApiKey) throw new Error("Missing OPENAI_API_KEY.");
   const topic = workflow.input_as_text?.trim();
   if (!topic) throw new Error("The request body must include input_as_text.");
-  // Generar artículo con estilo
-  const rawArticle = await generateStyledArticle(topic, openaiApiKey);
+  const requestedCoverPrompt = workflow.cover_prompt?.trim() || topic;
+
+  if (workflow.action === "cover") {
+    const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
+    const cover =
+      workflow.cover_source === "unsplash"
+        ? await searchUnsplashCover(requestedCoverPrompt)
+        : await generateAiCover(
+            requestedCoverPrompt,
+            requireOpenAiKey(openaiApiKey)
+          );
+
+    if (!cover || cover.source === "none") {
+      throw new Error(
+        workflow.cover_source === "unsplash"
+          ? "Unsplash no está configurado o no encontró una imagen adecuada."
+          : "No se pudo generar una nueva portada."
+      );
+    }
+
+    return { cover };
+  }
+
+  const openaiApiKey = requireOpenAiKey(process.env.OPENAI_API_KEY?.trim());
+  const editorialPackage = await generateEditorialPackage(
+    topic,
+    requestedCoverPrompt,
+    openaiApiKey
+  );
+  const cover = await generateCoverWithFallback(
+    editorialPackage.coverPrompt,
+    openaiApiKey
+  );
   const article = `${IA_GENERATED_INLINE_STYLES}
 <article class="ia-generated">
-${rawArticle.trim()}
+${editorialPackage.articleHtml.trim()}
 </article>`;
-  // Generar imagen con DALL·E
-  const imageUrl = await generateImage(topic, openaiApiKey);
-  // Publicar en WordPress con la imagen destacada
-  const wordpressUrl = await publishToWordPress(article, imageUrl);
-  return { article, imageUrl, wordpressUrl };
+  return { article, cover, coverPrompt: editorialPackage.coverPrompt };
 }
-// 🧠 Prompt mejorado con HTML moderno y estilo visual
-const STYLED_ARTICLE_PROMPT = `
-Eres un redactor especializado en desarrollo web y marketing digital.
-Redacta un artículo optimizado para SEO centrado en el tema "{{topic}}" usando HTML moderno.
 
-Instrucciones:
-- No incluyas frases como "publica un artículo" o "escribe sobre" en el título ni en el contenido.
-- El título debe ser atractivo, natural y relevante para el tema, sin mencionar la instrucción.
-- Estructura el contenido en formato HTML:
-  - <h1> título principal </h1>
-  - <section> introducción en <p> </section>
-  - <h2> subtítulos temáticos </h2> con secciones detalladas en <p> o <ul><li>
-  - <section> conclusión </section>
-- Usa párrafos claros y legibles (<p>), listas (<ul><li>) y subtítulos bien organizados.
-- No incluyas etiquetas <html>, <head> o <body>.
-- Mantén un tono profesional, inspirador y cercano, orientado a lectores interesados en tecnología, desarrollo web y marketing digital.
+function requireOpenAiKey(apiKey?: string): string {
+  if (!apiKey) throw new Error("Missing OPENAI_API_KEY.");
+  return apiKey;
+}
+type EditorialPackage = {
+  articleHtml: string;
+  coverPrompt: string;
+};
+
+const EDITORIAL_PACKAGE_PROMPT = `
+Crea una pieza editorial cultural en español y su dirección visual a partir del briefing proporcionado.
+
+Principio central:
+- La "chispa aportada por la persona" es el corazón concreto de la historia. No puede aparecer como chiste, ejemplo lateral, mención forzada o simple palabra clave.
+- Interpreta esa chispa con el territorio tecnológico y el enfoque humano indicados. Si expresa un deseo material, una preocupación o un recuerdo, explora lo que revela sobre identidad, deseo, autonomía, cuidado, poder o vida cotidiana.
+- Artículo e imagen deben compartir el mismo sujeto, objeto central, conflicto emocional y mundo narrativo.
+
+Artículo:
+- Escribe entre 700 y 1.000 palabras con mirada humana, curiosa y crítica; evita el tono genérico de marketing y el tecnosolucionismo.
+- Abre con una escena concreta construida alrededor de la aportación humana.
+- Relaciona esa escena de forma natural con tecnología e inteligencia artificial.
+- No inventes que la aportación sucede en un videojuego, metaverso o simulador salvo que el briefing lo diga.
+- Termina con una pregunta abierta para la comunidad.
+- Devuelve HTML semántico: un solo <h1>, <section>, <h2>, <p> y, cuando ayude, <ul><li>.
+- No incluyas <html>, <head>, <body>, <style>, Markdown ni bloques de código.
+
+Dirección visual:
+- Describe una sola escena editorial horizontal, concreta y fotografiable que represente el núcleo del artículo.
+- Incluye explícitamente la persona, el objeto o deseo central, el entorno, el gesto y la tensión emocional.
+- La conexión con el artículo debe entenderse sin depender de un pie de foto.
+- No pidas texto, letras, logotipos, marcas de agua, interfaces flotantes ni robots humanoides.
 `.trim();
 // Mantener sincronizado con las reglas en app/globals.css para vista previa local.
 const IA_GENERATED_INLINE_STYLES = `
 <style>
+.ia-cover {
+  max-width: min(900px, 100%);
+  margin: clamp(7.25rem, 8vw, 8rem) auto 2.5rem;
+}
+.ia-cover img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 1.5rem;
+}
+.ia-cover figcaption {
+  margin-top: 0.65rem;
+  color: #64748b;
+  font: 0.8rem/1.5 Arial, sans-serif;
+}
+.ia-cover a {
+  color: inherit;
+}
 .ia-generated {
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   max-width: min(780px, 100%);
@@ -250,10 +322,11 @@ const IA_GENERATED_INLINE_STYLES = `
 }
 </style>
 `.trim();
-async function generateStyledArticle(
-  topic: string,
+async function generateEditorialPackage(
+  creativeBrief: string,
+  visualSignals: string,
   apiKey: string
-): Promise<string> {
+): Promise<EditorialPackage> {
   const apiBase =
     process.env.OPENAI_API_BASE?.trim()?.replace(/\/+$/, "") ||
     "https://api.openai.com";
@@ -268,119 +341,234 @@ async function generateStyledArticle(
       messages: [
         {
           role: "system",
-          content:
-            "Eres un asistente que genera artículos HTML con estilo moderno y limpio.",
+          content: EDITORIAL_PACKAGE_PROMPT,
         },
         {
           role: "user",
-          content: STYLED_ARTICLE_PROMPT.replace("{{topic}}", topic),
+          content: [
+            "BRIEFING EDITORIAL:",
+            creativeBrief,
+            "",
+            "SEÑALES VISUALES SELECCIONADAS POR LA PERSONA:",
+            visualSignals,
+          ].join("\n"),
         },
       ],
-      temperature: 0.7,
+      temperature: 0.6,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "editorial_package",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              article_html: { type: "string" },
+              cover_prompt: { type: "string" },
+            },
+            required: ["article_html", "cover_prompt"],
+            additionalProperties: false,
+          },
+        },
+      },
     }),
   });
   if (!response.ok) {
     const detail = await response.text();
     throw new Error(`OpenAI article generation failed: ${detail}`);
   }
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || "Artículo no generado.";
+  const data = (await response.json()) as {
+    choices?: Array<{
+      message?: { content?: string | null; refusal?: string | null };
+    }>;
+  };
+  const message = data.choices?.[0]?.message;
+  if (message?.refusal) {
+    throw new Error(`OpenAI rechazó el briefing: ${message.refusal}`);
+  }
+  if (!message?.content) {
+    throw new Error("OpenAI no devolvió la dirección editorial.");
+  }
+
+  let parsed: { article_html?: unknown; cover_prompt?: unknown };
+  try {
+    parsed = JSON.parse(message.content) as typeof parsed;
+  } catch {
+    throw new Error("OpenAI devolvió una dirección editorial no válida.");
+  }
+
+  const articleHtml =
+    typeof parsed.article_html === "string" ? parsed.article_html.trim() : "";
+  const coverPrompt =
+    typeof parsed.cover_prompt === "string" ? parsed.cover_prompt.trim() : "";
+  if (!articleHtml || !/<h1[\s>]/i.test(articleHtml)) {
+    throw new Error("La dirección editorial no incluyó un artículo HTML válido.");
+  }
+  if (coverPrompt.length < 80) {
+    throw new Error("La dirección editorial no incluyó una escena visual suficiente.");
+  }
+
+  return { articleHtml, coverPrompt };
 }
-// 🖼️ Generar imagen con DALL·E
-async function generateImage(topic: string, apiKey: string): Promise<string> {
-  const dallePrompt = `Crea una imagen moderna, minimalista y elegante relacionada con: ${topic}. 
-  Estilo: fondo limpio, colores suaves, iluminación natural, formato horizontal 16:9.`;
-  const response = await fetch("https://api.openai.com/v1/images/generations", {
+// Generar una portada a partir de la misma dirección editorial del artículo.
+async function generateAiCover(
+  editorialDirection: string,
+  apiKey: string
+): Promise<CoverAsset> {
+  const prompt = `
+Crea una portada editorial horizontal que represente fielmente esta escena:
+${editorialDirection}
+
+Dirección de arte:
+- Conserva el sujeto, el objeto central, el entorno y la emoción descritos. No los sustituyas por metáforas tecnológicas genéricas.
+- La escena debe conectar tecnología e inteligencia artificial con la vida cotidiana de forma visible pero natural.
+- Estética de revista cultural independiente: composición audaz, textura táctil, luz natural y un detalle inesperado.
+- Paleta con negro tinta, marfil cálido, azul eléctrico, coral y verde ácido.
+- Reserva espacio visual tranquilo para que la imagen respire.
+- Sin texto, letras, logotipos, marcas de agua, interfaces flotantes ni clichés de robots humanoides.
+`.trim();
+  const apiBase =
+    process.env.OPENAI_API_BASE?.trim()?.replace(/\/+$/, "") ||
+    "https://api.openai.com";
+  const response = await fetch(`${apiBase}/v1/images/generations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-image-1",
-      prompt: dallePrompt,
-      size: "1024x1024",
+      model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-2",
+      prompt,
+      size: "1536x1024",
+      quality: "medium",
+      output_format: "webp",
+      output_compression: 82,
     }),
   });
   if (!response.ok) {
-    const detail = await response.text();
-    console.error("❌ Error generando imagen:", detail);
-    return "";
+    const detail = await response.text().catch(() => "");
+    console.error("OpenAI image generation failed", {
+      status: response.status,
+      requestId: response.headers.get("x-request-id"),
+      detail,
+    });
+    throw new Error("OpenAI no pudo generar la portada.");
   }
-  const data = await response.json();
-  return data.data?.[0]?.url || "";
+  const data = (await response.json()) as {
+    data?: Array<{ b64_json?: string }>;
+  };
+  const imageData = data.data?.[0]?.b64_json;
+  if (!imageData) {
+    throw new Error("OpenAI no devolvió datos para la portada.");
+  }
+
+  return {
+    source: "generated",
+    alt: buildCoverAlt(editorialDirection),
+    mimeType: "image/webp",
+    data: imageData,
+    width: 1536,
+    height: 1024,
+  };
 }
 // 📤 Publicar en WordPress con featured image
-async function publishToWordPress(
-  article: string,
-  imageUrl?: string
-): Promise<string | null> {
-  const baseUrl = process.env.WORDPRESS_BASE_URL?.replace(/\/+$/, "");
-  const username = process.env.WORDPRESS_USERNAME;
-  const appPassword = process.env.WORDPRESS_APP_PASSWORD;
-  if (!baseUrl || !username || !appPassword) {
-    console.warn(
-      "⚠️ WordPress environment variables not set, skipping publish."
-    );
-    return null;
+async function generateCoverWithFallback(
+  topic: string,
+  apiKey: string
+): Promise<CoverAsset> {
+  try {
+    return await generateAiCover(topic, apiKey);
+  } catch (error) {
+    console.warn("La portada generada falló; probando Unsplash.", error);
   }
-  const articleMarkup = article.trim();
-  const titleMatch = articleMarkup.match(/<h1[^>]*>(.*?)<\/h1>/i);
-  const title =
-    titleMatch?.[1]?.replace(/<[^>]*>/g, "").trim() || "Nuevo articulo";
-  const content = articleMarkup;
-  let featuredImageId: number | null = null;
-  // Subir imagen si existe
-  if (imageUrl) {
-    try {
-      const imgResponse = await fetch(imageUrl);
-      const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
-      const uploadResponse = await fetch(`${baseUrl}/wp-json/wp/v2/media`, {
-        method: "POST",
-        headers: {
-          "Content-Disposition": `attachment; filename="${title
-            .replace(/\s+/g, "_")
-            .toLowerCase()}.jpg"`,
-          "Content-Type": "image/jpeg",
-          Authorization:
-            "Basic " +
-            Buffer.from(`${username}:${appPassword}`).toString("base64"),
-        },
-        body: imgBuffer,
-      });
-      if (uploadResponse.ok) {
-        const uploadData = await uploadResponse.json();
-        featuredImageId = uploadData.id;
-        console.log(`🖼️ Imagen subida con ID ${featuredImageId}`);
-      } else {
-        console.warn("⚠️ No se pudo subir la imagen destacada.");
-      }
-    } catch (error) {
-      console.error("❌ Error subiendo imagen destacada:", error);
-    }
-  }
-  // 📰 Crear post con imagen destacada y categoría fija
-  const postResponse = await fetch(`${baseUrl}/wp-json/wp/v2/posts`, {
-    method: "POST",
+
+  const unsplashCover = await searchUnsplashCover(topic);
+  if (unsplashCover) return unsplashCover;
+
+  return {
+    source: "none",
+    alt: buildCoverAlt(topic),
+    reason:
+      "No se pudo generar la portada y Unsplash no está configurado o no devolvió resultados.",
+  };
+}
+
+async function searchUnsplashCover(
+  topic: string
+): Promise<UnsplashCover | null> {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY?.trim();
+  if (!accessKey) return null;
+
+  const searchUrl = new URL("https://api.unsplash.com/search/photos");
+  searchUrl.searchParams.set(
+    "query",
+    `human technology future ${topic.slice(0, 180)}`
+  );
+  searchUrl.searchParams.set("orientation", "landscape");
+  searchUrl.searchParams.set("per_page", "10");
+
+  const response = await fetch(searchUrl, {
     headers: {
-      "Content-Type": "application/json",
-      Authorization:
-        "Basic " + Buffer.from(`${username}:${appPassword}`).toString("base64"),
+      Authorization: `Client-ID ${accessKey}`,
+      "Accept-Version": "v1",
     },
-    body: JSON.stringify({
-      title,
-      content,
-      status: "publish", // o "draft" si prefieres revisarlo antes
-      featured_media: featuredImageId || undefined,
-      categories: [20], // 👈 ID de tu categoría "IA Generada"
-    }),
+    cache: "no-store",
   });
 
-  if (!postResponse.ok) {
-    const text = await postResponse.text();
-    throw new Error(`WordPress API error: ${text}`);
+  if (!response.ok) {
+    console.error("Unsplash search failed", {
+      status: response.status,
+      detail: await response.text().catch(() => ""),
+    });
+    return null;
   }
-  const data = await postResponse.json();
-  console.log(`✅ Artículo publicado en WordPress: ${data.link}`);
-  return data.link;
+
+  const payload = (await response.json()) as {
+    results?: Array<{
+      alt_description?: string | null;
+      description?: string | null;
+      urls: { raw: string };
+      links: { html: string; download_location: string };
+      user: { name: string; links: { html: string } };
+    }>;
+  };
+  const candidates = payload.results?.slice(0, 5) ?? [];
+  if (candidates.length === 0) return null;
+
+  const photo = candidates[Math.floor(Math.random() * candidates.length)];
+  const imageUrl = new URL(photo.urls.raw);
+  imageUrl.searchParams.set("w", "1536");
+  imageUrl.searchParams.set("h", "1024");
+  imageUrl.searchParams.set("fit", "crop");
+  imageUrl.searchParams.set("auto", "format");
+  imageUrl.searchParams.set("q", "85");
+
+  return {
+    source: "unsplash",
+    alt:
+      photo.alt_description?.trim() ||
+      photo.description?.trim() ||
+      buildCoverAlt(topic),
+    url: imageUrl.toString(),
+    width: 1536,
+    height: 1024,
+    downloadLocation: photo.links.download_location,
+    attribution: {
+      photographerName: photo.user.name,
+      photographerUrl: withUnsplashUtm(photo.user.links.html),
+      unsplashUrl: withUnsplashUtm(photo.links.html),
+    },
+  };
+}
+
+function withUnsplashUtm(value: string): string {
+  const url = new URL(value);
+  url.searchParams.set("utm_source", "laboratorio_de_futuros");
+  url.searchParams.set("utm_medium", "referral");
+  return url.toString();
+}
+
+function buildCoverAlt(topic: string): string {
+  const cleanTopic = topic.replace(/\s+/g, " ").trim().slice(0, 180);
+  return `Portada editorial sobre ${cleanTopic}`;
 }
