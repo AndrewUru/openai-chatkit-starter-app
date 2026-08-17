@@ -143,6 +143,7 @@ export function ArticleGenerator() {
   const resultRef = useRef<HTMLElement>(null);
   const articleRef = useRef<HTMLDivElement>(null);
   const workflowAbortRef = useRef<AbortController | null>(null);
+  const coverVariantRef = useRef(0);
 
   const selectedLens =
     HUMAN_LENSES.find((lens) => lens.id === selectedLensId) ?? null;
@@ -257,6 +258,7 @@ export function ArticleGenerator() {
       setError("");
       setArticle("");
       setCover(null);
+      coverVariantRef.current = 0;
       setIsRefreshingCover(false);
       setCoverPrompt(visualBrief);
       setCoverError("");
@@ -312,6 +314,7 @@ export function ArticleGenerator() {
               body: JSON.stringify({
                 action: "cover",
                 cover_source: "auto",
+                cover_variant: 0,
                 input_as_text: generatedCoverPrompt,
                 cover_prompt: generatedCoverPrompt,
               }),
@@ -370,6 +373,13 @@ export function ArticleGenerator() {
   const refreshCover = useCallback(
     async (source: "generated" | "unsplash") => {
       if (!coverPrompt || isRefreshingCover) return;
+      const coverVariant =
+        source === "generated"
+          ? coverVariantRef.current + 1
+          : coverVariantRef.current;
+      if (source === "generated") {
+        coverVariantRef.current = coverVariant;
+      }
       workflowAbortRef.current?.abort();
       const coverController = new AbortController();
       workflowAbortRef.current = coverController;
@@ -386,6 +396,7 @@ export function ArticleGenerator() {
             body: JSON.stringify({
               action: "cover",
               cover_source: source,
+              cover_variant: coverVariant,
               input_as_text: coverPrompt,
               cover_prompt: coverPrompt,
             }),
@@ -873,7 +884,7 @@ export function ArticleGenerator() {
                     disabled={isRefreshingCover}
                     className="cover-action"
                   >
-                    Otra imagen IA <span aria-hidden="true">↻</span>
+                    Otra dirección IA <span aria-hidden="true">↻</span>
                   </button>
                   <button
                     type="button"

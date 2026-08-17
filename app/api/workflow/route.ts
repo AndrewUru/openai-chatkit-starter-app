@@ -8,6 +8,7 @@ type WorkflowInput = {
   cover_prompt?: string;
   action?: "create" | "article" | "cover";
   cover_source?: "auto" | "generated" | "unsplash";
+  cover_variant?: number;
 };
 export async function POST(req: Request) {
   try {
@@ -48,6 +49,7 @@ async function runWorkflow(workflow: WorkflowInput) {
   const topic = workflow.input_as_text?.trim();
   if (!topic) throw new Error("The request body must include input_as_text.");
   const requestedCoverPrompt = workflow.cover_prompt?.trim() || topic;
+  const coverVariant = workflow.cover_variant ?? 0;
 
   if (workflow.action === "cover") {
     const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
@@ -57,11 +59,13 @@ async function runWorkflow(workflow: WorkflowInput) {
         : workflow.cover_source === "auto"
         ? await generateCoverWithFallback(
             requestedCoverPrompt,
-            requireOpenAiKey(openaiApiKey)
+            requireOpenAiKey(openaiApiKey),
+            coverVariant
           )
         : await generateAiCover(
             requestedCoverPrompt,
-            requireOpenAiKey(openaiApiKey)
+            requireOpenAiKey(openaiApiKey),
+            coverVariant
           );
 
     if (
@@ -95,7 +99,8 @@ ${editorialPackage.articleHtml.trim()}
 
   const cover = await generateCoverWithFallback(
     editorialPackage.coverPrompt,
-    openaiApiKey
+    openaiApiKey,
+    coverVariant
   );
   return { article, cover, coverPrompt: editorialPackage.coverPrompt };
 }
@@ -108,6 +113,115 @@ type EditorialPackage = {
   articleHtml: string;
   coverPrompt: string;
 };
+
+type CoverArtDirection = {
+  name: string;
+  medium: string;
+  composition: string;
+  palette: string;
+  people: string;
+  lightAndTexture: string;
+};
+
+const COVER_ART_DIRECTIONS: CoverArtDirection[] = [
+  {
+    name: "Bodegón cenital documental",
+    medium: "fotografía editorial realista de objetos y materiales",
+    composition:
+      "vista totalmente cenital, composición modular asimétrica y abundante espacio negativo",
+    palette: "azul ultramar, amarillo mostaza, gris piedra y blanco papel",
+    people:
+      "sin rostros ni persona ante un ordenador; como máximo, unas manos interactuando con un objeto relevante",
+    lightAndTexture:
+      "luz de estudio suave, sombras cortas, papel, metal y superficies táctiles",
+  },
+  {
+    name: "Collage editorial recortado",
+    medium:
+      "collage analógico de papeles recortados, fotografía fragmentada y formas impresas",
+    composition:
+      "capas diagonales, escala inesperada y un punto focal claro desplazado del centro",
+    palette: "magenta oscuro, azul noche, verde celadón y beige",
+    people:
+      "sin fotografía de una persona trabajando; solo una silueta o fragmento humano si el caso de uso lo necesita",
+    lightAndTexture:
+      "bordes de papel visibles, grano de impresión, tinta irregular y sombras de recorte",
+  },
+  {
+    name: "Maqueta física isométrica",
+    medium:
+      "fotografía de una maqueta construida con cartón, acrílico, cables y piezas modeladas",
+    composition:
+      "perspectiva isométrica a tres cuartos, profundidad marcada y módulos que representan el flujo de la app",
+    palette: "verde bosque, arcilla, lila pálido y aluminio",
+    people:
+      "sin personas reales; se permiten pequeñas figuras de maqueta únicamente para mostrar escala o uso",
+    lightAndTexture:
+      "iluminación lateral de taller, uniones y materiales deliberadamente visibles",
+  },
+  {
+    name: "Escena de uso en contexto",
+    medium: "fotografía documental contemporánea sin apariencia de stock",
+    composition:
+      "plano general a la altura de los ojos, entorno completo y acción situada lejos del centro",
+    palette: "tonos minerales, terracota, azul lavado y luz natural",
+    people:
+      "si aparece alguien, debe ser la persona usuaria utilizando el servicio en su contexto real; nunca un desarrollador de espaldas ante un portátil",
+    lightAndTexture:
+      "luz ambiente imperfecta, materiales cotidianos y color sin gradación cinematográfica",
+  },
+  {
+    name: "Macro técnico",
+    medium:
+      "fotografía macro de alta definición centrada en una interacción, herramienta o evidencia de prueba",
+    composition:
+      "primerísimo plano, recorte audaz, profundidad de campo corta y detalle dominante",
+    palette: "acero, rojo óxido, cian frío y negro",
+    people:
+      "sin caras ni retratos; solo un gesto, una mano o un elemento de accesibilidad cuando sea imprescindible",
+    lightAndTexture:
+      "contraste preciso, reflejos controlados y texturas materiales muy visibles",
+  },
+  {
+    name: "Serigrafía conceptual",
+    medium:
+      "ilustración editorial de serigrafía con masas planas y registro de tinta ligeramente imperfecto",
+    composition:
+      "formas geométricas grandes, silueta reconocible, ritmo gráfico y espacio negativo contundente",
+    palette: "negro, crema, amarillo señal y violeta",
+    people:
+      "sin persona ni portátil; representa la función de la app mediante objetos, recorridos y relaciones concretas",
+    lightAndTexture:
+      "trama de semitono, papel poroso y superposición visible de tintas",
+  },
+  {
+    name: "Archivo de proceso",
+    medium:
+      "composición editorial de documentos, tarjetas, diagramas físicos, sellos y anotaciones no legibles",
+    composition:
+      "vista oblicua de una mesa de archivo, elementos parcialmente superpuestos y recorrido visual de izquierda a derecha",
+    palette: "burdeos, verde oliva, papel envejecido y azul tinta",
+    people:
+      "sin personas; el proceso, las decisiones y la evidencia son los protagonistas",
+    lightAndTexture:
+      "luz lateral dura, marcas de uso, cinta, pliegues y textura de impresión",
+  },
+];
+
+function selectCoverArtDirection(
+  editorialDirection: string,
+  variant: number
+): CoverArtDirection {
+  let hash = 0;
+  for (const character of editorialDirection) {
+    hash = (hash * 31 + character.charCodeAt(0)) | 0;
+  }
+  const baseIndex = Math.abs(hash) % COVER_ART_DIRECTIONS.length;
+  const safeVariant = Number.isFinite(variant) ? Math.max(0, variant) : 0;
+  return COVER_ART_DIRECTIONS[
+    (baseIndex + Math.floor(safeVariant)) % COVER_ART_DIRECTIONS.length
+  ];
+}
 
 const EDITORIAL_PACKAGE_PROMPT = `
 Crea un artículo técnico editorial en español sobre desarrollo web e inteligencia artificial, acompañado de una dirección visual, a partir del briefing proporcionado.
@@ -458,18 +572,20 @@ Después del artículo incluye:
 
 Describe una única imagen editorial horizontal relacionada directamente con el producto analizado.
 
-La escena debe mostrar un entorno real de desarrollo, diseño o uso del producto.
+La escena debe representar el uso, el problema o el resultado específico de la aplicación. No centres la imagen en el acto genérico de programar.
 
-Puede incluir:
+Elige como sujeto central uno de estos tipos, según el caso:
 
-- una persona trabajando;
-- un portátil o monitor;
-- prototipos;
-- componentes físicos relacionados con el caso;
-- una interfaz web visible de forma no legible;
-- elementos del contexto real de uso.
+- un objeto o conjunto de objetos propios de la actividad;
+- el entorno donde se utilizaría la aplicación;
+- materiales de trabajo, entradas y resultados del flujo;
+- una evidencia física de prueba, accesibilidad o coordinación;
+- una persona usuaria en acción únicamente cuando sea esencial para comprender el caso;
+- una representación material de la arquitectura o del proceso.
 
-La imagen debe comunicar visualmente qué tipo de producto se está construyendo.
+Evita utilizar como solución por defecto una persona de espaldas ante un portátil, una oficina doméstica, una pantalla central o un retrato genérico. Una persona desarrollando no explica por sí sola qué aplicación se está construyendo.
+
+La imagen debe comunicar visualmente qué hace la aplicación o qué problema resuelve.
 
 No necesita representar una historia ni una escena emocional.
 
@@ -480,7 +596,7 @@ Prioriza:
 - composición editorial;
 - coherencia con el artículo.
 
-Evita clichés visuales de IA:
+Evita clichés visuales de IA y composiciones repetitivas:
 
 - robots humanoides;
 - cerebros luminosos;
@@ -492,6 +608,8 @@ Evita clichés visuales de IA:
 - texto legible;
 - logotipos;
 - marcas de agua.
+
+El campo cover_prompt debe describir con precisión el sujeto, el entorno, la acción y los objetos significativos. No fijes técnica artística, paleta, iluminación ni encuadre: el generador de portada aplicará una dirección visual variable en una fase posterior.
 
 CRITERIO FINAL
 
@@ -804,19 +922,29 @@ async function generateEditorialPackage(
 // Generar una portada a partir de la misma dirección editorial del artículo.
 async function generateAiCover(
   editorialDirection: string,
-  apiKey: string
+  apiKey: string,
+  variant = 0
 ): Promise<CoverAsset> {
+  const artDirection = selectCoverArtDirection(editorialDirection, variant);
   const prompt = `
-Crea una portada editorial horizontal que represente fielmente esta escena:
+Crea una portada editorial horizontal original para esta aplicación:
 ${editorialDirection}
 
-Dirección de arte:
-- Conserva el sujeto, el objeto central, el entorno y la emoción descritos. No los sustituyas por metáforas tecnológicas genéricas.
-- La escena debe conectar tecnología e inteligencia artificial con la vida cotidiana de forma visible pero natural.
-- Estética de revista cultural independiente: composición audaz, textura táctil, luz natural y un detalle inesperado.
-- Paleta con negro tinta, marfil cálido, azul eléctrico, coral y verde ácido.
-- Reserva espacio visual tranquilo para que la imagen respire.
-- Sin texto, letras, logotipos, marcas de agua, interfaces flotantes ni clichés de robots humanoides.
+VARIACIÓN VISUAL OBLIGATORIA: ${artDirection.name}
+- Medio: ${artDirection.medium}.
+- Composición: ${artDirection.composition}.
+- Paleta exclusiva de esta variante: ${artDirection.palette}.
+- Presencia humana: ${artDirection.people}.
+- Luz y textura: ${artDirection.lightAndTexture}.
+
+Reglas de contenido:
+- Representa la función específica de la aplicación mediante su entorno de uso, objetos, materiales, recorrido o evidencia de resultado.
+- Conserva del concepto editorial únicamente el problema, el objeto central y el contexto relevantes. La dirección visual anterior no prevalece sobre la variación obligatoria.
+- No uses por defecto la escena de una persona de espaldas trabajando ante un portátil o monitor.
+- Una pantalla nunca debe ser el único sujeto ni ocupar el centro como una captura de interfaz genérica.
+- Evita oficinas domésticas decorativas, plantas usadas como relleno y fondos con bloques de los colores de marca de la web.
+- La imagen debe diferenciarse de una fotografía de stock y tener un punto de vista reconocible.
+- Sin texto legible, letras, logotipos, marcas de agua, interfaces flotantes, robots humanoides, cerebros luminosos, hologramas ni código decorativo.
 `.trim();
   const apiBase =
     process.env.OPENAI_API_BASE?.trim()?.replace(/\/+$/, "") ||
@@ -865,10 +993,11 @@ Dirección de arte:
 // 📤 Publicar en WordPress con featured image
 async function generateCoverWithFallback(
   topic: string,
-  apiKey: string
+  apiKey: string,
+  variant = 0
 ): Promise<CoverAsset> {
   try {
-    return await generateAiCover(topic, apiKey);
+    return await generateAiCover(topic, apiKey, variant);
   } catch (error) {
     console.warn("La portada generada falló; probando Unsplash.", error);
   }
