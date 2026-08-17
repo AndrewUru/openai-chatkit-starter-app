@@ -1,221 +1,281 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Guía para crear apps con Codex | Laboratorio Codex",
+export const metadata = {
+  title: "Documentación de ChatKit | AgentKit demo",
   description:
-    "Una guía práctica para convertir una necesidad en encargos claros, cambios verificables y una aplicación construida con Codex.",
+    "Guía para que los editores y creadores aprovechen ChatKit dentro de la demo de AgentKit.",
 };
 
-const principles = [
+const roadmap = [
   {
-    number: "01",
-    title: "Resultado antes que código",
-    description:
-      "Define quién utilizará la app, qué podrá hacer y qué evidencia demostrará que la primera versión funciona.",
-  },
-  {
-    number: "02",
-    title: "Contexto antes que instrucciones",
-    description:
-      "Comparte la estructura del proyecto, sus convenciones, restricciones y comandos de validación antes de pedir cambios.",
-  },
-  {
-    number: "03",
-    title: "Cambios pequeños y comprobables",
-    description:
-      "Divide el trabajo por recorridos completos y pide que cada fase termine con pruebas o una verificación visible.",
-  },
-  {
-    number: "04",
-    title: "La aceptación sigue siendo humana",
-    description:
-      "Revisa decisiones de producto, permisos, seguridad, datos y despliegue antes de aceptar o publicar el resultado.",
-  },
-];
-
-const phases = [
-  {
-    title: "Define la aplicación",
+    title: "1. Preparar tu espacio",
     items: [
-      "Problema y usuario concretos.",
-      "Flujo principal de principio a fin.",
-      "Alcance mínimo útil y exclusiones.",
-      "Criterios de aceptación observables.",
+      "Revisa las variables `PUBLIC_EXPERIMENT_KEY`, `OPENAI_API_KEY` y credenciales de WordPress.",
+      "Configura los permisos de WordPress para permitir publicaciones con HTML enriquecido.",
     ],
   },
   {
-    title: "Prepara el contexto",
+    title: "2. Generar contenido",
     items: [
-      "Repositorio, stack y estado actual.",
-      "Convenciones descritas en AGENTS.md.",
-      "Restricciones de diseño, seguridad y datos.",
-      "Comandos para ejecutar, probar y validar.",
+      "Desde la página principal ingresa el tema del artículo.",
+      "Revisa la previsualización con el diseño IA antes de publicarlo.",
     ],
   },
   {
-    title: "Trabaja con Codex",
+    title: "3. Publicar y compartir",
     items: [
-      "Pide primero explorar y explicar lo relevante.",
-      "Acordad un plan antes de editar muchas piezas.",
-      "Implementa una fase completa cada vez.",
-      "Solicita evidencia y riesgos pendientes al terminar.",
+      "El artículo se publica automáticamente en WordPress con estilos integrados.",
+      "Comparte el enlace y supervisa el rendimiento del post.",
     ],
   },
 ];
 
-const questions = [
+const faq = [
   {
-    question: "¿La aplicación debe incluir inteligencia artificial?",
+    question: "¿Qué modelos usa la demo?",
     answer:
-      "No. Codex puede ayudarte a construir cualquier tipo de software. Solo añade IA al producto si resuelve una necesidad concreta y puedes definir cómo validarla.",
+      "El flujo genera el cuerpo del artículo con `gpt-5-turbo` y utiliza `gpt-image-1` para obtener una imagen destacada inspirada en el tema indicado.",
   },
   {
-    question: "¿Qué hago si todavía no existe un repositorio?",
+    question: "¿Puedo personalizar el estilo del artículo?",
     answer:
-      "Empieza por el usuario, el flujo principal, el entorno objetivo y los criterios de aceptación. Después pide una propuesta de stack y un esqueleto mínimo que puedas ejecutar.",
+      "Sí. Edita las reglas CSS de `.ia-generated` en `app/globals.css` y mantén sincronizada la constante `IA_GENERATED_INLINE_STYLES` en `app/api/workflow/route.ts` para que WordPress reciba los mismos estilos.",
   },
   {
-    question: "¿Cuándo debo dividir el trabajo?",
+    question: "¿Cómo cambio el estado por defecto de la publicación?",
     answer:
-      "Cuando una tarea mezcla varios resultados, afecta muchas capas o no puede comprobarse con una señal clara. Cada encargo debería producir un cambio revisable.",
-  },
-  {
-    question: "¿Qué debería revisar personalmente?",
-    answer:
-      "El comportamiento del producto, el diff, los datos sensibles, los permisos, las pruebas relevantes y cualquier acción externa o difícil de revertir.",
+      "En `publishToWordPress` ajusta el campo `status` (por ejemplo, `draft`) si prefieres revisar los posts antes de publicarlos.",
   },
 ];
 
 export default function DocumentationPage() {
   return (
-    <main className="min-h-screen bg-[#f4f0e6] text-[#11110f]">
-      <header className="border-b border-black bg-[#d7ff52]">
-        <div className="mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:px-14 lg:py-28">
-          <p className="text-xs font-bold uppercase tracking-[0.2em]">
-            Guía práctica · Laboratorio Codex
+    <main className="relative min-h-screen bg-slate-950 text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-emerald-500/10 via-slate-950 to-slate-950" />
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-16 lg:px-12">
+        <header className="rounded-3xl border border-emerald-400/30 bg-slate-900/50 p-10 text-center shadow-[0_0_80px_rgba(16,185,129,0.25)] backdrop-blur">
+          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-200">
+            Guía de Usuario
           </p>
-          <h1 className="mt-8 max-w-5xl font-serif text-6xl leading-[0.9] tracking-[-0.055em] sm:text-8xl">
-            Dale a Codex un resultado que pueda construir y comprobar.
+          <h1 className="text-4xl font-semibold text-emerald-100 md:text-5xl">
+            Documentación para impulsar tu contenido con ChatKit
           </h1>
-          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-black/65">
-            Una buena colaboración no empieza pidiendo código. Empieza
-            definiendo el problema, preparando el contexto y acordando cómo se
-            verificará cada cambio.
+          <p className="mx-auto mt-4 max-w-3xl text-base text-slate-300 md:text-lg">
+            Aprende a configurar la demo, generar artículos de calidad y
+            publicarlos en WordPress con un diseño profesional asistido por IA.
           </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm">
             <Link
               href="/"
-              className="rounded-full bg-[#11110f] px-6 py-3 text-sm font-bold text-[#f4f0e6]"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-400/70 bg-emerald-400/20 px-5 py-2 font-medium text-emerald-100 transition hover:border-emerald-300 hover:text-white"
             >
-              Crear un plan con Codex ←
+              ← Volver al generador
             </Link>
             <a
-              href="https://developers.openai.com/codex"
+              href="https://platform.openai.com/docs/guides/assistant"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border border-black px-6 py-3 text-sm font-bold"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-5 py-2 font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
             >
-              Documentación oficial ↗
+              Recursos oficiales de OpenAI
+              <span aria-hidden="true">↗</span>
             </a>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="mx-auto max-w-[1200px] space-y-24 px-5 py-24 sm:px-8 lg:px-14">
-        <section>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#4468ff]">
-            Cuatro principios
-          </p>
-          <div className="mt-8 grid border-l border-t border-black md:grid-cols-2">
-            {principles.map((principle) => (
-              <article
-                key={principle.number}
-                className="min-h-64 border-b border-r border-black p-7"
-              >
-                <p className="font-mono text-sm">{principle.number}</p>
-                <h2 className="mt-14 font-serif text-4xl tracking-[-0.04em]">
-                  {principle.title}
-                </h2>
-                <p className="mt-4 max-w-md leading-relaxed text-black/60">
-                  {principle.description}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#d7ff52]">
-            Un encargo útil
-          </p>
-          <pre className="mt-7 overflow-x-auto whitespace-pre-wrap font-mono text-sm leading-7 text-white/75">
-            {`Objetivo: [qué debe poder hacer la persona usuaria]
-
-Contexto: [repositorio, stack, estado actual y restricciones]
-
-Alcance: [qué incluye esta fase y qué queda fuera]
-
-Criterios de aceptación:
-- [comportamiento observable 1]
-- [comportamiento observable 2]
-- [estado vacío, error o accesibilidad relevante]
-
-Antes de editar: explora el proyecto, señala dudas y propón un plan.
-
-Al terminar: ejecuta las validaciones relevantes y resume cambios, evidencia y riesgos pendientes.`}
-          </pre>
-        </section>
-
-        <section>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#ff5c35]">
-            Flujo recomendado
-          </p>
-          <div className="mt-8 grid gap-6 lg:grid-cols-3">
-            {phases.map((phase, index) => (
-              <article key={phase.title} className="border-2 border-black p-7">
-                <p className="font-mono text-sm">0{index + 1}</p>
-                <h2 className="mt-8 font-serif text-4xl tracking-[-0.04em]">
-                  {phase.title}
-                </h2>
-                <ul className="mt-6 space-y-3 text-sm leading-relaxed text-black/65">
-                  {phase.items.map((item) => (
-                    <li key={item} className="border-t border-black/20 pt-3">
-                      {item}
-                    </li>
-                  ))}
+        <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+          <article className="space-y-8 rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-lg shadow-emerald-500/10">
+            <h2 className="text-2xl font-semibold text-emerald-100">
+              Visión general
+            </h2>
+            <p className="text-slate-300">
+              Esta demo conecta ChatKit con un flujo automatizado que genera
+              artículos en cuestión de segundos. El backend valida tu clave
+              pública, solicita contenido e imagen a la API de OpenAI y publica
+              el resultado en tu sitio de WordPress con una tarjeta visual
+              optimizada para la lectura.
+            </p>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-sm text-slate-200">
+                <h3 className="mb-3 text-base font-semibold text-emerald-100">
+                  Funciones clave
+                </h3>
+                <ul className="space-y-2">
+                  <li>• Generación de artículos SEO-ready con GPT.</li>
+                  <li>• Imagen destacada desde DALL·E lista para WordPress.</li>
+                  <li>• Estilos visuales consistentes con firma IA.</li>
+                  <li>• Publicación inmediata o modo borrador.</li>
                 </ul>
-              </article>
-            ))}
-          </div>
+              </div>
+              <div className="rounded-2xl border border-slate-700/80 bg-slate-900/70 p-6 text-sm text-slate-300">
+                <h3 className="mb-3 text-base font-semibold text-slate-100">
+                  Requisitos previos
+                </h3>
+                <ul className="space-y-2">
+                  <li>
+                    • Cuenta de OpenAI con acceso a los modelos mencionados.
+                  </li>
+                  <li>
+                    • WordPress con REST API y credenciales de aplicación.
+                  </li>
+                  <li>• Permisos para publicar contenido HTML enriquecido.</li>
+                  <li>• Entorno Node 18+ para ejecutar la demo localmente.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <aside className="space-y-6 rounded-3xl border border-slate-800 bg-slate-900/40 p-8 shadow-lg shadow-slate-900/40">
+            <h2 className="text-2xl font-semibold text-emerald-100">
+              Checklist rápida
+            </h2>
+            <ul className="space-y-4 text-sm text-slate-300">
+              <li className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+                <strong className="block text-emerald-200">
+                  Variables de entorno
+                </strong>
+                <span className="text-slate-400">
+                  Configura `PUBLIC_EXPERIMENT_KEY`, `OPENAI_API_KEY`,
+                  `WORDPRESS_BASE_URL`, `WORDPRESS_USERNAME` y
+                  `WORDPRESS_APP_PASSWORD`.
+                </span>
+              </li>
+              <li className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+                <strong className="block text-emerald-200">
+                  Pruebas locales
+                </strong>
+                <span className="text-slate-400">
+                  Ejecuta la app en local para validar el flujo completo antes
+                  de interactuar con producción.
+                </span>
+              </li>
+              <li className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4">
+                <strong className="block text-emerald-200">Accesos</strong>
+                <span className="text-slate-400">
+                  Verifica que la cuenta de WordPress tenga permisos para subir
+                  medios y publicar posts.
+                </span>
+              </li>
+            </ul>
+          </aside>
         </section>
 
-        <section>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#4468ff]">
+        <section className="grid gap-10 lg:grid-cols-2">
+          <article className="space-y-6 rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-slate-900/40">
+            <h2 className="text-2xl font-semibold text-emerald-100">
+              Flujos paso a paso
+            </h2>
+            <div className="space-y-6">
+              {roadmap.map((phase) => (
+                <div
+                  key={phase.title}
+                  className="rounded-2xl border border-slate-700 bg-slate-900/70 p-6"
+                >
+                  <h3 className="mb-4 text-lg font-semibold text-emerald-100">
+                    {phase.title}
+                  </h3>
+                  <ul className="space-y-3 text-sm text-slate-300">
+                    {phase.items.map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="mt-1 text-emerald-300"
+                        >
+                          ●
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="space-y-6 rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-slate-900/40">
+            <h2 className="text-2xl font-semibold text-emerald-100">
+              Consumo del endpoint
+            </h2>
+            <p className="text-slate-300">
+              El endpoint `/api/workflow` es el núcleo del proceso. Requiere la
+              clave pública para autorizar la solicitud y un cuerpo JSON con el
+              texto base que la IA utilizará como contexto.
+            </p>
+            <pre className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-sm text-emerald-200">
+              {`POST /api/workflow?key=<PUBLIC_EXPERIMENT_KEY>
+Content-Type: application/json
+
+{
+  "input_as_text": "Tema del artículo a generar"
+}`}
+            </pre>
+            <p className="text-sm text-slate-400">
+              La respuesta incluye el HTML estilizado (`article`), el enlace de
+              la imagen (`imageUrl`) y la URL final publicada en WordPress
+              (`wordpressUrl`). Usa estos campos para construir dashboards,
+              enviar recordatorios o auditar publicaciones.
+            </p>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 text-sm text-slate-300">
+              <h3 className="mb-3 text-base font-semibold text-emerald-100">
+                Buenas prácticas
+              </h3>
+              <ul className="space-y-2">
+                <li>
+                  • Asegura que el parámetro `key` no se exponga públicamente.
+                </li>
+                <li>
+                  • Controla la longitud de `input_as_text` para guiar al
+                  modelo.
+                </li>
+                <li>• Valida la respuesta antes de enviarla a WordPress.</li>
+              </ul>
+            </div>
+          </article>
+        </section>
+
+        <section className="space-y-8 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-xl shadow-emerald-500/10">
+          <h2 className="text-2xl font-semibold text-emerald-100">
             Preguntas frecuentes
-          </p>
-          <div className="mt-8 grid gap-x-10 gap-y-12 md:grid-cols-2">
-            {questions.map(({ question, answer }) => (
-              <article key={question} className="border-t-2 border-black pt-5">
-                <h2 className="font-serif text-3xl tracking-[-0.03em]">
+          </h2>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {faq.map(({ question, answer }) => (
+              <article
+                key={question}
+                className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-6 text-sm text-slate-300"
+              >
+                <h3 className="text-base font-semibold text-emerald-100">
                   {question}
-                </h2>
-                <p className="mt-4 leading-relaxed text-black/60">{answer}</p>
+                </h3>
+                <p>{answer}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="border-t-2 border-black py-12 text-center">
-          <h2 className="font-serif text-5xl tracking-[-0.045em]">
-            Empieza por algo pequeño que puedas verificar.
+        <section className="space-y-6 rounded-3xl border border-emerald-500/40 bg-emerald-500/10 p-8 text-center text-sm text-emerald-100 shadow-[0_0_60px_rgba(16,185,129,0.3)]">
+          <h2 className="text-2xl font-semibold text-emerald-50">
+            ¿Listo para experimentar?
           </h2>
-          <Link
-            href="/"
-            className="mt-8 inline-flex border-b-2 border-black pb-1 text-sm font-bold uppercase tracking-[0.14em]"
-          >
-            Diseñar mi app con Codex →
-          </Link>
+          <p className="mx-auto max-w-3xl text-emerald-50/80">
+            Ajusta los prompts, refresca la identidad visual del artículo y
+            comparte tus resultados con el equipo. Esta documentación se
+            mantendrá viva para incorporar nuevos flujos, analíticas y pautas de
+            estilo.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-400/80 bg-emerald-400/20 px-6 py-2 font-medium text-white transition hover:border-white/70"
+            >
+              Volver al generador IA
+            </Link>
+            <a
+              href="mailto:atobio459@gmail.com?subject=Feedback%20ChatKit"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-100/60 bg-emerald-100/10 px-6 py-2 font-medium text-emerald-50 transition hover:border-emerald-100 hover:text-white"
+            >
+              Enviar feedback
+            </a>
+          </div>
         </section>
       </div>
     </main>

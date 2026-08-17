@@ -2,147 +2,148 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Método Codex | Laboratorio Codex",
+  title: "Flujo del Agente | AgentKit demo",
   description:
-    "El recorrido desde una necesidad hasta una aplicación implementada, probada y revisada con Codex.",
+    "Descripción paso a paso del flujo del agente que genera y publica artículos con ChatKit.",
 };
 
 const stages = [
   {
-    number: "01",
-    title: "Define el resultado",
+    title: "1. Validación y seguridad",
     description:
-      "Empieza por la persona usuaria, el problema y el comportamiento que debe poder observar. Una tecnología o una lista de pantallas todavía no son un objetivo.",
-    deliverable: "Problema, usuario y criterio de éxito.",
+      "El endpoint recibe la solicitud desde la interfaz, verifica la clave pública `PUBLIC_EXPERIMENT_KEY` y solo continúa si coincide.",
   },
   {
-    number: "02",
-    title: "Delimita la primera versión",
+    title: "2. Generación del contenido",
     description:
-      "Reduce la idea a un recorrido completo que aporte valor. Declara qué incluye esta fase y qué quedará para después.",
-    deliverable: "Flujo principal, alcance y exclusiones.",
+      "Se invoca a `gpt-5-turbo` con un prompt estructurado para crear el artículo HTML. El resultado se envuelve con la clase `.ia-generated` y estilos inline.",
   },
   {
-    number: "03",
-    title: "Prepara el contexto",
+    title: "3. Diseño y recursos visuales",
     description:
-      "Da a Codex acceso al proyecto relevante y explica sus convenciones, restricciones, comandos y criterios de aceptación. Las dudas deben aparecer antes de editar.",
-    deliverable: "Brief técnico e instrucciones del repositorio.",
+      "El flujo solicita a `gpt-image-1` una imagen destacada siguiendo la estética definida en el prompt, lista para subirse como media en WordPress.",
   },
   {
-    number: "04",
-    title: "Explora y acuerda un plan",
+    title: "4. Publicación automatizada",
     description:
-      "Pide a Codex que localice los puntos de cambio, explique dependencias y proponga fases pequeñas. Revisa el enfoque antes de una modificación amplia.",
-    deliverable: "Plan revisable con riesgos y decisiones.",
+      "Si las credenciales de WordPress están disponibles, se crea el post con título derivado del `<h1>`, contenido estilizado.",
   },
   {
-    number: "05",
-    title: "Implementa y verifica",
+    title: "5. Retroalimentación a la UI",
     description:
-      "Cada fase debe producir comportamiento ejecutable y evidencia: pruebas, comprobación de tipos, lint, recorrido de interfaz o inspección del resultado.",
-    deliverable: "Cambios funcionales y evidencia de validación.",
-  },
-  {
-    number: "06",
-    title: "Revisa y entrega",
-    description:
-      "La persona responsable revisa el comportamiento, el diff y los riesgos pendientes. Solo después decide integrar, desplegar o abrir la siguiente fase.",
-    deliverable: "Decisión humana y siguiente paso concreto.",
+      "La API responde con el HTML final, la URL de la imagen y el enlace publicado para que la interfaz muestre la vista previa y confirme el éxito.",
   },
 ];
 
 export default function FlowPage() {
   return (
-    <main className="min-h-screen bg-[#11110f] text-[#f4f0e6]">
-      <header className="border-b border-white/20">
-        <div className="mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:px-14 lg:py-28">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#d7ff52]">
-            Método Codex
+    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-500/15 blur-3xl" />
+        <div className="absolute bottom-[-15%] right-[-10%] h-[30rem] w-[30rem] rounded-full bg-sky-500/15 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-12 px-6 pb-20 pt-16 sm:pt-20 lg:px-12">
+        <header className="space-y-6 text-center">
+          <p className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-emerald-400/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">
+            Flujo del agente
           </p>
-          <h1 className="mt-8 max-w-5xl font-serif text-6xl leading-[0.9] tracking-[-0.055em] sm:text-8xl">
-            De una necesidad a una app que puedas comprobar.
+          <h1 className="text-4xl font-semibold leading-tight text-emerald-100 sm:text-5xl">
+            Cómo ChatKit produce y publica un artículo
           </h1>
-          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-white/60">
-            Codex puede explorar, proponer, implementar y verificar. El trabajo
-            mejora cuando cada fase tiene contexto suficiente, una salida
-            concreta y una decisión humana al final.
+          <p className="mx-auto max-w-3xl text-base text-slate-300 sm:text-lg">
+            Este recorrido explica las etapas que recorre la demo: desde que el
+            usuario propone un tema hasta que el contenido estilizado queda
+            publicado en WordPress con un look consistente.
           </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/"
-              className="rounded-full bg-[#d7ff52] px-6 py-3 text-sm font-bold text-[#11110f]"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-400/60 bg-emerald-400/20 px-5 py-2 text-sm font-semibold text-emerald-100 transition hover:border-emerald-300 hover:text-white"
             >
-              Probar la experiencia ←
+              Volver al generador
             </Link>
             <Link
               href="/docs"
-              className="rounded-full border border-white/40 px-6 py-3 text-sm font-bold"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-5 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white"
             >
-              Abrir la guía →
+              Ver documentación completa
             </Link>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="mx-auto max-w-[1200px] px-5 py-24 sm:px-8 lg:px-14">
-        <section aria-labelledby="method-title">
-          <h2 id="method-title" className="sr-only">
-            Fases del método
+        <section className="space-y-8">
+          <div className="grid gap-6 rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-emerald-500/10 sm:grid-cols-2">
+            <article className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-sm text-slate-200">
+              <h2 className="mb-3 text-base font-semibold text-emerald-100">
+                Resumen técnico
+              </h2>
+              <ul className="space-y-2">
+                <li>• API principal: `POST /api/workflow`.</li>
+                <li>• Modelos utilizados: `gpt-5-turbo` y `gpt-image-1`.</li>
+                <li>• Salida: HTML con clase `.ia-generated` + imagen.</li>
+                <li>• Destino: publicación directa en WordPress.</li>
+              </ul>
+            </article>
+            <article className="rounded-2xl border border-slate-700/80 bg-slate-900/80 p-6 text-sm text-slate-300">
+              <h2 className="mb-3 text-base font-semibold text-slate-100">
+                Buenas prácticas
+              </h2>
+              <ul className="space-y-2">
+                <li>
+                  • Limita la longitud del tema para obtener textos precisos.
+                </li>
+                <li>
+                  • Ajusta la clase `.ia-generated` para mantener identidad.
+                </li>
+                <li>
+                  • Usa estado `draft` en WordPress si necesitas revisión.
+                </li>
+                <li>• Loggea respuestas de error para facilitar el soporte.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section className="space-y-8">
+          <h2 className="text-2xl font-semibold text-emerald-100">
+            Etapas del pipeline
           </h2>
-          <div className="grid border-l border-t border-white/25 lg:grid-cols-2">
+          <div className="space-y-6">
             {stages.map((stage) => (
               <article
-                key={stage.number}
-                className="border-b border-r border-white/25 p-7 sm:p-9"
+                key={stage.title}
+                className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 text-sm text-slate-300 shadow-lg shadow-slate-900/40"
               >
-                <div className="flex items-start justify-between gap-6">
-                  <p className="font-mono text-sm text-[#d7ff52]">
-                    {stage.number}
-                  </p>
-                  <p className="text-right text-xs uppercase tracking-[0.14em] text-white/35">
-                    Salida verificable
-                  </p>
-                </div>
-                <h3 className="mt-12 font-serif text-4xl tracking-[-0.04em] sm:text-5xl">
+                <h3 className="text-lg font-semibold text-emerald-200">
                   {stage.title}
                 </h3>
-                <p className="mt-5 max-w-xl leading-relaxed text-white/55">
-                  {stage.description}
-                </p>
-                <p className="mt-8 border-l-2 border-[#ff5c35] pl-4 text-sm font-semibold text-white/80">
-                  {stage.deliverable}
-                </p>
+                <p className="mt-2 leading-relaxed">{stage.description}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mt-24 bg-[#4468ff] p-7 sm:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
-            Secuencia resumida
+        <section className="space-y-6 rounded-3xl border border-slate-800 bg-slate-900/60 p-8 text-sm text-slate-300 shadow-xl shadow-emerald-500/10">
+          <h2 className="text-2xl font-semibold text-emerald-100">
+            Diagrama simplificado
+          </h2>
+          <pre className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/70 p-6 text-left font-mono text-xs text-emerald-200 md:text-sm">
+            {`Usuario → /api/workflow?key=PUBLIC_EXPERIMENT_KEY
+  ├─> Validar clave
+  ├─> generateStyledArticle(topic)
+  │     └─> gpt-5-turbo produce HTML
+  ├─> generateImage(topic)
+  │     └─> gpt-image-1 devuelve URL
+  ├─> publishToWordPress(html, imageUrl)
+  │     ├─> Subir imagen destacada
+  │     └─> Crear post con contenido IA
+  └─> Responder a la UI con enlaces y mensaje`}
+          </pre>
+          <p>
+            Puedes extender este flujo añadiendo pasos de moderación, chequeo
+            SEO o analítica de engagement antes de publicar.
           </p>
-          <p className="mt-8 overflow-x-auto whitespace-nowrap font-mono text-sm leading-8 sm:text-base">
-            Necesidad → Alcance → Contexto → Plan → Código → Pruebas → Revisión
-            → Entrega
-          </p>
-        </section>
-
-        <section className="mt-24 grid gap-10 border-t border-white/25 pt-12 lg:grid-cols-[0.8fr_1.2fr]">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#d7ff52]">
-            Una regla útil
-          </p>
-          <div>
-            <h2 className="font-serif text-5xl leading-[0.95] tracking-[-0.045em]">
-              Si no puedes describir cómo comprobarlo, todavía no está listo
-              para delegarlo.
-            </h2>
-            <p className="mt-7 max-w-2xl leading-relaxed text-white/55">
-              La verificación no es el último paso. Define el tamaño de cada
-              encargo, orienta las decisiones de implementación y permite saber
-              cuándo detenerse para revisar.
-            </p>
-          </div>
         </section>
       </div>
     </main>
