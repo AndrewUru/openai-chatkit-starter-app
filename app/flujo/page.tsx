@@ -16,12 +16,12 @@ const stages = [
   {
     title: "2. Generación del contenido",
     description:
-      "Se invoca a `gpt-5-turbo` con un prompt estructurado para crear el artículo HTML. El resultado se envuelve con la clase `.ia-generated` y estilos inline.",
+      "Se invoca al modelo configurado en `OPENAI_TEXT_MODEL` (por defecto, `gpt-5.6-luna`) con un prompt estructurado para crear el artículo HTML. El resultado se envuelve con la clase `.ia-generated` y estilos inline.",
   },
   {
     title: "3. Diseño y recursos visuales",
     description:
-      "El flujo solicita a `gpt-image-1` una imagen destacada siguiendo la estética definida en el prompt, lista para subirse como media en WordPress.",
+      "El flujo solicita al modelo configurado en `OPENAI_IMAGE_MODEL` (por defecto, `gpt-image-2`) una imagen destacada siguiendo la estética definida en el prompt, lista para subirse como media en WordPress.",
   },
   {
     title: "4. Publicación automatizada",
@@ -80,7 +80,7 @@ export default function FlowPage() {
               </h2>
               <ul className="space-y-2">
                 <li>• API principal: `POST /api/workflow`.</li>
-                <li>• Modelos utilizados: `gpt-5-turbo` y `gpt-image-1`.</li>
+                <li>• Modelos utilizados: `gpt-5.6-luna` y `gpt-image-2`.</li>
                 <li>• Salida: HTML con clase `.ia-generated` + imagen.</li>
                 <li>• Destino: publicación directa en WordPress.</li>
               </ul>
@@ -132,9 +132,9 @@ export default function FlowPage() {
             {`Usuario → /api/workflow?key=PUBLIC_EXPERIMENT_KEY
   ├─> Validar clave
   ├─> generateStyledArticle(topic)
-  │     └─> gpt-5-turbo produce HTML
+  │     └─> OPENAI_TEXT_MODEL produce HTML
   ├─> generateImage(topic)
-  │     └─> gpt-image-1 devuelve URL
+  │     └─> OPENAI_IMAGE_MODEL devuelve URL
   ├─> publishToWordPress(html, imageUrl)
   │     ├─> Subir imagen destacada
   │     └─> Crear post con contenido IA

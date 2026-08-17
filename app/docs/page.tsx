@@ -34,7 +34,7 @@ const faq = [
   {
     question: "¿Qué modelos usa la demo?",
     answer:
-      "El flujo genera el cuerpo del artículo con `gpt-5-turbo` y utiliza `gpt-image-1` para obtener una imagen destacada inspirada en el tema indicado.",
+      "El flujo genera el cuerpo del artículo con `OPENAI_TEXT_MODEL` (por defecto, `gpt-5.6-luna`) y utiliza `OPENAI_IMAGE_MODEL` (por defecto, `gpt-image-2`) para obtener una imagen destacada inspirada en el tema indicado.",
   },
   {
     question: "¿Puedo personalizar el estilo del artículo?",
