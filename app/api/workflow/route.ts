@@ -6,8 +6,8 @@ export const maxDuration = 180;
 type WorkflowInput = {
   input_as_text: string;
   cover_prompt?: string;
-  action?: "create" | "cover";
-  cover_source?: "generated" | "unsplash";
+  action?: "create" | "article" | "cover";
+  cover_source?: "auto" | "generated" | "unsplash";
 };
 export async function POST(req: Request) {
   try {
@@ -24,7 +24,9 @@ export async function POST(req: Request) {
       success: true,
       message:
         body.action === "cover"
-          ? "Nueva portada preparada para revisar."
+          ? "Portada preparada para revisar."
+          : body.action === "article"
+          ? "El artículo está listo. La portada se está preparando por separado."
           : "Tu pieza está lista. Revísala antes de publicarla.",
       ...result,
     });
@@ -52,12 +54,20 @@ async function runWorkflow(workflow: WorkflowInput) {
     const cover =
       workflow.cover_source === "unsplash"
         ? await searchUnsplashCover(requestedCoverPrompt)
+        : workflow.cover_source === "auto"
+        ? await generateCoverWithFallback(
+            requestedCoverPrompt,
+            requireOpenAiKey(openaiApiKey)
+          )
         : await generateAiCover(
             requestedCoverPrompt,
             requireOpenAiKey(openaiApiKey)
           );
 
-    if (!cover || cover.source === "none") {
+    if (
+      !cover ||
+      (cover.source === "none" && workflow.cover_source !== "auto")
+    ) {
       throw new Error(
         workflow.cover_source === "unsplash"
           ? "Unsplash no está configurado o no encontró una imagen adecuada."
@@ -74,14 +84,19 @@ async function runWorkflow(workflow: WorkflowInput) {
     requestedCoverPrompt,
     openaiApiKey
   );
-  const cover = await generateCoverWithFallback(
-    editorialPackage.coverPrompt,
-    openaiApiKey
-  );
   const article = `${IA_GENERATED_INLINE_STYLES}
 <article class="ia-generated">
 ${editorialPackage.articleHtml.trim()}
 </article>`;
+
+  if (workflow.action === "article") {
+    return { article, coverPrompt: editorialPackage.coverPrompt };
+  }
+
+  const cover = await generateCoverWithFallback(
+    editorialPackage.coverPrompt,
+    openaiApiKey
+  );
   return { article, cover, coverPrompt: editorialPackage.coverPrompt };
 }
 

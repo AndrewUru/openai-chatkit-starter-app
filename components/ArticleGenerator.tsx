@@ -133,6 +133,7 @@ export function ArticleGenerator() {
   const [cover, setCover] = useState<CoverAsset | null>(null);
   const [coverPrompt, setCoverPrompt] = useState("");
   const [isRefreshingCover, setIsRefreshingCover] = useState(false);
+  const [coverElapsedSeconds, setCoverElapsedSeconds] = useState(0);
   const [coverError, setCoverError] = useState("");
   const [resultMessage, setResultMessage] = useState("");
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
@@ -140,9 +141,23 @@ export function ArticleGenerator() {
   const [publishMessage, setPublishMessage] = useState("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const resultRef = useRef<HTMLElement>(null);
+  const workflowAbortRef = useRef<AbortController | null>(null);
 
   const selectedLens =
     HUMAN_LENSES.find((lens) => lens.id === selectedLensId) ?? null;
+
+  const cancelActiveWorkflow = useCallback(() => {
+    workflowAbortRef.current?.abort();
+    workflowAbortRef.current = null;
+    setIsRefreshingCover(false);
+  }, []);
+
+  useEffect(
+    () => () => {
+      workflowAbortRef.current?.abort();
+    },
+    []
+  );
 
   useEffect(() => {
     if (state === "loading") {
@@ -165,8 +180,24 @@ export function ArticleGenerator() {
     return undefined;
   }, [state]);
 
+  useEffect(() => {
+    if (!isRefreshingCover) {
+      setCoverElapsedSeconds(0);
+      return undefined;
+    }
+
+    const startedAt = Date.now();
+    setCoverElapsedSeconds(0);
+    const interval = window.setInterval(() => {
+      setCoverElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [isRefreshingCover]);
+
   const spinWheel = useCallback(() => {
     if (isSpinning || !selectedLensId) return;
+
+    cancelActiveWorkflow();
 
     const index = Math.floor(Math.random() * TERRITORIES.length);
     const currentPosition = ((wheelRotation % 360) + 360) % 360;
@@ -187,7 +218,7 @@ export function ArticleGenerator() {
       setSelectedTerritory(TERRITORIES[index]);
       setIsSpinning(false);
     }, prefersReducedMotion ? 50 : 1700);
-  }, [isSpinning, selectedLensId, wheelRotation]);
+  }, [cancelActiveWorkflow, isSpinning, selectedLensId, wheelRotation]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -217,10 +248,15 @@ export function ArticleGenerator() {
         humanContribution || "una escena humana cotidiana",
       ].join(" · ");
 
+      workflowAbortRef.current?.abort();
+      const workflowController = new AbortController();
+      workflowAbortRef.current = workflowController;
+
       setState("loading");
       setError("");
       setArticle("");
       setCover(null);
+      setIsRefreshingCover(false);
       setCoverPrompt(visualBrief);
       setCoverError("");
       setResultMessage("");
@@ -234,8 +270,9 @@ export function ArticleGenerator() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: workflowController.signal,
             body: JSON.stringify({
-              action: "create",
+              action: "article",
               input_as_text: creativeBrief,
               cover_prompt: visualBrief,
             }),
@@ -254,19 +291,76 @@ export function ArticleGenerator() {
         }
 
         setArticle(generated);
-        setCover(data.cover ?? null);
-        setCoverPrompt(data.coverPrompt?.trim() || visualBrief);
+        const generatedCoverPrompt = data.coverPrompt?.trim() || visualBrief;
+        setCover(null);
+        setCoverPrompt(generatedCoverPrompt);
         setResultMessage(
-          data.message || "La pieza está lista para que tomes la decisión final."
+          data.message ||
+            "El artículo está listo. La portada se está preparando por separado."
         );
         setState("success");
+
+        setIsRefreshingCover(true);
+        try {
+          const coverResponse = await fetch(
+            `/api/workflow?key=${encodeURIComponent(PUBLIC_KEY)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              signal: workflowController.signal,
+              body: JSON.stringify({
+                action: "cover",
+                cover_source: "auto",
+                input_as_text: generatedCoverPrompt,
+                cover_prompt: generatedCoverPrompt,
+              }),
+            }
+          );
+
+          if (!coverResponse.ok) {
+            const detail = await coverResponse.text().catch(() => "");
+            throw new Error(detail || "No se pudo preparar la portada.");
+          }
+
+          const coverData =
+            (await coverResponse.json()) as CreativeWorkflowResponse;
+          if (!coverData.cover) {
+            throw new Error("La respuesta no incluyó una portada.");
+          }
+          setCover(coverData.cover);
+          setResultMessage(
+            coverData.message ||
+              "La pieza está lista para que tomes la decisión final."
+          );
+        } catch (coverRequestError) {
+          if (
+            coverRequestError instanceof DOMException &&
+            coverRequestError.name === "AbortError"
+          ) {
+            return;
+          }
+          setCoverError(
+            coverRequestError instanceof Error
+              ? coverRequestError.message
+              : "No se pudo preparar la portada."
+          );
+        } finally {
+          if (workflowAbortRef.current === workflowController) {
+            setIsRefreshingCover(false);
+          }
+        }
       } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
         setError(
           err instanceof Error
             ? err.message
             : "Ocurrió un error inesperado durante la creación."
         );
         setState("error");
+      } finally {
+        if (workflowAbortRef.current === workflowController) {
+          workflowAbortRef.current = null;
+        }
       }
     },
     [selectedLens, selectedTerritory, topic]
@@ -275,6 +369,9 @@ export function ArticleGenerator() {
   const refreshCover = useCallback(
     async (source: "generated" | "unsplash") => {
       if (!coverPrompt || isRefreshingCover) return;
+      workflowAbortRef.current?.abort();
+      const coverController = new AbortController();
+      workflowAbortRef.current = coverController;
       setIsRefreshingCover(true);
       setCoverError("");
 
@@ -284,6 +381,7 @@ export function ArticleGenerator() {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: coverController.signal,
             body: JSON.stringify({
               action: "cover",
               cover_source: source,
@@ -310,13 +408,22 @@ export function ArticleGenerator() {
         setPublishedLink(null);
         setPublishMessage("");
       } catch (coverRequestError) {
+        if (
+          coverRequestError instanceof DOMException &&
+          coverRequestError.name === "AbortError"
+        ) {
+          return;
+        }
         setCoverError(
           coverRequestError instanceof Error
             ? coverRequestError.message
             : "No se pudo cambiar la portada."
         );
       } finally {
-        setIsRefreshingCover(false);
+        if (workflowAbortRef.current === coverController) {
+          setIsRefreshingCover(false);
+          workflowAbortRef.current = null;
+        }
       }
     },
     [coverPrompt, isRefreshingCover]
@@ -324,7 +431,7 @@ export function ArticleGenerator() {
 
   const publishPiece = useCallback(
     async (status: "draft" | "publish") => {
-      if (!article || publishState === "publishing") return;
+      if (!article || isRefreshingCover || publishState === "publishing") return;
       setPublishState("publishing");
       setPublishMessage("");
 
@@ -360,7 +467,7 @@ export function ArticleGenerator() {
         );
       }
     },
-    [article, cover, publishState]
+    [article, cover, isRefreshingCover, publishState]
   );
 
   const coverPreviewUrl =
@@ -373,21 +480,23 @@ export function ArticleGenerator() {
   const loadingMessage = (() => {
     if (elapsedSeconds < 15) return "Interpretando el reto";
     if (elapsedSeconds < 45) return "Construyendo el caso de producto";
-    if (elapsedSeconds < 90) return "Generando el artículo y la portada";
-    return "Ultimando la portada";
+    if (elapsedSeconds < 90) return "Redactando el artículo";
+    return "Revisando la estructura editorial";
   })();
 
   const loadingHint =
-    elapsedSeconds < 60
-      ? "Este proceso suele tardar entre 1 y 2 minutos."
-      : elapsedSeconds < 120
-      ? "La imagen suele ser la parte más lenta. Puedes dejar esta pestaña abierta."
+    elapsedSeconds < 90
+      ? "Mostraremos el artículo primero; la portada continuará en segundo plano."
       : "Está tardando un poco más de lo habitual, pero el proceso sigue activo.";
 
   const elapsedLabel = `${String(Math.floor(elapsedSeconds / 60)).padStart(
     2,
     "0"
   )}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
+
+  const coverElapsedLabel = `${String(
+    Math.floor(coverElapsedSeconds / 60)
+  ).padStart(2, "0")}:${String(coverElapsedSeconds % 60).padStart(2, "0")}`;
 
   return (
     <div className="experience-shell min-h-screen text-[#11110f]">
@@ -454,6 +563,7 @@ export function ArticleGenerator() {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => {
+                    cancelActiveWorkflow();
                     setSelectedLensId(lens.id);
                     setSelectedTerritory(null);
                     setState("idle");
@@ -570,7 +680,7 @@ export function ArticleGenerator() {
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
                 placeholder="Por ejemplo: un portfolio que converse con cada visitante sin perder accesibilidad…"
-                disabled={state === "loading"}
+                disabled={state === "loading" || isRefreshingCover}
                 rows={4}
                 className="mt-5 w-full resize-none border-0 border-b-2 border-[#11110f] bg-transparent px-0 py-4 font-serif text-3xl leading-tight outline-none placeholder:text-black/35 focus:border-white disabled:opacity-60 sm:text-4xl"
               />
@@ -584,7 +694,10 @@ export function ArticleGenerator() {
                 <button
                   type="submit"
                   disabled={
-                    state === "loading" || !selectedTerritory || !selectedLens
+                    state === "loading" ||
+                    isRefreshingCover ||
+                    !selectedTerritory ||
+                    !selectedLens
                   }
                   className="create-button"
                 >
@@ -711,8 +824,26 @@ export function ArticleGenerator() {
                     </span>
                   ) : null}
                   {isRefreshingCover ? (
-                    <div className="absolute inset-0 z-10 grid place-items-center bg-black/65 text-sm font-bold uppercase tracking-[0.16em] text-white">
-                      Buscando otra mirada…
+                    <div
+                      role="status"
+                      className="absolute inset-0 z-10 grid place-items-center bg-black/70 px-8 text-center text-white"
+                    >
+                      <div>
+                        <p className="text-sm font-bold uppercase tracking-[0.16em]">
+                          {cover
+                            ? "Buscando otra mirada…"
+                            : "Creando la portada…"}
+                        </p>
+                        <p className="mt-3 font-mono text-sm tabular-nums text-white/70">
+                          {coverElapsedLabel}
+                        </p>
+                        {!cover ? (
+                          <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/65">
+                            Ya puedes revisar el artículo mientras termina la
+                            imagen.
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -766,18 +897,24 @@ export function ArticleGenerator() {
                     <button
                       type="button"
                       onClick={() => publishPiece("draft")}
-                      disabled={publishState === "publishing"}
+                      disabled={
+                        isRefreshingCover || publishState === "publishing"
+                      }
                       className="publish-secondary"
                     >
-                      Guardar borrador
+                      {isRefreshingCover ? "Esperando portada…" : "Guardar borrador"}
                     </button>
                     <button
                       type="button"
                       onClick={() => publishPiece("publish")}
-                      disabled={publishState === "publishing"}
+                      disabled={
+                        isRefreshingCover || publishState === "publishing"
+                      }
                       className="publish-primary"
                     >
-                      {publishState === "publishing"
+                      {isRefreshingCover
+                        ? "Preparando portada…"
+                        : publishState === "publishing"
                         ? "Enviando…"
                         : "Publicar ahora ↗"}
                     </button>
@@ -811,6 +948,7 @@ export function ArticleGenerator() {
               <button
                 type="button"
                 onClick={() => {
+                  cancelActiveWorkflow();
                   setSelectedTerritory(null);
                   setTopic("");
                   setArticle("");
