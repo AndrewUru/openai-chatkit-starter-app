@@ -26,6 +26,7 @@ Crea un `.env.local` con algo parecido:
 
 ```bash
 OPENAI_API_KEY=sk-...
+OPENAI_TEXT_MODEL=gpt-5.6-luna
 OPENAI_IMAGE_MODEL=gpt-image-2
 PUBLIC_EXPERIMENT_KEY=demo2025
 NEXT_PUBLIC_PUBLIC_EXPERIMENT_KEY=demo2025
@@ -42,6 +43,7 @@ NEXT_PUBLIC_CHATKIT_SCRIPT_URL=/api/chatkit-script
 ```
 
 Notas rápidas:
+- `OPENAI_TEXT_MODEL` configura el modelo que genera el artículo; si se omite, se usa `gpt-5.6-luna`.
 - `PUBLIC_EXPERIMENT_KEY` es la llave que valida `/api/workflow`; debe coincidir con `NEXT_PUBLIC_PUBLIC_EXPERIMENT_KEY` que envía el cliente (el UI usa `demo2025` como valor de fallback).
 - `UNSPLASH_ACCESS_KEY` activa la búsqueda manual y el fallback fotográfico. La clave permanece únicamente en el servidor.
 - La creación no publica automáticamente: WordPress solo se invoca al confirmar borrador o publicación desde la vista previa.

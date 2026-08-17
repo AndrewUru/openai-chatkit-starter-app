@@ -839,6 +839,8 @@ async function generateEditorialPackage(
   const apiBase =
     process.env.OPENAI_API_BASE?.trim()?.replace(/\/+$/, "") ||
     "https://api.openai.com";
+  const textModel =
+    process.env.OPENAI_TEXT_MODEL?.trim() || "gpt-5.6-luna";
   const response = await fetch(`${apiBase}/v1/chat/completions`, {
     method: "POST",
     headers: {
@@ -846,7 +848,7 @@ async function generateEditorialPackage(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-5-turbo",
+      model: textModel,
       messages: [
         {
           role: "system",
@@ -863,7 +865,6 @@ async function generateEditorialPackage(
           ].join("\n"),
         },
       ],
-      temperature: 0.6,
       response_format: {
         type: "json_schema",
         json_schema: {
@@ -884,7 +885,9 @@ async function generateEditorialPackage(
   });
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`OpenAI article generation failed: ${detail}`);
+    throw new Error(
+      `OpenAI article generation failed (${textModel}): ${detail}`
+    );
   }
   const data = (await response.json()) as {
     choices?: Array<{
