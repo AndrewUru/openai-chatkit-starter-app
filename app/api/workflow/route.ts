@@ -110,31 +110,31 @@ type EditorialPackage = {
 };
 
 const EDITORIAL_PACKAGE_PROMPT = `
-Crea un artículo técnico editorial en español sobre desarrollo web e inteligencia artificial, acompañado de una dirección visual, a partir del briefing proporcionado.
+Crea un artículo técnico editorial en español que convierta el briefing en un plan concreto para diseñar, construir, probar y entregar una aplicación con Codex. Acompáñalo de una dirección visual coherente.
 
 OBJETIVO
 
-Transforma la aportación humana del briefing en un caso técnico de producto web plausible.
+Transforma la aportación humana del briefing en una propuesta de aplicación plausible y en un flujo de trabajo útil con Codex.
 
 La pieza debe analizar:
 - el problema;
 - el contexto de uso;
-- la solución propuesta;
-- la arquitectura;
-- la interacción;
-- el papel específico de la IA;
-- las decisiones de implementación;
-- las limitaciones;
-- los riesgos.
+- el alcance de la primera versión;
+- la arquitectura y la experiencia de usuario;
+- el contexto que necesita Codex;
+- las fases de implementación;
+- la estrategia de pruebas y verificación;
+- las decisiones que requieren revisión humana;
+- las limitaciones y los riesgos.
 
 No escribas una historia ni una pieza narrativa.
 No construyas personajes ficticios, escenas dramatizadas ni situaciones noveladas.
 
-La aportación humana debe funcionar como requisito, problema o caso de uso real que estructura todo el artículo.
+La aportación humana debe funcionar como requisito, problema o caso de uso real que estructura todo el artículo. No conviertas Codex en el protagonista: el centro es la aplicación que una persona necesita construir.
 
 PRINCIPIO CENTRAL
 
-La "chispa aportada por la persona" es el punto de partida técnico del análisis.
+La "aplicación o necesidad aportada por la persona" es el punto de partida técnico del análisis.
 
 Debes interpretar esa aportación como uno o varios de estos elementos:
 
@@ -143,7 +143,7 @@ Debes interpretar esa aportación como uno o varios de estos elementos:
 - requisito funcional;
 - comportamiento;
 - fricción;
-- oportunidad de automatización;
+- flujo que hoy resulta manual o insuficiente;
 - hipótesis de producto;
 - caso de uso.
 
@@ -154,11 +154,11 @@ No la conviertas en:
 - una anécdota;
 - un recurso narrativo;
 - una keyword añadida artificialmente;
-- una excusa para hablar genéricamente de IA.
+- una excusa para hablar genéricamente de Codex o inteligencia artificial.
 
-CASO DE PRODUCTO
+APLICACIÓN CONCRETA
 
-A partir del briefing, define un producto o experiencia web concreta.
+A partir del briefing, define una aplicación concreta que pueda construirse de forma incremental con Codex.
 
 El artículo debe permitir entender:
 
@@ -169,28 +169,30 @@ El artículo debe permitir entender:
 - qué información introduce el usuario;
 - qué procesa el sistema;
 - qué resultado devuelve;
-- qué parte corresponde a lógica convencional;
-- qué parte corresponde a IA;
+- cuál es el alcance mínimo útil;
+- qué deberá explorar, implementar y verificar Codex;
 - qué decisiones siguen dependiendo de una persona.
 
 Evita expresiones vagas como:
 
-"plataforma inteligente"
-"experiencia impulsada por IA"
+"Codex hará la aplicación"
+"desarrollo totalmente automático"
 "sistema revolucionario"
 "solución personalizada"
 
-si no explicas inmediatamente qué hacen técnicamente.
+si no explicas inmediatamente el trabajo, el contexto y los criterios de aceptación necesarios.
+
+Codex es el agente que ayuda a desarrollar la aplicación. No presupongas que Codex, un modelo o una función generativa forman parte del producto final. Incluye IA dentro de la aplicación únicamente cuando el briefing lo requiera y exista una función de producto justificada.
 
 ESTRUCTURA DEL ARTÍCULO
 
-Organiza el contenido alrededor de una estructura técnica similar a esta:
+Organiza el contenido alrededor de esta estructura:
 
 1. Problema
 
-Explica con precisión qué necesidad plantea el briefing y por qué puede convertirse en un problema de producto web.
+Explica con precisión qué necesidad plantea el briefing, quién la experimenta y qué resultado observable debería producir la aplicación.
 
-2. Propuesta de producto
+2. Aplicación y primera versión
 
 Define qué podría construirse.
 
@@ -199,7 +201,8 @@ Describe:
 - usuarios;
 - funcionalidad principal;
 - flujo de interacción;
-- estados importantes de la interfaz.
+- estados importantes de la interfaz;
+- qué queda deliberadamente fuera de la primera versión.
 
 3. Arquitectura de la solución
 
@@ -221,45 +224,40 @@ No añadas tecnologías únicamente para aparentar profundidad técnica.
 
 Cada decisión debe estar relacionada con una necesidad concreta del producto.
 
-4. Papel de la inteligencia artificial
+4. Plan de trabajo con Codex
 
-Define exactamente para qué se utiliza IA.
+Explica cómo dividir el trabajo en encargos pequeños y verificables para Codex.
 
-Puede incluir, cuando tenga sentido:
+Incluye, cuando sea relevante:
 
-- clasificación;
-- extracción;
-- generación;
-- embeddings;
-- búsqueda semántica;
-- RAG;
-- recomendación;
-- resumen;
-- transformación;
-- visión;
-- análisis de texto;
-- detección de patrones;
-- asistencia contextual.
+- qué debería explorar primero en el repositorio;
+- qué archivos, convenciones y restricciones necesita conocer;
+- qué plan debería proponer antes de editar;
+- en qué orden implementar los cambios;
+- qué comandos, pruebas o recorridos debería ejecutar;
+- qué evidencia debería presentar al terminar.
 
-Explica también qué NO debería delegarse a la IA.
+Propón ejemplos breves de encargos concretos, pero no redactes una conversación ficticia ni una colección de prompts genéricos.
 
-Diferencia entre:
-- reglas deterministas;
-- lógica de aplicación;
-- procesamiento con modelos;
-- decisiones humanas.
+Explica también qué decisiones de producto, seguridad, datos o publicación no deberían delegarse sin revisión.
 
-5. Flujo de datos
+5. Contexto e instrucciones
 
-Cuando sea relevante, explica de forma comprensible:
+Describe la información que permitirá a Codex trabajar con precisión:
 
-entrada del usuario → validación → procesamiento → modelo → resultado → interfaz
+- objetivo y comportamiento esperado;
+- estructura y estado actual del repositorio;
+- restricciones técnicas y de diseño;
+- convenciones del proyecto y contenido relevante de AGENTS.md;
+- criterios de aceptación;
+- comandos de validación;
+- acciones que necesitan confirmación.
 
-Indica qué datos se almacenan y cuáles podrían procesarse temporalmente.
+No inventes archivos ni configuraciones que el briefing no menciona. Si falta información, conviértela en una pregunta o una comprobación inicial.
 
-6. Interfaz y experiencia de usuario
+6. Interfaz y comportamiento
 
-Describe cómo se materializaría la solución en una interfaz web.
+Describe cómo se materializaría la solución para quien la usa.
 
 Puedes tratar aspectos como:
 
@@ -277,30 +275,41 @@ Puedes tratar aspectos como:
 
 La interfaz debe responder al funcionamiento real del sistema.
 
-7. Limitaciones y riesgos
+7. Verificación y revisión
+
+Define cómo comprobar el trabajo antes de aceptarlo:
+
+- pruebas automatizadas relevantes;
+- comprobaciones de tipos y lint;
+- recorridos manuales o en navegador;
+- estados vacíos, de carga y error;
+- accesibilidad;
+- seguridad y privacidad;
+- regresiones posibles;
+- evidencia que Codex debería devolver.
+
+No des por terminada una fase solo porque el código compile.
+
+8. Límites, riesgos y control humano
 
 Analiza al menos una limitación importante.
 
 Por ejemplo:
 
-- errores del modelo;
-- alucinaciones;
 - privacidad;
 - coste;
-- latencia;
 - dependencia de proveedores;
 - seguridad;
-- sesgos;
 - accesibilidad;
 - calidad de datos;
 - mantenimiento;
 - escalabilidad.
 
-No presentes la IA como una solución automática o infalible.
+Incluye riesgos propios del desarrollo asistido: requisitos ambiguos, cambios demasiado amplios, validación insuficiente, exposición de secretos o aceptación de código no revisado.
 
-8. Implementación viable hoy
+9. Primera iteración viable
 
-Aclara qué partes del producto podrían desarrollarse actualmente con tecnologías existentes.
+Propón una primera iteración que pueda encargarse a Codex hoy, con un alcance acotado, una salida concreta y una lista breve de comprobaciones.
 
 Distingue claramente cualquier elemento experimental o especulativo.
 
@@ -313,9 +322,9 @@ No inventes:
 - APIs inexistentes;
 - capacidades técnicas no disponibles.
 
-ENFOQUE TÉCNICO
+ARQUITECTURA Y TECNOLOGÍA
 
-El desarrollo web debe tener peso real en el artículo.
+La ingeniería de software debe tener peso real en el artículo.
 
 Cuando ayude al caso, puedes discutir decisiones como:
 
@@ -342,29 +351,24 @@ Selecciona únicamente las que tengan sentido para el producto descrito.
 
 Evita convertir el artículo en una lista de tecnologías.
 
-IA Y ARQUITECTURA
+CODEX EN EL PROCESO
 
-Si utilizas un modelo generativo, explica:
+Describe a Codex como colaborador de desarrollo que trabaja con el contexto y los permisos disponibles. No le atribuyas acceso, memoria, integraciones, herramientas o autonomía que el briefing no establezca.
 
-- qué contexto recibe;
-- qué información proporciona el usuario;
-- qué información recupera el sistema;
-- qué resultado genera;
-- cómo se valida;
-- qué ocurre cuando falla.
+Un buen flujo debe conectar:
 
-Cuando tenga sentido, explica si sería preferible utilizar:
+objetivo humano → exploración del proyecto → plan revisable → cambios pequeños → pruebas → evidencia → decisión humana
 
-- prompting;
-- structured outputs;
-- function calling;
-- embeddings;
-- RAG;
-- modelos especializados;
-- clasificación convencional;
-- reglas deterministas.
+Cuando ayude al caso, explica cómo aprovechar:
 
-No presupongas que un LLM es siempre la mejor solución.
+- instrucciones persistentes del repositorio;
+- habilidades o integraciones relevantes;
+- revisión de código;
+- terminal y pruebas;
+- verificación visual;
+- tareas repetibles o automatizadas.
+
+Menciona solo capacidades necesarias para el plan y formula cualquier dependencia del entorno como condición, no como hecho garantizado.
 
 ESTILO EDITORIAL
 
@@ -376,7 +380,7 @@ El tono debe ser:
 - claro;
 - crítico;
 - preciso;
-- accesible para desarrolladores web;
+- accesible para personas que quieren construir software con Codex;
 - editorial, no académico.
 
 Evita:
@@ -387,12 +391,12 @@ Evita:
 - metáforas excesivas;
 - introducciones genéricas;
 - lenguaje de marketing;
-- hype sobre inteligencia artificial;
+- hype sobre inteligencia artificial o agentes;
 - tecnosolucionismo;
-- frases como "la IA está revolucionando...";
+- frases como "Codex lo hará todo" o "la IA está revolucionando...";
 - conclusiones grandilocuentes.
 
-El artículo debe parecer escrito por alguien que analiza cómo construir el producto, no por alguien intentando venderlo.
+El artículo debe parecer escrito por alguien que prepara un trabajo real con Codex, no por alguien intentando vender la herramienta.
 
 APERTURA
 
@@ -435,17 +439,17 @@ No añadas explicaciones fuera del HTML.
 
 CIERRE
 
-Termina con una pregunta técnica o de producto dirigida a la comunidad de desarrollo web.
+Termina con una pregunta técnica o de producto dirigida a quienes construyen aplicaciones con Codex.
 
 Debe surgir de alguna decisión o tensión real del caso.
 
 Por ejemplo:
 
-- cuánto automatizar;
-- qué debe seguir bajo control humano;
-- dónde almacenar determinados datos;
-- cuándo utilizar un modelo;
-- cuándo una solución determinista sería mejor.
+- qué debería incluir la primera versión;
+- qué decisión debe seguir bajo control humano;
+- qué evidencia es suficiente para aceptar un cambio;
+- qué contexto falta antes de implementar;
+- dónde dividir el trabajo entre fases.
 
 DIRECCIÓN VISUAL
 
@@ -458,18 +462,19 @@ Después del artículo incluye:
 
 Describe una única imagen editorial horizontal relacionada directamente con el producto analizado.
 
-La escena debe mostrar un entorno real de desarrollo, diseño o uso del producto.
+La escena debe mostrar un entorno real de creación, revisión o prueba de la aplicación con Codex.
 
 Puede incluir:
 
 - una persona trabajando;
 - un portátil o monitor;
 - prototipos;
-- componentes físicos relacionados con el caso;
-- una interfaz web visible de forma no legible;
+- notas de alcance o criterios de aceptación;
+- una interfaz de aplicación visible de forma no legible;
+- elementos de prueba o revisión;
 - elementos del contexto real de uso.
 
-La imagen debe comunicar visualmente qué tipo de producto se está construyendo.
+La imagen debe comunicar visualmente qué aplicación se está construyendo y que existe un proceso de colaboración entre una persona y Codex.
 
 No necesita representar una historia ni una escena emocional.
 
@@ -480,7 +485,7 @@ Prioriza:
 - composición editorial;
 - coherencia con el artículo.
 
-Evita clichés visuales de IA:
+Evita clichés visuales de IA y representaciones literales de marca:
 
 - robots humanoides;
 - cerebros luminosos;
@@ -497,14 +502,15 @@ CRITERIO FINAL
 
 Antes de responder, comprueba internamente:
 
-- ¿El artículo analiza un producto concreto?
+- ¿El artículo define una aplicación concreta?
 - ¿El problema proviene directamente de la aportación humana?
 - ¿Se entiende cómo funcionaría técnicamente?
-- ¿La IA tiene una función específica y justificada?
-- ¿Se distingue entre IA y lógica convencional?
+- ¿Se entiende cómo colaborar con Codex para construirla?
+- ¿Codex aparece como agente de desarrollo y no como funcionalidad obligatoria del producto?
 - ¿La arquitectura es plausible?
-- ¿Se explican limitaciones reales?
-- ¿Podría un desarrollador imaginar cómo empezar a construirlo?
+- ¿Hay criterios de aceptación, pruebas y puntos de revisión humana?
+- ¿Se explican límites y riesgos reales?
+- ¿Podría una persona convertir el artículo en su siguiente encargo a Codex?
 
 Si alguna respuesta es no, corrige la pieza antes de entregarla.
 `.trim();
@@ -812,7 +818,7 @@ ${editorialDirection}
 
 Dirección de arte:
 - Conserva el sujeto, el objeto central, el entorno y la emoción descritos. No los sustituyas por metáforas tecnológicas genéricas.
-- La escena debe conectar tecnología e inteligencia artificial con la vida cotidiana de forma visible pero natural.
+- La escena debe mostrar de forma natural el proceso de idear, construir, probar o revisar una aplicación con Codex.
 - Estética de revista cultural independiente: composición audaz, textura táctil, luz natural y un detalle inesperado.
 - Paleta con negro tinta, marfil cálido, azul eléctrico, coral y verde ácido.
 - Reserva espacio visual tranquilo para que la imagen respire.

@@ -42,45 +42,45 @@ type HumanLens = {
 const TERRITORIES: Territory[] = [
   {
     number: "01",
-    title: "Interfaces inteligentes",
-    signal: "UX + IA generativa",
+    title: "De idea a prototipo",
+    signal: "Alcance + primera versión",
     prompt:
-      "cómo diseñar interfaces web que colaboren con inteligencia artificial sin quitar control, contexto ni autonomía a quien las usa",
+      "convertir una necesidad todavía difusa en una primera aplicación funcional construida con Codex, con alcance pequeño, decisiones explícitas y una demostración verificable",
   },
   {
     number: "02",
-    title: "Agentes en la web",
-    signal: "Agentes + herramientas",
+    title: "Aplicación web",
+    signal: "Interfaz + servidor",
     prompt:
-      "aplicaciones web donde agentes de IA entienden objetivos, utilizan herramientas y explican cada acción antes de ejecutarla",
+      "crear con Codex una aplicación web completa que conecte interfaz, lógica de servidor, datos y estados de error alrededor de un problema real",
   },
   {
     number: "03",
-    title: "Código aumentado",
-    signal: "Desarrollo + copilotos",
+    title: "Aplicación móvil",
+    signal: "Interacción + dispositivo",
     prompt:
-      "cómo cambia el oficio de desarrollar para la web cuando los copilotos de IA participan en arquitectura, código, pruebas y revisión",
+      "diseñar y construir con Codex una aplicación móvil enfocada, accesible y comprobable en un dispositivo o simulador",
   },
   {
     number: "04",
-    title: "Web para todas las personas",
-    signal: "Accesibilidad + IA",
+    title: "Herramienta interna",
+    signal: "Flujo + integración",
     prompt:
-      "cómo usar inteligencia artificial para crear experiencias web más accesibles sin automatizar decisiones que requieren criterio humano",
+      "transformar con Codex un proceso manual o repetitivo de un equipo en una herramienta interna sencilla, segura y mantenible",
   },
   {
     number: "05",
-    title: "Datos con criterio",
-    signal: "APIs + privacidad",
+    title: "Calidad y pruebas",
+    signal: "QA + evidencia",
     prompt:
-      "productos web que personalizan con IA y datos propios manteniendo privacidad, trazabilidad y límites comprensibles",
+      "usar Codex para convertir criterios de aceptación en pruebas, recorridos verificables y evidencias que permitan confiar en una aplicación",
   },
   {
     number: "06",
-    title: "Experiencias generativas",
-    signal: "WebGL + modelos",
+    title: "Evolución del producto",
+    signal: "Código existente + mejora",
     prompt:
-      "nuevas experiencias web que combinan código creativo, WebGL y modelos generativos para responder en tiempo real a cada persona",
+      "entender una base de código existente y trabajar con Codex para añadir una funcionalidad, refactorizar o corregir un problema sin romper el comportamiento actual",
   },
 ];
 
@@ -88,32 +88,32 @@ const TERRITORY_NUMBERS = TERRITORIES.map((territory) => territory.number);
 
 const HUMAN_LENSES: HumanLens[] = [
   {
-    id: "utilidad",
-    label: "Utilidad",
-    description: "Resolver un problema real antes de añadir tecnología.",
+    id: "problema",
+    label: "Problema",
+    description: "Empezar por una necesidad real, no por una funcionalidad.",
     instruction:
-      "desde la utilidad, partiendo de un problema verificable y una persona concreta",
+      "desde el problema, definiendo primero la necesidad, el contexto y el resultado esperado",
   },
   {
-    id: "accesibilidad",
-    label: "Accesibilidad",
-    description: "Diseñar para capacidades, contextos y dispositivos diversos.",
+    id: "usuario",
+    label: "Usuario",
+    description: "Diseñar el flujo desde quien utilizará la aplicación.",
     instruction:
-      "desde la accesibilidad, atendiendo a capacidades, contextos, rendimiento y dispositivos diversos",
+      "desde el usuario, atendiendo a su tarea, capacidades, contexto, dispositivo y fricciones",
   },
   {
-    id: "criterio",
-    label: "Criterio",
-    description: "Cuestionar la automatización antes de darla por buena.",
+    id: "verificacion",
+    label: "Verificación",
+    description: "Definir cómo sabremos que la aplicación funciona.",
     instruction:
-      "desde una mirada crítica que evalúe riesgos, límites y decisiones que no deben automatizarse",
+      "desde la verificación, convirtiendo expectativas en criterios de aceptación, pruebas y evidencia observable",
   },
   {
-    id: "experimentacion",
-    label: "Experimentación",
-    description: "Prototipar, medir y aprender con rapidez.",
+    id: "control",
+    label: "Control",
+    description: "Decidir qué delegar en Codex y qué revisar personalmente.",
     instruction:
-      "desde la experimentación, proponiendo un prototipo pequeño, medible y técnicamente plausible",
+      "desde el control humano, delimitando permisos, decisiones sensibles, revisiones y puntos de confirmación",
   },
 ];
 
@@ -141,6 +141,7 @@ export function ArticleGenerator() {
   const [publishMessage, setPublishMessage] = useState("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const resultRef = useRef<HTMLElement>(null);
+  const articleRef = useRef<HTMLDivElement>(null);
   const workflowAbortRef = useRef<AbortController | null>(null);
 
   const selectedLens =
@@ -232,20 +233,20 @@ export function ArticleGenerator() {
 
       const humanContribution = topic.trim();
       const creativeBrief = [
-        "Ámbito obligatorio: desarrollo web e inteligencia artificial.",
-        `Tema central: ${selectedTerritory.prompt}.`,
-        `Enfoque humano: escribe ${selectedLens.instruction}.`,
+        "Ámbito obligatorio: uso de Codex para diseñar, crear, probar y entregar una aplicación.",
+        `Reto de construcción: ${selectedTerritory.prompt}.`,
+        `Criterio de trabajo: plantea la propuesta ${selectedLens.instruction}.`,
         humanContribution
-          ? `Chispa aportada por la persona: ${humanContribution}.`
-          : "Busca una historia cotidiana y concreta que permita comprender el tema.",
-        "La pieza debe convertir la chispa humana en un reto concreto de producto o desarrollo web, explicar qué papel cumple la IA, evitar el tecnosolucionismo y terminar con una pregunta abierta para la comunidad desarrolladora.",
+          ? `Aplicación o necesidad aportada por la persona: ${humanContribution}.`
+          : "Propón una necesidad cotidiana y concreta que merezca convertirse en una aplicación.",
+        "La pieza debe convertir la aportación humana en un plan concreto para construir una app con Codex: alcance, arquitectura, instrucciones, fases de implementación, pruebas, revisión humana y siguiente paso. Codex es el agente de desarrollo; no presupongas que forma parte del producto final.",
       ].join(" ");
       const visualBrief = [
-        "Desarrollo web e inteligencia artificial",
+        "Creación de aplicaciones con Codex",
         selectedTerritory.title,
         selectedTerritory.signal,
         selectedLens.label,
-        humanContribution || "una escena humana cotidiana",
+        humanContribution || "una persona convirtiendo una necesidad en software",
       ].join(" · ");
 
       workflowAbortRef.current?.abort();
@@ -479,9 +480,9 @@ export function ArticleGenerator() {
 
   const loadingMessage = (() => {
     if (elapsedSeconds < 15) return "Interpretando el reto";
-    if (elapsedSeconds < 45) return "Construyendo el caso de producto";
-    if (elapsedSeconds < 90) return "Redactando el artículo";
-    return "Revisando la estructura editorial";
+    if (elapsedSeconds < 45) return "Definiendo la aplicación";
+    if (elapsedSeconds < 90) return "Preparando el plan con Codex";
+    return "Revisando fases y pruebas";
   })();
 
   const loadingHint =
@@ -508,21 +509,22 @@ export function ArticleGenerator() {
           <div>
             <p className="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.24em]">
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#ff5c35]" />
-              Experimento interactivo · Desarrollo web + IA
+              Laboratorio interactivo · Crear apps con Codex
             </p>
             <h1 className="max-w-5xl font-serif text-[clamp(4.25rem,10vw,9.5rem)] leading-[0.76] tracking-[-0.075em]">
-              La próxima web no se predice.
+              Tu próxima app no aparece sola.
               <span className="mt-3 block pl-[8vw] italic text-[#4468ff]">
-                Se construye.
+                Constrúyela con Codex.
               </span>
             </h1>
           </div>
 
           <div className="border-l-2 border-[#11110f] pl-6 lg:mb-2">
             <p className="text-xl leading-snug">
-              Una experiencia para imaginar productos, interfaces y agentes web
-              con inteligencia artificial, partiendo de algo irremplazable:
-              <strong className="font-semibold"> tu manera de mirar.</strong>
+              Convierte una necesidad real en un plan de producto, código y
+              pruebas que puedas desarrollar con Codex, sin renunciar a algo
+              irremplazable:
+              <strong className="font-semibold"> tu criterio.</strong>
             </p>
             <a
               href="#experiencia"
@@ -536,7 +538,7 @@ export function ArticleGenerator() {
 
         <div className="marquee-band" aria-hidden="true">
           <div>
-            DISEÑAR · PROGRAMAR · PROTOTIPAR · PROBAR · APRENDER · DISEÑAR · PROGRAMAR · PROTOTIPAR · PROBAR · APRENDER ·
+            IDEAR · EXPLORAR · PLANIFICAR · PROGRAMAR · PROBAR · ENTREGAR · IDEAR · EXPLORAR · PLANIFICAR · PROGRAMAR · PROBAR · ENTREGAR ·
           </div>
         </div>
 
@@ -545,11 +547,12 @@ export function ArticleGenerator() {
             <p className="step-label">01 / Tu pulso</p>
             <div>
               <h2 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-[-0.045em] sm:text-7xl">
-                Todo producto digital nace desde una decisión.
+                Antes de pedir código, decide qué significa que funcione.
               </h2>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-black/65">
-                Elige el principio desde el que quieres construir. No define una
-                tecnología: define cómo tomarás decisiones con ella.
+                Elige el criterio que guiará tu colaboración con Codex. Será la
+                referencia para definir alcance, revisar cambios y aceptar el
+                resultado.
               </p>
             </div>
           </header>
@@ -595,17 +598,18 @@ export function ArticleGenerator() {
               <div>
                 <p className="step-label text-[#d7ff52]">02 / El azar</p>
                 <h2 className="mt-8 max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                  Deja que el azar defina el reto.
+                  Deja que el azar defina qué vas a construir.
                 </h2>
                 <p className="mt-7 max-w-lg text-lg leading-relaxed text-white/60">
-                  La ruleta combina tu principio con uno de seis territorios del
-                  desarrollo web con IA. La intersección será el punto de partida.
+                  La ruleta combina tu criterio con uno de seis escenarios de
+                  creación de aplicaciones con Codex. La intersección será el
+                  punto de partida.
                 </p>
               </div>
 
               <div className="mt-12 hidden border-t border-white/25 pt-5 text-sm text-white/45 lg:block">
-                <p>Una máquina propone.</p>
-                <p>Una persona decide qué hacer con ello.</p>
+                <p>Codex explora, implementa y verifica.</p>
+                <p>Una persona define el objetivo y acepta el resultado.</p>
               </div>
             </div>
 
@@ -622,7 +626,7 @@ export function ArticleGenerator() {
                   onClick={spinWheel}
                   disabled={isSpinning || !selectedLensId}
                   className="wheel-trigger"
-                  aria-label="Girar la ruleta de desarrollo web e inteligencia artificial"
+                  aria-label="Girar la ruleta de creación de aplicaciones con Codex"
                 >
                   <span>{isSpinning ? "Girando" : "Girar"}</span>
                   <span aria-hidden="true" className="text-xl">↻</span>
@@ -654,7 +658,7 @@ export function ArticleGenerator() {
                   <p className="border-t border-white/25 pt-5 text-center text-sm text-white/40">
                     {isSpinning
                       ? "Las señales se están alineando…"
-                      : "Aquí aparecerá tu reto de desarrollo web e IA."}
+                      : "Aquí aparecerá tu reto para construir con Codex."}
                   </p>
                 )}
               </div>
@@ -667,19 +671,19 @@ export function ArticleGenerator() {
             <div>
               <p className="step-label">03 / Tu huella</p>
               <h2 className="mt-8 font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                Ahora entra el problema que quieres resolver.
+                Describe la aplicación que quieres poner en marcha.
               </h2>
             </div>
 
             <form onSubmit={handleSubmit} className="self-end">
               <label htmlFor="human-spark" className="block text-sm font-bold uppercase tracking-[0.16em]">
-                Añade un reto, una idea, un usuario o una obsesión
+                Añade una necesidad, un flujo, un usuario o una restricción
               </label>
               <textarea
                 id="human-spark"
                 value={topic}
                 onChange={(event) => setTopic(event.target.value)}
-                placeholder="Por ejemplo: un portfolio que converse con cada visitante sin perder accesibilidad…"
+                placeholder="Por ejemplo: una app para que un equipo pequeño convierta notas de reuniones en tareas revisables…"
                 disabled={state === "loading" || isRefreshingCover}
                 rows={4}
                 className="mt-5 w-full resize-none border-0 border-b-2 border-[#11110f] bg-transparent px-0 py-4 font-serif text-3xl leading-tight outline-none placeholder:text-black/35 focus:border-white disabled:opacity-60 sm:text-4xl"
@@ -689,7 +693,7 @@ export function ArticleGenerator() {
                 <p className="max-w-sm text-sm leading-relaxed text-black/65">
                   {selectedTerritory && selectedLens
                     ? `${selectedLens.label} × ${selectedTerritory.title}. La combinación está lista.`
-                    : "Completa los dos primeros pasos para diseñar tu caso web con IA."}
+                    : "Completa los dos primeros pasos para diseñar tu app con Codex."}
                 </p>
                 <button
                   type="submit"
@@ -701,7 +705,7 @@ export function ArticleGenerator() {
                   }
                   className="create-button"
                 >
-                  {state === "loading" ? "Creando…" : "Crear con IA"}
+                  {state === "loading" ? "Diseñando…" : "Diseñar con Codex"}
                   <span aria-hidden="true">↗</span>
                 </button>
               </div>
@@ -754,7 +758,7 @@ export function ArticleGenerator() {
                 <div>
                   <p className="step-label text-[#4468ff]">04 / La pieza</p>
                   <h2 className="mt-5 font-serif text-5xl tracking-[-0.045em] sm:text-7xl">
-                    Tu caso de producto ya existe.
+                    Tu plan para construir con Codex ya existe.
                   </h2>
                 </div>
                 <div className="max-w-xs text-sm leading-relaxed text-black/60">
@@ -838,10 +842,24 @@ export function ArticleGenerator() {
                           {coverElapsedLabel}
                         </p>
                         {!cover ? (
-                          <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/65">
-                            Ya puedes revisar el artículo mientras termina la
-                            imagen.
-                          </p>
+                          <>
+                            <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/65">
+                              Ya puedes revisar el artículo mientras termina la
+                              imagen.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                articleRef.current?.scrollIntoView({
+                                  behavior: "smooth",
+                                  block: "start",
+                                })
+                              }
+                              className="mt-5 border-b border-white pb-1 text-xs font-bold uppercase tracking-[0.14em]"
+                            >
+                              Ir al artículo ↓
+                            </button>
+                          </>
                         ) : null}
                       </div>
                     </div>
@@ -877,6 +895,7 @@ export function ArticleGenerator() {
               </section>
 
               <div
+                ref={articleRef}
                 className="generated-story"
                 dangerouslySetInnerHTML={{ __html: article }}
               />
@@ -973,8 +992,8 @@ export function ArticleGenerator() {
       </main>
 
       <footer className="flex flex-col justify-between gap-5 border-t border-white/20 bg-[#11110f] px-5 py-8 text-xs uppercase tracking-[0.16em] text-white/50 sm:flex-row sm:px-8 lg:px-14">
-        <span>El Salto Web · Laboratorio Web + IA</span>
-        <span>Diseñado por humanos · Ampliado con IA · 2026</span>
+        <span>El Salto Web · Laboratorio Codex</span>
+        <span>Dirigido por personas · Construido con Codex · 2026</span>
       </footer>
     </div>
   );

@@ -1,18 +1,19 @@
-# Laboratorio IA · ChatKit + WordPress
+# Laboratorio Codex · De una necesidad a una app
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![NextJS](https://img.shields.io/badge/Built_with-NextJS-blue)
 ![OpenAI API](https://img.shields.io/badge/Powered_by-OpenAI_API-orange)
 
-Experimento en Next.js 15 que genera y publica artículos en WordPress usando la API de OpenAI. La UI (en español) está orientada al equipo de El Salto Web y mantiene en el repositorio los endpoints de ChatKit para embebidos opcionales.
+Experimento en Next.js 15 que convierte una necesidad en un plan técnico para diseñar, crear, probar y entregar una aplicación con Codex. El resultado puede revisarse y publicarse en WordPress, y el repositorio mantiene los endpoints de ChatKit para embebidos opcionales.
 
 ## Estado actual
-- La experiencia combina una intención humana, una ruleta de territorios y una aportación personal para construir el briefing creativo.
-- `/api/workflow` crea primero una dirección editorial estructurada y la comparte entre el artículo y la portada WebP de `gpt-image-2`. Si la imagen falla y existe `UNSPLASH_ACCESS_KEY`, busca una fotografía coherente de respaldo con atribución.
+- La experiencia combina un criterio humano, seis escenarios de creación de aplicaciones y una necesidad concreta para preparar el briefing.
+- El resultado define alcance, arquitectura, contexto para Codex, fases de implementación, pruebas y puntos de revisión humana.
+- `/api/workflow` devuelve primero el plan editorial y genera después la portada WebP de `gpt-image-2`. Si la imagen falla y existe `UNSPLASH_ACCESS_KEY`, busca una fotografía coherente de respaldo con atribución.
 - La interfaz permite regenerar la portada, buscar una alternativa en Unsplash y revisar toda la pieza antes de decidir.
 - `/api/publish` solo se ejecuta después de la aprobación humana; permite guardar como borrador o publicar y coloca la portada dentro del contenido y como imagen destacada.
 - Infraestructura ChatKit lista para usar el web component: `/api/create-session` genera el `client_secret`, `/api/chatkit-script` proxya `chatkit.js`, con el componente `components/ChatKitPanel.tsx` y la configuración base en `lib/config.ts`.
-- Páginas `/docs` y `/flujo` explican el uso y el pipeline dentro de la propia app.
+- Las páginas `/docs` y `/flujo` explican cómo preparar encargos verificables y trabajar por fases con Codex.
 
 ## Requisitos rápidos
 - Node.js 18 o superior.
@@ -50,14 +51,15 @@ Notas rápidas:
 
 ## Puesta en marcha
 1) Instala dependencias: `npm install`.
-2) Arranca en local: `npm run dev` y abre `http://localhost:3000`; ingresa un tema y sigue el progreso mientras se genera el HTML y se publica en WordPress (si hay credenciales).
+2) Arranca en local: `npm run dev` y abre `http://localhost:3000`; selecciona un criterio, gira la ruleta y describe la aplicación que quieres construir con Codex.
 3) Build de producción: `npm run build`. Añade tu dominio al allowlist de OpenAI si vas a usar ChatKit en producción.
 
 ## Flujo de generación y publicación
-- La UI envía el briefing editorial y visual a `/api/workflow?key=<PUBLIC_EXPERIMENT_KEY>`.
+- La UI envía primero el briefing con `action: "article"` a `/api/workflow?key=<PUBLIC_EXPERIMENT_KEY>`.
 - `generateEditorialPackage` usa Structured Outputs para devolver el HTML y un `cover_prompt` derivados de la misma escena y aportación humana.
+- La UI muestra el plan y solicita después la portada con `action: "cover"`, sin bloquear la lectura.
 - `generateAiCover` solicita a `gpt-image-2` una portada horizontal WebP con ese `cover_prompt`; `searchUnsplashCover` reutiliza la misma dirección como alternativa opcional.
-- La respuesta incluye `article`, `cover` y `coverPrompt`. Después de la revisión, `/api/publish` crea el post con estado `draft` o `publish`.
+- Después de la revisión, `/api/publish` crea el post con estado `draft` o `publish`.
 
 ## Personalización
 - Ajusta el prompt `EDITORIAL_PACKAGE_PROMPT` y los estilos inline en `app/api/workflow/route.ts` (mantén en sync con `.ia-generated` en `app/globals.css`).

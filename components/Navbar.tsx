@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 
 const NAV_LINKS = [
   { href: "#experiencia", label: "La experiencia" },
-  { href: "/flujo", label: "Cómo funciona" },
+  { href: "/flujo", label: "Método Codex" },
 ];
 
 export function Navbar() {
@@ -23,7 +23,7 @@ export function Navbar() {
           <span className="grid h-8 w-8 place-items-center rounded-full bg-[#11110f] text-xs text-[#d7ff52]">
             ES
           </span>
-          <span>Laboratorio Web + IA</span>
+          <span>Laboratorio Codex</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
@@ -39,7 +39,7 @@ export function Navbar() {
             )
           )}
           <Link href="/docs" className="rounded-full bg-[#11110f] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-[#f4f0e6] transition hover:bg-[#4468ff]">
-            Manifiesto ↗
+            Guía Codex ↗
           </Link>
         </div>
 
@@ -70,7 +70,7 @@ export function Navbar() {
               )
             )}
             <Link href="/docs" onClick={closeMenu} className="py-4 font-serif text-3xl">
-              Manifiesto ↗
+              Guía Codex ↗
             </Link>
           </div>
         </div>
