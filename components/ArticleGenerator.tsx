@@ -138,7 +138,7 @@ export function ArticleGenerator() {
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
   const [publishState, setPublishState] = useState<PublishState>("idle");
   const [publishMessage, setPublishMessage] = useState("");
-  const [progress, setProgress] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const resultRef = useRef<HTMLElement>(null);
 
   const selectedLens =
@@ -146,22 +146,22 @@ export function ArticleGenerator() {
 
   useEffect(() => {
     if (state === "loading") {
-      setProgress(10);
+      const startedAt = Date.now();
+      setElapsedSeconds(0);
       const interval = window.setInterval(() => {
-        setProgress((current) => Math.min(92, current + Math.random() * 8));
-      }, 420);
+        setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+      }, 1000);
       return () => window.clearInterval(interval);
     }
 
     if (state === "success") {
-      setProgress(100);
       const scrollTimer = window.setTimeout(() => {
         resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 180);
       return () => window.clearTimeout(scrollTimer);
     }
 
-    setProgress(0);
+    setElapsedSeconds(0);
     return undefined;
   }, [state]);
 
@@ -371,11 +371,23 @@ export function ArticleGenerator() {
       : null;
 
   const loadingMessage = (() => {
-    if (progress < 28) return "Interpretando el reto";
-    if (progress < 56) return "Conectando usuario, web e IA";
-    if (progress < 78) return "Diseñando la solución";
-    return "Preparando el caso de producto";
+    if (elapsedSeconds < 15) return "Interpretando el reto";
+    if (elapsedSeconds < 45) return "Construyendo el caso de producto";
+    if (elapsedSeconds < 90) return "Generando el artículo y la portada";
+    return "Ultimando la portada";
   })();
+
+  const loadingHint =
+    elapsedSeconds < 60
+      ? "Este proceso suele tardar entre 1 y 2 minutos."
+      : elapsedSeconds < 120
+      ? "La imagen suele ser la parte más lenta. Puedes dejar esta pestaña abierta."
+      : "Está tardando un poco más de lo habitual, pero el proceso sigue activo.";
+
+  const elapsedLabel = `${String(Math.floor(elapsedSeconds / 60)).padStart(
+    2,
+    "0"
+  )}:${String(elapsedSeconds % 60).padStart(2, "0")}`;
 
   return (
     <div className="experience-shell min-h-screen text-[#11110f]">
@@ -582,15 +594,32 @@ export function ArticleGenerator() {
               </div>
 
               {state === "loading" ? (
-                <div className="mt-10" aria-live="polite">
-                  <div className="flex justify-between text-xs font-bold uppercase tracking-[0.16em]">
-                    <span>{loadingMessage}</span>
-                    <span>{Math.round(progress)}%</span>
+                <div className="mt-10" role="status">
+                  <div className="flex items-end justify-between gap-6">
+                    <div>
+                      <p
+                        aria-live="polite"
+                        className="text-xs font-bold uppercase tracking-[0.16em]"
+                      >
+                        {loadingMessage}
+                      </p>
+                      <p className="mt-2 max-w-md text-sm text-black/60">
+                        {loadingHint}
+                      </p>
+                    </div>
+                    <span
+                      aria-label={`${elapsedSeconds} segundos transcurridos`}
+                      className="shrink-0 font-mono text-sm font-bold tabular-nums"
+                    >
+                      {elapsedLabel}
+                    </span>
                   </div>
-                  <div className="mt-3 h-2 overflow-hidden bg-black/20">
+                  <div
+                    aria-hidden="true"
+                    className="mt-4 h-2 overflow-hidden bg-black/20"
+                  >
                     <div
-                      className="h-full bg-[#11110f] transition-all duration-500"
-                      style={{ width: `${progress}%` }}
+                      className="h-full w-full animate-pulse bg-[#11110f] motion-reduce:animate-none"
                     />
                   </div>
                 </div>
