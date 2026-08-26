@@ -142,86 +142,88 @@ type CoverArtDirection = {
 
 const COVER_ART_DIRECTIONS: CoverArtDirection[] = [
   {
-    name: "Bodegón cenital documental",
-    medium: "fotografía editorial realista de objetos y materiales",
-    composition:
-      "vista totalmente cenital, composición modular asimétrica y abundante espacio negativo",
-    palette: "azul ultramar, amarillo mostaza, gris piedra y blanco papel",
-    people:
-      "sin rostros ni persona ante un ordenador; como máximo, unas manos interactuando con un objeto relevante",
-    lightAndTexture:
-      "luz de estudio suave, sombras cortas, papel, metal y superficies táctiles",
-  },
-  {
-    name: "Collage editorial recortado",
+    name: "Tech zine recortado",
     medium:
-      "collage analógico de papeles recortados, fotografía fragmentada y formas impresas",
+      "collage digital de fotografías recortadas, pegatinas, trazos de rotulador y textura de fotocopia",
     composition:
-      "capas diagonales, escala inesperada y un punto focal claro desplazado del centro",
-    palette: "magenta oscuro, azul noche, verde celadón y beige",
+      "sujeto recortado en gran formato, titular inclinado y elementos gráficos que invaden los bordes",
+    palette: "azul eléctrico, lima ácido, negro tinta y blanco roto",
     people:
-      "sin fotografía de una persona trabajando; solo una silueta o fragmento humano si el caso de uso lo necesita",
+      "gestos espontáneos, manos u objetos en acción; nunca una pose corporativa ante un portátil",
     lightAndTexture:
-      "bordes de papel visibles, grano de impresión, tinta irregular y sombras de recorte",
+      "flash directo, grano visible, bordes imperfectos y energía de fanzine digital",
   },
   {
-    name: "Maqueta física isométrica",
+    name: "Thumbnail social maximalista",
     medium:
-      "fotografía de una maqueta construida con cartón, acrílico, cables y piezas modeladas",
+      "fotografía expresiva combinada con formas 2D, emojis abstractos y stickers tecnológicos",
     composition:
-      "perspectiva isométrica a tres cuartos, profundidad marcada y módulos que representan el flujo de la app",
-    palette: "verde bosque, arcilla, lila pálido y aluminio",
+      "primer plano con emoción clara, titular enorme en dos líneas y contraste pensado para verse en tamaño pequeño",
+    palette: "coral brillante, cian, amarillo señal y negro",
     people:
-      "sin personas reales; se permiten pequeñas figuras de maqueta únicamente para mostrar escala o uso",
+      "si aparece una persona, expresión natural y divertida vinculada al tema; sin gesto exagerado de clickbait",
     lightAndTexture:
-      "iluminación lateral de taller, uniones y materiales deliberadamente visibles",
+      "luz frontal nítida, sombras duras de recorte y acabado gráfico muy limpio",
   },
   {
-    name: "Escena de uso en contexto",
-    medium: "fotografía documental contemporánea sin apariencia de stock",
-    composition:
-      "plano general a la altura de los ojos, entorno completo y acción situada lejos del centro",
-    palette: "tonos minerales, terracota, azul lavado y luz natural",
-    people:
-      "si aparece alguien, debe ser la persona usuaria utilizando el servicio en su contexto real; nunca un desarrollador de espaldas ante un portátil",
-    lightAndTexture:
-      "luz ambiente imperfecta, materiales cotidianos y color sin gradación cinematográfica",
-  },
-  {
-    name: "Macro técnico",
+    name: "Juguete 3D retrofuturista",
     medium:
-      "fotografía macro de alta definición centrada en una interacción, herramienta o evidencia de prueba",
+      "render 3D táctil con objetos tecnológicos convertidos en juguetes de plástico y gel translúcido",
     composition:
-      "primerísimo plano, recorte audaz, profundidad de campo corta y detalle dominante",
-    palette: "acero, rojo óxido, cian frío y negro",
+      "objeto protagonista grande, perspectiva dinámica y titular integrado como pieza física de la escena",
+    palette: "violeta intenso, naranja mandarina, azul hielo y plata",
     people:
-      "sin caras ni retratos; solo un gesto, una mano o un elemento de accesibilidad cuando sea imprescindible",
+      "sin personas reales; se permiten avatares o manos 3D simples cuando ayuden a explicar la acción",
     lightAndTexture:
-      "contraste preciso, reflejos controlados y texturas materiales muy visibles",
+      "brillos de plástico, sombras suaves, reflejos cromados y acabado juguetón",
   },
   {
-    name: "Serigrafía conceptual",
+    name: "Interfaz punk",
     medium:
-      "ilustración editorial de serigrafía con masas planas y registro de tinta ligeramente imperfecto",
+      "composición gráfica inspirada en interfaces tempranas, ventanas pixeladas y tipografía de póster",
     composition:
-      "formas geométricas grandes, silueta reconocible, ritmo gráfico y espacio negativo contundente",
-    palette: "negro, crema, amarillo señal y violeta",
+      "capas de paneles rotos, cursores y barras abstractas alrededor de un titular frontal muy legible",
+    palette: "negro, verde terminal, rosa neón y crema",
     people:
-      "sin persona ni portátil; representa la función de la app mediante objetos, recorridos y relaciones concretas",
+      "sin retrato corporativo; solo siluetas, manos o fragmentos fotográficos si aportan tensión humana",
     lightAndTexture:
-      "trama de semitono, papel poroso y superposición visible de tintas",
+      "píxel visible, ruido digital, bordes duros y pequeños fallos de registro",
   },
   {
-    name: "Archivo de proceso",
+    name: "Macro tech con humor",
     medium:
-      "composición editorial de documentos, tarjetas, diagramas físicos, sellos y anotaciones no legibles",
+      "fotografía macro de un objeto cotidiano alterado con una intervención tecnológica inesperada",
     composition:
-      "vista oblicua de una mesa de archivo, elementos parcialmente superpuestos y recorrido visual de izquierda a derecha",
-    palette: "burdeos, verde oliva, papel envejecido y azul tinta",
+      "recorte extremo, detalle protagonista y titular compacto ocupando el espacio negativo",
+    palette: "acero, azul eléctrico, rojo tomate y amarillo cálido",
     people:
-      "sin personas; el proceso, las decisiones y la evidencia son los protagonistas",
+      "sin retratos; una mano o un gesto puede introducir escala y una nota de humor",
     lightAndTexture:
-      "luz lateral dura, marcas de uso, cinta, pliegues y textura de impresión",
+      "flash de estudio, reflejos intensos, textura hiperreal y contraste alto",
+  },
+  {
+    name: "Póster rave digital",
+    medium:
+      "póster digital cinético con tipografía protagonista, distorsión óptica y formas vectoriales",
+    composition:
+      "titular gigante como centro, diagonales rápidas y un símbolo visual específico del tema",
+    palette: "negro profundo, blanco, lima fluorescente y azul ultramar",
+    people:
+      "sin personas; el ritmo tipográfico y el símbolo temático llevan toda la energía",
+    lightAndTexture:
+      "alto contraste, desenfoque direccional, tramado y brillo de pantalla",
+  },
+  {
+    name: "Scrapbook de internet",
+    medium:
+      "mezcla de capturas abstractas, notas adhesivas, iconos dibujados y fotografía casual",
+    composition:
+      "capas superpuestas como un escritorio caótico, con titular manuscrito-digital muy claro y un foco visual dominante",
+    palette: "crema, azul navegador, rosa chicle y verde menta",
+    people:
+      "fragmentos espontáneos de manos o expresiones solo si conectan directamente con la historia",
+    lightAndTexture:
+      "textura de escáner, cinta adhesiva, garabatos y pequeñas imperfecciones de compresión",
   },
 ];
 
@@ -544,9 +546,15 @@ async function generateAiCover(
   variant = 0
 ): Promise<CoverAsset> {
   const artDirection = selectCoverArtDirection(editorialDirection, variant);
+  const coverText = extractCoverText(editorialDirection);
   const prompt = `
-Crea una portada editorial horizontal original para esta publicación:
+Crea una imagen horizontal original que funcione como thumbnail de YouTube, portada de una publicación y pieza para redes sociales:
 ${editorialDirection}
+
+TEXTO OBLIGATORIO EN LA IMAGEN: "${coverText}"
+- Escríbelo exactamente una vez, con letras grandes, nítidas y perfectamente legibles.
+- Debe entenderse incluso al reducir la imagen al tamaño de una miniatura móvil.
+- Reserva una zona segura alrededor del texto para permitir recortes a 16:9, 4:5 y 1:1.
 
 VARIACIÓN VISUAL OBLIGATORIA: ${artDirection.name}
 - Medio: ${artDirection.medium}.
@@ -558,11 +566,11 @@ VARIACIÓN VISUAL OBLIGATORIA: ${artDirection.name}
 Reglas de contenido:
 - Representa el tema específico de la publicación mediante su entorno, objetos, materiales, acción o evidencia de resultado.
 - Conserva del concepto editorial únicamente el asunto, el objeto central y el contexto relevantes. La dirección visual anterior no prevalece sobre la variación obligatoria.
+- El resultado debe sentirse desenfadado, contemporáneo, techy y compartible; evita la estética corporativa o de banco de imágenes.
+- Construye una jerarquía inmediata: titular, sujeto visual y uno o dos acentos gráficos. No llenes cada rincón.
 - No uses por defecto la escena de una persona de espaldas trabajando ante un portátil o monitor.
 - Una pantalla nunca debe ser el único sujeto ni ocupar el centro como una captura de interfaz genérica.
-- Evita oficinas domésticas decorativas, plantas usadas como relleno y fondos con bloques de los colores de marca de la web.
-- La imagen debe diferenciarse de una fotografía de stock y tener un punto de vista reconocible.
-- Sin texto legible, letras, logotipos, marcas de agua, interfaces flotantes, robots humanoides, cerebros luminosos, hologramas ni código decorativo.
+- Evita oficinas domésticas decorativas, plantas usadas como relleno, logotipos, marcas de agua, robots humanoides, cerebros luminosos y hologramas genéricos.
 `.trim();
   const apiBase =
     process.env.OPENAI_API_BASE?.trim()?.replace(/\/+$/, "") ||
@@ -607,6 +615,23 @@ Reglas de contenido:
     width: 1536,
     height: 1024,
   };
+}
+
+function extractCoverText(editorialDirection: string): string {
+  const match = editorialDirection.match(
+    /TEXTO EN PORTADA:\s*["“”]?([^\n"“”]+)["“”]?/i
+  );
+  const candidate = match?.[1]?.replace(/\s+/g, " ").trim();
+  if (candidate) return candidate.slice(0, 72);
+
+  return editorialDirection
+    .replace(/TEXTO EN PORTADA:/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .slice(0, 6)
+    .join(" ")
+    .slice(0, 72);
 }
 // 📤 Publicar en WordPress con featured image
 async function generateCoverWithFallback(

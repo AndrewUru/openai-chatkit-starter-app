@@ -17,6 +17,10 @@ import type {
   EditorialStreamEvent,
   EditorialStreamPackage,
 } from "@/lib/editorial-stream";
+import {
+  IDEA_TERRITORIES,
+  type DiscoveredIdea,
+} from "@/lib/idea-discovery";
 import { Navbar } from "./Navbar";
 
 const FutureWheelWebGL = dynamic(
@@ -34,65 +38,13 @@ type PublishResponse = {
   message?: string;
 };
 
-type SurpriseIdea = {
-  number: string;
-  title: string;
-  signal: string;
-  prompt: string;
-};
-
 type EditorialOption = {
   id: string;
   label: string;
   instruction: string;
 };
 
-const SURPRISE_IDEAS: SurpriseIdea[] = [
-  {
-    number: "01",
-    title: "Tutorial",
-    signal: "Explica un proceso útil",
-    prompt:
-      "Cómo convertir una tarea repetitiva de WordPress en un flujo sencillo con inteligencia artificial",
-  },
-  {
-    number: "02",
-    title: "Opinión",
-    signal: "Defiende una mirada propia",
-    prompt:
-      "Qué perdemos cuando automatizamos demasiado pronto nuestro trabajo creativo",
-  },
-  {
-    number: "03",
-    title: "Tendencia",
-    signal: "Interpreta un cambio",
-    prompt:
-      "Por qué las herramientas de IA están pasando de responder preguntas a completar flujos de trabajo",
-  },
-  {
-    number: "04",
-    title: "Caso real",
-    signal: "Cuenta una experiencia",
-    prompt:
-      "Lo que aprendí al conectar un generador de contenido con una publicación real en WordPress",
-  },
-  {
-    number: "05",
-    title: "Aprendizaje",
-    signal: "Comparte una lección",
-    prompt:
-      "La importancia de mantener una decisión humana al final de cualquier automatización editorial",
-  },
-  {
-    number: "06",
-    title: "Experimento",
-    signal: "Plantea una prueba",
-    prompt:
-      "Qué ocurre si partimos de una sola frase para crear y publicar un artículo completo",
-  },
-];
-
-const SURPRISE_NUMBERS = SURPRISE_IDEAS.map((idea) => idea.number);
+const SURPRISE_NUMBERS = IDEA_TERRITORIES.map((territory) => territory.number);
 
 const CONTENT_TYPES: EditorialOption[] = [
   {
@@ -191,9 +143,10 @@ export function ArticleGenerator() {
     useState<string | null>(null);
   const [selectedFocusId, setSelectedFocusId] = useState<string | null>(null);
   const [showDirection, setShowDirection] = useState(false);
-  const [showSurprise, setShowSurprise] = useState(false);
   const [selectedSurprise, setSelectedSurprise] =
-    useState<SurpriseIdea | null>(null);
+    useState<DiscoveredIdea | null>(null);
+  const [ideaError, setIdeaError] = useState("");
+  const [isDiscoveringIdea, setIsDiscoveringIdea] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [state, setState] = useState<WorkflowState>("idle");
@@ -215,6 +168,7 @@ export function ArticleGenerator() {
   const generationRef = useRef<HTMLElement>(null);
   const articleRef = useRef<HTMLDivElement>(null);
   const workflowAbortRef = useRef<AbortController | null>(null);
+  const ideaAbortRef = useRef<AbortController | null>(null);
   const coverVariantRef = useRef(0);
 
   const selectedContentType =
@@ -231,6 +185,7 @@ export function ArticleGenerator() {
   useEffect(
     () => () => {
       workflowAbortRef.current?.abort();
+      ideaAbortRef.current?.abort();
     },
     []
   );
@@ -279,18 +234,24 @@ export function ArticleGenerator() {
     return () => window.clearInterval(interval);
   }, [isRefreshingCover]);
 
-  const spinWheel = useCallback(() => {
-    if (isSpinning) return;
+  const spinWheel = useCallback(async () => {
+    if (isSpinning || isDiscoveringIdea) return;
 
     cancelActiveWorkflow();
+    ideaAbortRef.current?.abort();
 
-    const index = Math.floor(Math.random() * SURPRISE_IDEAS.length);
+    const ideaController = new AbortController();
+    ideaAbortRef.current = ideaController;
+    const index = Math.floor(Math.random() * IDEA_TERRITORIES.length);
+    const territory = IDEA_TERRITORIES[index];
     const currentPosition = ((wheelRotation % 360) + 360) % 360;
     const targetPosition = (330 - index * 60 + 360) % 360;
     const landingDistance = (targetPosition - currentPosition + 360) % 360;
 
     setIsSpinning(true);
+    setIsDiscoveringIdea(true);
     setSelectedSurprise(null);
+    setIdeaError("");
     setState("idle");
     setError("");
     setWheelRotation((current) => current + 4 * 360 + landingDistance);
@@ -299,13 +260,49 @@ export function ArticleGenerator() {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
+    const animationDuration = prefersReducedMotion ? 50 : 1700;
     window.setTimeout(() => {
-      const surprise = SURPRISE_IDEAS[index];
-      setSelectedSurprise(surprise);
-      setTopic(surprise.prompt);
       setIsSpinning(false);
-    }, prefersReducedMotion ? 50 : 1700);
-  }, [cancelActiveWorkflow, isSpinning, wheelRotation]);
+    }, animationDuration);
+
+    try {
+      const [response] = await Promise.all([
+        fetch(`/api/idea?key=${encodeURIComponent(PUBLIC_KEY)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: ideaController.signal,
+          body: JSON.stringify({ territory: territory.id }),
+        }),
+        new Promise((resolve) => window.setTimeout(resolve, animationDuration)),
+      ]);
+
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "");
+        throw new Error(detail || "No se pudo descubrir una idea nueva.");
+      }
+
+      const idea = (await response.json()) as DiscoveredIdea;
+      setSelectedSurprise(idea);
+      setTopic(idea.prompt);
+    } catch (ideaRequestError) {
+      if (
+        ideaRequestError instanceof DOMException &&
+        ideaRequestError.name === "AbortError"
+      ) {
+        return;
+      }
+      setIdeaError(
+        ideaRequestError instanceof Error
+          ? ideaRequestError.message
+          : "No se pudo descubrir una idea nueva. Prueba otro giro."
+      );
+    } finally {
+      if (ideaAbortRef.current === ideaController) {
+        ideaAbortRef.current = null;
+        setIsDiscoveringIdea(false);
+      }
+    }
+  }, [cancelActiveWorkflow, isDiscoveringIdea, isSpinning, wheelRotation]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -320,6 +317,12 @@ export function ArticleGenerator() {
 
       const creativeBrief = [
         `Idea aportada por la persona: ${humanContribution}.`,
+        selectedSurprise?.sources.length &&
+        humanContribution === selectedSurprise.prompt.trim()
+          ? `Fuentes iniciales descubiertas por la ruleta: ${selectedSurprise.sources
+              .map((source) => source.url)
+              .join(", ")}.`
+          : "Investiga en la web fuentes fiables y recientes antes de redactar cuando el tema incluya afirmaciones verificables.",
         selectedContentType
           ? `Tipo de contenido solicitado: ${selectedContentType.instruction}.`
           : "Elige el tipo de contenido que mejor sirva a la idea.",
@@ -328,11 +331,13 @@ export function ArticleGenerator() {
           : "Elige el enfoque y el tono que mejor sirvan a la idea y a una lectura web.",
         "Convierte la idea en una publicación completa, autónoma y lista para revisar antes de enviarla a WordPress.",
         "Respeta la información proporcionada. No inventes experiencias personales, citas, cifras, resultados ni fuentes.",
+        "Incluye enlaces a las fuentes consultadas cuando aporten hechos, datos o contexto reciente.",
       ].join(" ");
       const visualBrief = [
         `Publicación editorial sobre: ${humanContribution}`,
         selectedContentType?.label || "Formato decidido por la IA",
         selectedFocus?.label || "Enfoque decidido por la IA",
+        "Portada tipo thumbnail para YouTube y redes sociales, con titular breve integrado y estética techy desenfadada",
       ].join(" · ");
 
       workflowAbortRef.current?.abort();
@@ -513,7 +518,7 @@ export function ArticleGenerator() {
         }
       }
     },
-    [selectedContentType, selectedFocus, topic]
+    [selectedContentType, selectedFocus, selectedSurprise, topic]
   );
 
   const refreshCover = useCallback(
@@ -642,7 +647,7 @@ export function ArticleGenerator() {
     : Math.min(88, 10 + Math.round(liveWordCount / 10));
 
   const loadingMessage = (() => {
-    if (!liveArticleHtml) return "Entendiendo tu idea";
+    if (!liveArticleHtml) return "Investigando fuentes en la web";
     if (liveWordCount < 120) return "Encontrando el ángulo editorial";
     if (!liveCoverDirection) return "Escribiendo en directo";
     return "Definiendo la dirección visual";
@@ -651,7 +656,7 @@ export function ArticleGenerator() {
   const loadingHint =
     liveArticleHtml
       ? "Ya puedes leer la publicación mientras la IA continúa escribiendo."
-      : "Las primeras palabras aparecerán aquí en cuanto la IA encuentre la dirección.";
+      : "Las primeras palabras aparecerán cuando la IA haya contrastado el ángulo editorial.";
 
   const elapsedLabel = `${String(Math.floor(elapsedSeconds / 60)).padStart(
     2,
@@ -684,14 +689,14 @@ export function ArticleGenerator() {
             </h1>
             <div className="border-l-2 border-[#11110f] pl-6 lg:mb-2">
               <p className="text-xl leading-snug">
-                Cuéntanos lo que quieres contar. La IA le dará forma y tú
-                decidirás si se guarda o se publica.
+                Gira la ruleta o trae tu propia idea. La IA investiga, escribe y
+                diseña la portada; tú decides si se publica.
               </p>
               <a
-                href="#experiencia"
+                href="#ruleta"
                 className="mt-8 inline-flex items-center gap-3 border-b-2 border-[#11110f] pb-1 text-sm font-bold uppercase tracking-[0.16em] transition hover:text-[#4468ff]"
               >
-                Crear una publicación
+                Girar la ruleta
                 <span aria-hidden="true">↓</span>
               </a>
             </div>
@@ -705,6 +710,120 @@ export function ArticleGenerator() {
         </div>
 
         <section
+          id="ruleta"
+          className="scroll-mt-6 bg-[#11110f] text-[#f4f0e6]"
+        >
+          <div className="mx-auto grid min-h-[85vh] w-full max-w-[1440px] items-center gap-14 px-5 py-20 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-14 lg:py-24">
+            <div>
+              <p className="step-label text-[#d7ff52]">01 / Radar de ideas</p>
+              <h2 className="mt-7 max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
+                Gira. La IA investiga el resto.
+              </h2>
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/60">
+                Cada giro explora la web en tiempo real y encuentra un ángulo
+                editorial nuevo. Seis territorios, posibilidades infinitas.
+              </p>
+              <div className="mt-10 grid max-w-lg grid-cols-2 gap-x-6 gap-y-3 border-t border-white/20 pt-6 text-xs uppercase tracking-[0.14em] text-white/45 sm:grid-cols-3">
+                {IDEA_TERRITORIES.map((territory) => (
+                  <p key={territory.id}>
+                    <span className="mr-2 text-[#d7ff52]">{territory.number}</span>
+                    {territory.title}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="wheel-stage">
+                <div className="wheel-pointer" aria-hidden="true" />
+                <FutureWheelWebGL
+                  labels={SURPRISE_NUMBERS}
+                  rotation={wheelRotation}
+                  spinning={isSpinning}
+                />
+                <button
+                  type="button"
+                  onClick={spinWheel}
+                  disabled={isSpinning || isDiscoveringIdea}
+                  className="wheel-trigger"
+                  aria-label="Girar la ruleta y buscar una idea editorial nueva"
+                >
+                  <span>
+                    {isSpinning
+                      ? "Girando"
+                      : isDiscoveringIdea
+                      ? "Buscando"
+                      : "Girar"}
+                  </span>
+                  <span aria-hidden="true" className="text-xl">↻</span>
+                </button>
+              </div>
+
+              <div aria-live="polite" className="mt-10 min-h-48 w-full max-w-2xl">
+                {selectedSurprise ? (
+                  <div className="territory-reveal">
+                    <div className="flex items-start justify-between gap-6">
+                      <p className="font-mono text-sm text-[#d7ff52]">
+                        {selectedSurprise.number} / {selectedSurprise.territory}
+                      </p>
+                      <p className="max-w-xs text-right text-xs uppercase tracking-[0.16em] text-white/45">
+                        {selectedSurprise.signal}
+                      </p>
+                    </div>
+                    <h3 className="mt-5 font-serif text-4xl tracking-[-0.04em] sm:text-6xl">
+                      {selectedSurprise.title}
+                    </h3>
+                    <p className="mt-5 max-w-xl text-base leading-relaxed text-white/65">
+                      {selectedSurprise.prompt}
+                    </p>
+                    {selectedSurprise.sources.length ? (
+                      <div className="mt-6 flex flex-wrap gap-2" aria-label="Fuentes encontradas">
+                        {selectedSurprise.sources.map((source, index) => (
+                          <a
+                            key={source.url}
+                            href={source.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="idea-source-chip"
+                          >
+                            <span className="text-white/45">
+                              {String(index + 1).padStart(2, "0")}
+                            </span>
+                            <span className="max-w-44 truncate">{source.title}</span>
+                            <span aria-hidden="true">↗</span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
+                    <a
+                      href="#experiencia"
+                      className="mt-7 inline-flex border-b border-[#d7ff52] pb-1 text-sm font-bold text-[#d7ff52]"
+                    >
+                      Desarrollar esta idea ↓
+                    </a>
+                  </div>
+                ) : ideaError ? (
+                  <div role="alert" className="border-t border-[#ff5c35] pt-5 text-center text-sm text-[#ff9b82]">
+                    {ideaError}
+                  </div>
+                ) : (
+                  <div className="border-t border-white/25 pt-5 text-center text-sm text-white/40">
+                    {isDiscoveringIdea ? (
+                      <p className="flex items-center justify-center gap-3">
+                        <span className="ai-live-dot" aria-hidden="true" />
+                        Buscando señales, fuentes y un ángulo que merezca un artículo…
+                      </p>
+                    ) : (
+                      <p>Un giro nunca devuelve exactamente la misma idea.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
           id="experiencia"
           className="scroll-mt-6 bg-[#ff5c35] text-[#11110f]"
         >
@@ -712,7 +831,7 @@ export function ArticleGenerator() {
             <form onSubmit={handleSubmit}>
               <div className="grid gap-10 lg:grid-cols-[0.58fr_1.42fr]">
                 <div>
-                  <p className="step-label">01 / Idea</p>
+                  <p className="step-label">02 / Tu dirección</p>
                   <h2 className="mt-7 max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
                     ¿Qué quieres contar?
                   </h2>
@@ -770,7 +889,7 @@ export function ArticleGenerator() {
               <div className="mt-16 border-t-2 border-black pt-8">
                 <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                   <div>
-                    <p className="step-label">02 / Dirección opcional</p>
+                    <p className="step-label">03 / Dirección opcional</p>
                     <p className="mt-3 max-w-xl text-sm leading-relaxed text-black/65">
                       Elige el tipo y el enfoque si quieres tener más control.
                       Si no, dejaremos que la IA decida.
@@ -856,16 +975,7 @@ export function ArticleGenerator() {
                 ) : null}
               </div>
 
-              <div className="mt-12 flex flex-col items-start justify-between gap-6 border-t border-black/30 pt-8 sm:flex-row sm:items-center">
-                <button
-                  type="button"
-                  onClick={() => setShowSurprise((current) => !current)}
-                  aria-expanded={showSurprise}
-                  aria-controls="surprise-panel"
-                  className="border-b-2 border-[#11110f] pb-1 text-sm font-bold uppercase tracking-[0.14em]"
-                >
-                  {showSurprise ? "Cerrar sorpresa" : "Sorpréndeme"} <span aria-hidden="true">↗</span>
-                </button>
+              <div className="mt-12 flex justify-end border-t border-black/30 pt-8">
                 <button
                   type="submit"
                   disabled={state === "loading" || isRefreshingCover || !topic.trim()}
@@ -897,7 +1007,7 @@ export function ArticleGenerator() {
                   <div>
                     <p className="step-label flex items-center gap-3 text-[#d7ff52]">
                       <span className="ai-live-dot" aria-hidden="true" />
-                      03 / Generación en directo
+                      04 / Investigación y generación
                     </p>
                     <h2 className="mt-7 max-w-lg font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
                       La publicación está naciendo ahora.
@@ -966,80 +1076,6 @@ export function ArticleGenerator() {
           </section>
         ) : null}
 
-        {showSurprise ? (
-          <section
-            id="surprise-panel"
-            className="bg-[#11110f] text-[#f4f0e6]"
-          >
-            <div className="mx-auto grid w-full max-w-[1440px] gap-14 px-5 py-20 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-14 lg:py-24">
-              <div>
-                <p className="step-label text-[#d7ff52]">Desbloquea una idea</p>
-                <h2 className="mt-7 max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                  Deja que el azar te dé un punto de partida.
-                </h2>
-                <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/60">
-                  La ruleta ya no es un paso obligatorio. Úsala solo cuando
-                  quieras descubrir una dirección inesperada.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="wheel-stage">
-                  <div className="wheel-pointer" aria-hidden="true" />
-                  <FutureWheelWebGL
-                    labels={SURPRISE_NUMBERS}
-                    rotation={wheelRotation}
-                    spinning={isSpinning}
-                  />
-                  <button
-                    type="button"
-                    onClick={spinWheel}
-                    disabled={isSpinning}
-                    className="wheel-trigger"
-                    aria-label="Girar la ruleta de ideas editoriales"
-                  >
-                    <span>{isSpinning ? "Girando" : "Girar"}</span>
-                    <span aria-hidden="true" className="text-xl">↻</span>
-                  </button>
-                </div>
-
-                <div aria-live="polite" className="mt-10 min-h-40 w-full max-w-2xl">
-                  {selectedSurprise ? (
-                    <div className="territory-reveal">
-                      <div className="flex items-start justify-between gap-6">
-                        <p className="font-mono text-sm text-[#d7ff52]">
-                          IDEA {selectedSurprise.number}
-                        </p>
-                        <p className="text-right text-xs uppercase tracking-[0.16em] text-white/45">
-                          {selectedSurprise.signal}
-                        </p>
-                      </div>
-                      <h3 className="mt-5 font-serif text-5xl tracking-[-0.04em] sm:text-6xl">
-                        {selectedSurprise.title}
-                      </h3>
-                      <p className="mt-5 max-w-xl text-base leading-relaxed text-white/65">
-                        {selectedSurprise.prompt}
-                      </p>
-                      <a
-                        href="#experiencia"
-                        className="mt-6 inline-flex border-b border-[#d7ff52] pb-1 text-sm font-bold text-[#d7ff52]"
-                      >
-                        Usar esta idea ↑
-                      </a>
-                    </div>
-                  ) : (
-                    <p className="border-t border-white/25 pt-5 text-center text-sm text-white/40">
-                      {isSpinning
-                        ? "Buscando una dirección…"
-                        : "Tutorial · Opinión · Tendencia · Caso real · Aprendizaje · Experimento"}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
         <section
           ref={resultRef}
           id="resultado"
@@ -1049,7 +1085,7 @@ export function ArticleGenerator() {
             <div className="mx-auto w-full max-w-[1200px] px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
               <header className="mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
                 <div>
-                  <p className="step-label text-[#4468ff]">04 / Resultado</p>
+                  <p className="step-label text-[#4468ff]">05 / Resultado</p>
                   <h2 className="mt-5 font-serif text-5xl tracking-[-0.045em] sm:text-7xl">
                     Revisa el contenido y decide qué quieres hacer con él.
                   </h2>
@@ -1067,8 +1103,12 @@ export function ArticleGenerator() {
                   <div>
                     <p className="step-label text-[#ff5c35]">La portada</p>
                     <h3 className="mt-3 font-serif text-4xl tracking-[-0.04em] sm:text-5xl">
-                      Elige la imagen que abre la historia.
+                      Un thumbnail hecho para destacar.
                     </h3>
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-black/55">
+                      Titular integrado, composición adaptable a redes y una
+                      dirección techy distinta en cada variación.
+                    </p>
                   </div>
                   {cover?.source === "unsplash" ? (
                     <p className="text-xs text-black/55">
@@ -1166,7 +1206,7 @@ export function ArticleGenerator() {
                     disabled={isRefreshingCover}
                     className="cover-action"
                   >
-                    Generar otra imagen <span aria-hidden="true">↻</span>
+                    Otra versión techy <span aria-hidden="true">↻</span>
                   </button>
                   <button
                     type="button"
@@ -1196,7 +1236,7 @@ export function ArticleGenerator() {
               <section className="publish-decision mt-20 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10">
                 <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
                   <div>
-                    <p className="step-label text-[#d7ff52]">05 / WordPress</p>
+                    <p className="step-label text-[#d7ff52]">06 / WordPress</p>
                     <h3 className="mt-4 max-w-2xl font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">
                       La última palabra sigue siendo humana.
                     </h3>

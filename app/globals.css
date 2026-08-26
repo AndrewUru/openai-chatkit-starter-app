@@ -358,6 +358,26 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
   animation: reveal-up 450ms ease both;
 }
 
+.idea-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  border: 1px solid rgba(215,255,82,.42);
+  border-radius: 999px;
+  padding: .5rem .75rem;
+  color: #d7ff52;
+  font-family: var(--font-mono);
+  font-size: .65rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.idea-source-chip:hover {
+  background: #d7ff52;
+  color: #11110f;
+}
+
 @keyframes reveal-up { from { opacity: 0; transform: translateY(1rem); } }
 
 .create-button {
@@ -384,7 +404,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 .cover-frame {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 16 / 9;
   border: 2px solid #11110f;
   background: #d7ff52;
 }

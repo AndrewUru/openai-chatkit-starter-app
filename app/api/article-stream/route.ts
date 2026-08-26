@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { Output, streamText } from "ai";
+import { Output, stepCountIs, streamText } from "ai";
 import { EDITORIAL_PUBLICATION_PROMPT } from "@/lib/editorial-generation";
 import {
   editorialStreamSchema,
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
   let streamError: Error | null = null;
   const result = streamText({
-    model: openai.chat(textModel),
+    model: openai.responses(textModel),
     system: EDITORIAL_PUBLICATION_PROMPT,
     prompt: [
       "BRIEFING EDITORIAL:",
@@ -60,6 +60,25 @@ export async function POST(request: Request) {
       "SEÑALES VISUALES SELECCIONADAS POR LA PERSONA:",
       visualSignals,
     ].join("\n"),
+    tools: {
+      web_search: openai.tools.webSearch({
+        externalWebAccess: true,
+        searchContextSize: "high",
+        userLocation: {
+          type: "approximate",
+          country: "ES",
+          timezone: "Europe/Madrid",
+        },
+      }),
+    },
+    prepareStep: ({ stepNumber }) =>
+      stepNumber === 0
+        ? {
+            toolChoice: { type: "tool", toolName: "web_search" },
+            activeTools: ["web_search"],
+          }
+        : { toolChoice: "none", activeTools: [] },
+    stopWhen: stepCountIs(3),
     output: Output.object({ schema: editorialStreamSchema }),
     onError({ error }) {
       streamError =
