@@ -13,6 +13,10 @@ import type {
   CoverAsset,
   CreativeWorkflowResponse,
 } from "@/lib/creative-assets";
+import type {
+  EditorialStreamEvent,
+  EditorialStreamPackage,
+} from "@/lib/editorial-stream";
 import { Navbar } from "./Navbar";
 import { FluidAtmosphereWebGL } from "./FluidAtmosphereWebGL";
 
@@ -168,6 +172,20 @@ const TOPIC_EXAMPLES = [
 const PUBLIC_KEY =
   process.env.NEXT_PUBLIC_PUBLIC_EXPERIMENT_KEY ?? "demo2025";
 
+function countWords(html: string): number {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[^;]+;/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+function extractHeading(html: string): string {
+  const match = html.match(/<h1[^>]*>([\s\S]*?)(?:<\/h1>|$)/i);
+  return match?.[1]?.replace(/<[^>]*>/g, "").trim() || "La idea está tomando forma";
+}
+
 export function ArticleGenerator() {
   const [topic, setTopic] = useState("");
   const [selectedContentTypeId, setSelectedContentTypeId] =
@@ -182,6 +200,8 @@ export function ArticleGenerator() {
   const [state, setState] = useState<WorkflowState>("idle");
   const [error, setError] = useState("");
   const [article, setArticle] = useState("");
+  const [liveArticleHtml, setLiveArticleHtml] = useState("");
+  const [liveCoverDirection, setLiveCoverDirection] = useState("");
   const [cover, setCover] = useState<CoverAsset | null>(null);
   const [coverPrompt, setCoverPrompt] = useState("");
   const [isRefreshingCover, setIsRefreshingCover] = useState(false);
@@ -193,6 +213,7 @@ export function ArticleGenerator() {
   const [publishMessage, setPublishMessage] = useState("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const resultRef = useRef<HTMLElement>(null);
+  const generationRef = useRef<HTMLElement>(null);
   const articleRef = useRef<HTMLDivElement>(null);
   const workflowAbortRef = useRef<AbortController | null>(null);
   const coverVariantRef = useRef(0);
@@ -219,10 +240,19 @@ export function ArticleGenerator() {
     if (state === "loading") {
       const startedAt = Date.now();
       setElapsedSeconds(0);
+      const scrollTimer = window.setTimeout(() => {
+        generationRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 180);
       const interval = window.setInterval(() => {
         setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
       }, 1000);
-      return () => window.clearInterval(interval);
+      return () => {
+        window.clearTimeout(scrollTimer);
+        window.clearInterval(interval);
+      };
     }
 
     if (state === "success") {
@@ -313,6 +343,8 @@ export function ArticleGenerator() {
       setState("loading");
       setError("");
       setArticle("");
+      setLiveArticleHtml("");
+      setLiveCoverDirection("");
       setCover(null);
       coverVariantRef.current = 0;
       setIsRefreshingCover(false);
@@ -325,13 +357,12 @@ export function ArticleGenerator() {
 
       try {
         const response = await fetch(
-          `/api/workflow?key=${encodeURIComponent(PUBLIC_KEY)}`,
+          `/api/article-stream?key=${encodeURIComponent(PUBLIC_KEY)}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             signal: workflowController.signal,
             body: JSON.stringify({
-              action: "article",
               input_as_text: creativeBrief,
               cover_prompt: visualBrief,
             }),
@@ -343,18 +374,78 @@ export function ArticleGenerator() {
           throw new Error(detail || `Error ${response.status} al crear la pieza.`);
         }
 
-        const data = (await response.json()) as CreativeWorkflowResponse;
-        const generated = data.article?.trim();
+        if (!response.body) {
+          throw new Error("La respuesta no incluyó un flujo de contenido.");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let completePackage: EditorialStreamPackage | null = null;
+
+        const processLine = (line: string) => {
+          if (!line.trim()) return;
+          const event = JSON.parse(line) as EditorialStreamEvent;
+          if (event.type === "error") {
+            throw new Error(event.message);
+          }
+          if (event.data.article_html) {
+            setLiveArticleHtml(event.data.article_html);
+          }
+          if (event.data.cover_prompt) {
+            setLiveCoverDirection(event.data.cover_prompt);
+          }
+          if (event.type === "done") {
+            completePackage = event.data;
+          }
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          buffer += decoder.decode(value, { stream: !done });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          lines.forEach(processLine);
+          if (done) break;
+        }
+        processLine(buffer);
+
+        const streamedPackage = completePackage as EditorialStreamPackage | null;
+        if (!streamedPackage?.article_html?.trim()) {
+          throw new Error("La IA no completó el contenido de la publicación.");
+        }
+
+        const generatedCoverPrompt =
+          streamedPackage.cover_prompt?.trim() || visualBrief;
+        const finalizeResponse = await fetch(
+          `/api/workflow?key=${encodeURIComponent(PUBLIC_KEY)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: workflowController.signal,
+            body: JSON.stringify({
+              action: "finalize",
+              input_as_text: streamedPackage.article_html,
+              cover_prompt: generatedCoverPrompt,
+            }),
+          }
+        );
+        if (!finalizeResponse.ok) {
+          const detail = await finalizeResponse.text().catch(() => "");
+          throw new Error(detail || "No se pudo preparar la publicación final.");
+        }
+        const finalized =
+          (await finalizeResponse.json()) as CreativeWorkflowResponse;
+        const generated = finalized.article?.trim();
         if (!generated) {
-          throw new Error("La respuesta no incluyó contenido para la pieza.");
+          throw new Error("La respuesta no incluyó contenido para la publicación.");
         }
 
         setArticle(generated);
-        const generatedCoverPrompt = data.coverPrompt?.trim() || visualBrief;
         setCover(null);
         setCoverPrompt(generatedCoverPrompt);
         setResultMessage(
-          data.message ||
+          finalized.message ||
             "El artículo está listo. La portada se está preparando por separado."
         );
         setState("success");
@@ -545,17 +636,23 @@ export function ArticleGenerator() {
       ? cover.url
       : null;
 
+  const liveWordCount = countWords(liveArticleHtml);
+  const liveHeading = extractHeading(liveArticleHtml);
+  const generationProgress = liveCoverDirection
+    ? 94
+    : Math.min(88, 10 + Math.round(liveWordCount / 10));
+
   const loadingMessage = (() => {
-    if (elapsedSeconds < 15) return "Entendiendo tu idea";
-    if (elapsedSeconds < 45) return "Dando forma a la publicación";
-    if (elapsedSeconds < 90) return "Escribiendo el artículo";
-    return "Revisando el contenido";
+    if (!liveArticleHtml) return "Entendiendo tu idea";
+    if (liveWordCount < 120) return "Encontrando el ángulo editorial";
+    if (!liveCoverDirection) return "Escribiendo en directo";
+    return "Definiendo la dirección visual";
   })();
 
   const loadingHint =
-    elapsedSeconds < 90
-      ? "Mostraremos el artículo primero; la portada continuará en segundo plano."
-      : "Está tardando un poco más de lo habitual, pero el proceso sigue activo.";
+    liveArticleHtml
+      ? "Ya puedes leer la publicación mientras la IA continúa escribiendo."
+      : "Las primeras palabras aparecerán aquí en cuanto la IA encuentre la dirección.";
 
   const elapsedLabel = `${String(Math.floor(elapsedSeconds / 60)).padStart(
     2,
@@ -781,38 +878,6 @@ export function ArticleGenerator() {
                 </button>
               </div>
 
-              {state === "loading" ? (
-                <div className="mt-10" role="status">
-                  <div className="flex items-end justify-between gap-6">
-                    <div>
-                      <p
-                        aria-live="polite"
-                        className="text-xs font-bold uppercase tracking-[0.16em]"
-                      >
-                        {loadingMessage}
-                      </p>
-                      <p className="mt-2 max-w-md text-sm text-black/60">
-                        {loadingHint}
-                      </p>
-                    </div>
-                    <span
-                      aria-label={`${elapsedSeconds} segundos transcurridos`}
-                      className="shrink-0 font-mono text-sm font-bold tabular-nums"
-                    >
-                      {elapsedLabel}
-                    </span>
-                  </div>
-                  <div
-                    aria-hidden="true"
-                    className="mt-4 h-2 overflow-hidden bg-black/20"
-                  >
-                    <div
-                      className="h-full w-full animate-pulse bg-[#11110f] motion-reduce:animate-none"
-                    />
-                  </div>
-                </div>
-              ) : null}
-
               {state === "error" ? (
                 <p role="alert" className="mt-8 border-l-4 border-[#11110f] pl-4 font-semibold">
                   {error}
@@ -821,6 +886,87 @@ export function ArticleGenerator() {
             </form>
           </div>
         </section>
+
+        {state === "loading" ? (
+          <section
+            ref={generationRef}
+            id="generacion"
+            className="ai-live-workbench scroll-mt-6 bg-[#11110f] text-[#f4f0e6]"
+          >
+            <div className="mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-14 lg:py-24">
+              <div className="grid gap-12 lg:grid-cols-[0.55fr_1.45fr]">
+                <div className="flex flex-col justify-between">
+                  <div>
+                    <p className="step-label flex items-center gap-3 text-[#d7ff52]">
+                      <span className="ai-live-dot" aria-hidden="true" />
+                      03 / Generación en directo
+                    </p>
+                    <h2 className="mt-7 max-w-lg font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
+                      La publicación está naciendo ahora.
+                    </h2>
+                    <p className="mt-6 max-w-md text-base leading-relaxed text-white/55">
+                      No es una animación de espera: cada fragmento que ves llega
+                      del modelo en tiempo real.
+                    </p>
+                  </div>
+
+                  <div className="mt-12 border-t border-white/20 pt-5">
+                    <div className="flex items-end justify-between gap-5">
+                      <div>
+                        <p aria-live="polite" className="text-sm font-bold text-[#d7ff52]">
+                          {loadingMessage}
+                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-white/45">
+                          {loadingHint}
+                        </p>
+                      </div>
+                      <span className="font-mono text-sm tabular-nums text-white/55">
+                        {elapsedLabel}
+                      </span>
+                    </div>
+                    <div className="mt-5 h-1 overflow-hidden bg-white/15">
+                      <div
+                        className="ai-live-progress h-full bg-[#d7ff52]"
+                        style={{ width: `${generationProgress}%` }}
+                      />
+                    </div>
+                    <div className="mt-5 grid grid-cols-2 gap-4 font-mono text-xs uppercase tracking-[0.12em] text-white/40">
+                      <p>
+                        Palabras <span className="block pt-1 text-xl text-white">{liveWordCount}</span>
+                      </p>
+                      <p>
+                        Portada <span className="block pt-1 text-sm text-white">{liveCoverDirection ? "Dirigida" : "Pendiente"}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="ai-live-page" aria-busy="true" aria-live="polite">
+                  <div className="flex items-center justify-between border-b border-black/15 px-5 py-4 font-mono text-[.68rem] uppercase tracking-[0.14em] text-black/45 sm:px-8">
+                    <span>Borrador vivo</span>
+                    <span className="max-w-[55%] truncate text-right">{liveHeading}</span>
+                  </div>
+                  {liveArticleHtml ? (
+                    <div className="generated-story ai-live-story px-5 py-8 sm:px-8 sm:py-10">
+                      <article
+                        className="ia-generated"
+                        dangerouslySetInnerHTML={{ __html: liveArticleHtml }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-5 px-7 py-12 sm:px-12">
+                      <div className="ai-writing-line h-12 w-4/5" />
+                      <div className="ai-writing-line h-4 w-full" />
+                      <div className="ai-writing-line h-4 w-11/12" />
+                      <div className="ai-writing-line h-4 w-3/4" />
+                      <div className="ai-writing-line mt-10 h-8 w-2/3" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {showSurprise ? (
           <section id="surprise-panel" className="bg-[#11110f] text-[#f4f0e6]">
@@ -1118,6 +1264,8 @@ export function ArticleGenerator() {
                   setSelectedSurprise(null);
                   setTopic("");
                   setArticle("");
+                  setLiveArticleHtml("");
+                  setLiveCoverDirection("");
                   setCover(null);
                   setCoverPrompt("");
                   setCoverError("");

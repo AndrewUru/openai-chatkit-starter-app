@@ -223,6 +223,85 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
   background: #f4f0e6;
 }
 
+.ai-live-workbench {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-live-workbench::before {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(215,255,82,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(215,255,82,.045) 1px, transparent 1px);
+  background-size: 3.5rem 3.5rem;
+  content: "";
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+  pointer-events: none;
+}
+
+.ai-live-workbench > div { position: relative; }
+
+.ai-live-dot {
+  width: .65rem;
+  height: .65rem;
+  border-radius: 999px;
+  background: #d7ff52;
+  box-shadow: 0 0 0 0 rgba(215,255,82,.5);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+
+@keyframes live-pulse {
+  70% { box-shadow: 0 0 0 .6rem rgba(215,255,82,0); }
+  100% { box-shadow: 0 0 0 0 rgba(215,255,82,0); }
+}
+
+.ai-live-progress { transition: width 320ms ease-out; }
+
+.ai-live-page {
+  min-height: 36rem;
+  max-height: 70vh;
+  overflow: auto;
+  border: 2px solid #11110f;
+  background: #f4f0e6;
+  color: #11110f;
+  box-shadow: 1.25rem 1.25rem 0 #4468ff;
+}
+
+.ai-live-story .ia-generated {
+  max-width: 46rem;
+  margin-block: 0;
+}
+
+.ai-live-story .ia-generated h1 {
+  margin-bottom: 2rem;
+  font-size: clamp(2.5rem,5vw,4.5rem);
+}
+
+.ai-live-story .ia-generated h2 {
+  margin-top: 2.5rem;
+  font-size: clamp(1.8rem,3vw,2.7rem);
+}
+
+.ai-writing-line {
+  overflow: hidden;
+  background: rgba(17,17,15,.1);
+}
+
+.ai-writing-line::after {
+  display: block;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(68,104,255,.35), transparent);
+  content: "";
+  animation: writing-scan 1.4s ease-in-out infinite;
+}
+
+@keyframes writing-scan {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(230%); }
+}
+
 .marquee-band {
   overflow: hidden;
   border-block: 2px solid #11110f;
@@ -514,6 +593,8 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
   .fluid-atmosphere { opacity: .4; }
   .marquee-band > div { animation: none; }
   .territory-reveal { animation: none; }
+  .ai-live-dot, .ai-writing-line::after { animation: none; }
+  .ai-live-progress { transition: none; }
 }
 
 .ia-generated {

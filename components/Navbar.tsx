@@ -8,6 +8,10 @@ const NAV_LINKS = [
   { href: "/flujo", label: "Cómo funciona" },
 ];
 
+const VERCEL_APP_URL =
+  process.env.NEXT_PUBLIC_VERCEL_APP_URL ??
+  "https://openai-chatkit-starter-app-xi.vercel.app";
+
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const closeMenu = useCallback(() => setIsOpen(false), []);
@@ -38,6 +42,14 @@ export function Navbar() {
               </Link>
             )
           )}
+          <a
+            href={VERCEL_APP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-link"
+          >
+            App en Vercel ↗
+          </a>
           <Link href="/docs" className="rounded-full bg-[#11110f] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-[#f4f0e6] transition hover:bg-[#4468ff]">
             Documentación ↗
           </Link>
@@ -69,6 +81,15 @@ export function Navbar() {
                 </Link>
               )
             )}
+            <a
+              href={VERCEL_APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={closeMenu}
+              className="border-b border-black/20 py-4 font-serif text-3xl"
+            >
+              App en Vercel ↗
+            </a>
             <Link href="/docs" onClick={closeMenu} className="py-4 font-serif text-3xl">
               Documentación ↗
             </Link>

@@ -1,4 +1,5 @@
 import type { CoverAsset, UnsplashCover } from "@/lib/creative-assets";
+import { EDITORIAL_PUBLICATION_PROMPT } from "@/lib/editorial-generation";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -6,7 +7,7 @@ export const maxDuration = 180;
 type WorkflowInput = {
   input_as_text: string;
   cover_prompt?: string;
-  action?: "create" | "article" | "cover";
+  action?: "create" | "article" | "cover" | "finalize";
   cover_source?: "auto" | "generated" | "unsplash";
   cover_variant?: number;
 };
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
       message:
         body.action === "cover"
           ? "Portada preparada para revisar."
+          : body.action === "finalize"
+          ? "El artículo está listo. La portada se está preparando por separado."
           : body.action === "article"
           ? "El artículo está listo. La portada se está preparando por separado."
           : "Tu pieza está lista. Revísala antes de publicarla.",
@@ -50,6 +53,16 @@ async function runWorkflow(workflow: WorkflowInput) {
   if (!topic) throw new Error("The request body must include input_as_text.");
   const requestedCoverPrompt = workflow.cover_prompt?.trim() || topic;
   const coverVariant = workflow.cover_variant ?? 0;
+
+  if (workflow.action === "finalize") {
+    if (!/<h1[\s>]/i.test(topic)) {
+      throw new Error("La publicación generada no incluye un título válido.");
+    }
+    return {
+      article: wrapGeneratedArticle(topic),
+      coverPrompt: requestedCoverPrompt,
+    };
+  }
 
   if (workflow.action === "cover") {
     const openaiApiKey = process.env.OPENAI_API_KEY?.trim();
@@ -88,10 +101,7 @@ async function runWorkflow(workflow: WorkflowInput) {
     requestedCoverPrompt,
     openaiApiKey
   );
-  const article = `${IA_GENERATED_INLINE_STYLES}
-<article class="ia-generated">
-${editorialPackage.articleHtml.trim()}
-</article>`;
+  const article = wrapGeneratedArticle(editorialPackage.articleHtml);
 
   if (workflow.action === "article") {
     return { article, coverPrompt: editorialPackage.coverPrompt };
@@ -103,6 +113,13 @@ ${editorialPackage.articleHtml.trim()}
     coverVariant
   );
   return { article, cover, coverPrompt: editorialPackage.coverPrompt };
+}
+
+function wrapGeneratedArticle(articleHtml: string): string {
+  return `${IA_GENERATED_INLINE_STYLES}
+<article class="ia-generated">
+${articleHtml.trim()}
+</article>`;
 }
 
 function requireOpenAiKey(apiKey?: string): string {
@@ -224,65 +241,6 @@ function selectCoverArtDirection(
 }
 
 
-const EDITORIAL_PUBLICATION_PROMPT = `
-Eres editor de una publicación digital en español. A partir del briefing de la persona, crea un artículo completo y una dirección visual para su portada.
-
-OBJETIVO
-
-Convierte la idea recibida en una publicación autónoma, útil y lista para revisión editorial. El resultado es el artículo final, no un esquema, un plan de escritura ni una explicación de cómo producirlo.
-
-Respeta el tipo de contenido y el enfoque indicados en el briefing. Cuando la persona deje esas decisiones a la IA, elige la forma que mejor sirva a la idea.
-
-FIDELIDAD
-
-- Conserva la intención y los hechos aportados por la persona.
-- No inventes experiencias personales, clientes, citas, fuentes, herramientas, estudios, cifras, fechas, métricas ni resultados.
-- Si faltan datos para afirmar algo concreto, formula una observación general honesta o explica el límite sin fingir certeza.
-- No conviertas cada tema en una pieza sobre desarrollo de aplicaciones o sobre la herramienta que ha generado el texto.
-- Menciona marcas, tecnologías o productos solo cuando formen parte de la idea o sean necesarios para comprenderla.
-
-ESTRUCTURA Y ESTILO
-
-- Escribe en español natural y peninsular salvo que el briefing indique otra variante.
-- Crea un título específico y atractivo, sin clickbait.
-- Abre directamente con el asunto central; evita introducciones genéricas sobre la revolución de la IA.
-- Desarrolla una progresión clara con subtítulos útiles.
-- Prioriza ejemplos, decisiones, matices y pasos concretos según el tipo de contenido.
-- Mantén un tono editorial, humano y preciso. Evita lenguaje de marketing, hype, repeticiones y conclusiones grandilocuentes.
-- Escribe entre 700 y 1.000 palabras, salvo que la idea pida de forma clara una pieza más breve.
-- Cierra de manera natural: con una conclusión útil, una invitación a aplicar lo aprendido o una pregunta relevante. No fuerces una llamada a la acción.
-
-ADAPTACIÓN POR TIPO
-
-- Tutorial o guía: ofrece una secuencia accionable, requisitos cuando existan, advertencias y un resultado esperado.
-- Caso real o enfoque personal: utiliza primera persona únicamente para hechos y vivencias expresamente aportados en el briefing. No completes huecos con ficción.
-- Opinión: presenta una tesis reconocible, argumentos, objeciones y una conclusión razonada.
-- Artículo divulgativo: explica conceptos con claridad y contexto sin simplificarlos en exceso.
-- Enfoque SEO: responde a una intención de búsqueda real con lenguaje natural; no repitas palabras clave artificialmente.
-
-FORMATO DEL ARTÍCULO
-
-Devuelve article_html como HTML semántico válido para insertar dentro de una página existente.
-
-Utiliza:
-- un único <h1>;
-- <section>, <h2>, <p>;
-- <ul> o <ol> solo cuando faciliten la lectura;
-- <strong> y <blockquote> con moderación.
-
-No incluyas <html>, <head>, <body>, <style>, <script>, Markdown, comentarios HTML ni bloques de código. No añadas notas sobre el proceso de generación ni una sección de dirección visual dentro del artículo.
-
-DIRECCIÓN VISUAL
-
-Devuelve cover_prompt como una descripción independiente de una única imagen editorial horizontal relacionada directamente con el tema.
-
-- Describe el sujeto, el entorno, la acción y los objetos significativos.
-- Busca una imagen con una idea visual reconocible, no una ilustración literal de cada frase.
-- No fijes técnica artística, paleta, iluminación ni encuadre; una fase posterior aplicará una dirección visual variable.
-- Evita texto legible, logotipos, marcas de agua y clichés visuales de IA como robots humanoides, cerebros luminosos, hologramas, interfaces flotantes, código decorativo o una persona de espaldas ante un portátil.
-
-Antes de responder, comprueba internamente que el artículo responde a la idea, que no inventa datos, que el tipo y el tono son coherentes, que contiene un único h1 y que cover_prompt puede entenderse sin leer el briefing.
-`.trim();
 // Mantener sincronizado con las reglas en app/globals.css para vista previa local.
 const IA_GENERATED_INLINE_STYLES = `
 <style>
