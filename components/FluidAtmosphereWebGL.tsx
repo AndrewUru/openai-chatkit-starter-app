@@ -401,9 +401,9 @@ void main() {
 
   float alpha = 0.0;
 
-  alpha += vapor * 0.086;
-  alpha += filament * 0.082;
-  alpha += wake * (0.025 + u_energy * 0.055);
+  alpha += vapor * 0.14;
+  alpha += filament * 0.13;
+  alpha += wake * (0.04 + u_energy * 0.08);
 
   /*
    * Keep transparent negative space.
@@ -460,7 +460,7 @@ void main() {
      OUTPUT
      --------------------------------------------------------- */
 
-  alpha = min(alpha, 0.19);
+  alpha = min(alpha, 0.28);
 
   gl_FragColor = vec4(
     color,
@@ -564,6 +564,13 @@ export const FluidAtmosphereWebGL = memo(
       const canvas = canvasRef.current;
 
       if (!canvas) return;
+
+      const atmosphere =
+        canvas.closest<HTMLElement>(
+          ".fluid-atmosphere"
+        );
+
+      if (!atmosphere) return;
 
       const reduceMotion =
         window.matchMedia(
@@ -705,6 +712,8 @@ export const FluidAtmosphereWebGL = memo(
 
       let frame = 0;
 
+      let surfaceModeFrame = 0;
+
       let previousTime =
         performance.now();
 
@@ -737,6 +746,39 @@ export const FluidAtmosphereWebGL = memo(
         reduceMotion
           ? 0
           : 0.08;
+
+
+      /* -----------------------------------------------------
+         SURFACE CONTRAST
+         ----------------------------------------------------- */
+
+      const updateSurfaceMode = () => {
+        surfaceModeFrame = 0;
+
+        const element =
+          document.elementFromPoint(
+            window.innerWidth * 0.5,
+            window.innerHeight * 0.5
+          );
+
+        const surface =
+          element?.closest<HTMLElement>(
+            "[data-atmosphere-surface]"
+          );
+
+        atmosphere.dataset.surface =
+          surface?.dataset.atmosphereSurface ??
+          "light";
+      };
+
+      const scheduleSurfaceMode = () => {
+        if (surfaceModeFrame) return;
+
+        surfaceModeFrame =
+          requestAnimationFrame(
+            updateSurfaceMode
+          );
+      };
 
 
       /* -----------------------------------------------------
@@ -809,6 +851,8 @@ export const FluidAtmosphereWebGL = memo(
           window.scrollY /
           maxScroll;
 
+        scheduleSurfaceMode();
+
         if (!reduceMotion) {
           energy =
             Math.min(
@@ -816,6 +860,11 @@ export const FluidAtmosphereWebGL = memo(
               energy + 0.16
             );
         }
+      };
+
+      const handleResize = () => {
+        resize();
+        scheduleSurfaceMode();
       };
 
 
@@ -1139,6 +1188,7 @@ export const FluidAtmosphereWebGL = memo(
 
       resize();
       updateScrollTarget();
+      updateSurfaceMode();
 
       window.addEventListener(
         "pointermove",
@@ -1158,7 +1208,7 @@ export const FluidAtmosphereWebGL = memo(
 
       window.addEventListener(
         "resize",
-        resize,
+        handleResize,
         {
           passive: true,
         }
@@ -1184,6 +1234,12 @@ export const FluidAtmosphereWebGL = memo(
       return () => {
         stop();
 
+        if (surfaceModeFrame) {
+          cancelAnimationFrame(
+            surfaceModeFrame
+          );
+        }
+
         observer.disconnect();
 
         window.removeEventListener(
@@ -1198,7 +1254,7 @@ export const FluidAtmosphereWebGL = memo(
 
         window.removeEventListener(
           "resize",
-          resize
+          handleResize
         );
 
         document.removeEventListener(

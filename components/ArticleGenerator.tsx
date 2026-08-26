@@ -668,7 +668,7 @@ export function ArticleGenerator() {
       <FluidAtmosphereWebGL />
       <Navbar />
 
-      <main>
+      <main data-atmosphere-surface="light">
         <section
           id="inicio"
           className="relative mx-auto w-full max-w-[1440px] px-5 pb-16 pt-16 sm:px-8 lg:px-14 lg:pb-24"
@@ -708,6 +708,7 @@ export function ArticleGenerator() {
 
         <section
           id="experiencia"
+          data-atmosphere-surface="warm"
           className="scroll-mt-6 bg-[#ff5c35] text-[#11110f]"
         >
           <div className="mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-14 lg:py-28">
@@ -891,6 +892,7 @@ export function ArticleGenerator() {
           <section
             ref={generationRef}
             id="generacion"
+            data-atmosphere-surface="dark"
             className="ai-live-workbench scroll-mt-6 bg-[#11110f] text-[#f4f0e6]"
           >
             <div className="mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-14 lg:py-24">
@@ -969,7 +971,11 @@ export function ArticleGenerator() {
         ) : null}
 
         {showSurprise ? (
-          <section id="surprise-panel" className="bg-[#11110f] text-[#f4f0e6]">
+          <section
+            id="surprise-panel"
+            data-atmosphere-surface="dark"
+            className="bg-[#11110f] text-[#f4f0e6]"
+          >
             <div className="mx-auto grid w-full max-w-[1440px] gap-14 px-5 py-20 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-14 lg:py-24">
               <div>
                 <p className="step-label text-[#d7ff52]">Desbloquea una idea</p>
@@ -1039,7 +1045,12 @@ export function ArticleGenerator() {
           </section>
         ) : null}
 
-        <section ref={resultRef} id="resultado" className="scroll-mt-6 bg-[#f4f0e6]">
+        <section
+          ref={resultRef}
+          id="resultado"
+          data-atmosphere-surface="light"
+          className="scroll-mt-6 bg-[#f4f0e6]"
+        >
           {state === "success" ? (
             <div className="mx-auto w-full max-w-[1200px] px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
               <header className="mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
@@ -1286,7 +1297,10 @@ export function ArticleGenerator() {
         </section>
       </main>
 
-      <footer className="flex flex-col justify-between gap-5 border-t border-white/20 bg-[#11110f] px-5 py-8 text-xs uppercase tracking-[0.16em] text-white/50 sm:flex-row sm:px-8 lg:px-14">
+      <footer
+        data-atmosphere-surface="dark"
+        className="flex flex-col justify-between gap-5 border-t border-white/20 bg-[#11110f] px-5 py-8 text-xs uppercase tracking-[0.16em] text-white/50 sm:flex-row sm:px-8 lg:px-14"
+      >
         <span>El Salto Web · AI Lab</span>
         <span>Experimento construido con Next.js + Codex · 2026</span>
       </footer>
