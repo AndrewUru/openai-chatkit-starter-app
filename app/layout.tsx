@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Laboratorio Codex | El Salto Web",
+  title: "Crea una publicación con IA | El Salto Web",
   description:
-    "Una experiencia interactiva para convertir una necesidad real en un plan para crear, probar y entregar una aplicación con Codex.",
+    "Convierte una idea, un tema o una experiencia en un artículo listo para revisar y publicar en WordPress.",
   openGraph: {
-    title: "Laboratorio Codex | El Salto Web",
+    title: "Una idea entra. Un artículo sale | El Salto Web",
     description:
-      "Gira la ruleta y convierte una idea en un plan concreto para construir una aplicación con Codex.",
+      "Crea una publicación completa a partir de una sola idea y decide cuándo enviarla a WordPress.",
     url: "https://elsaltoweb.es/laboratorio-ia/",
     siteName: "El Salto Web",
     images: [
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
         url: "https://elsaltoweb.es/wp-content/uploads/2025/10/laboratorio-ia.webp",
         width: 1200,
         height: 630,
-        alt: "Laboratorio para crear aplicaciones con Codex de El Salto Web",
+        alt: "Laboratorio de IA editorial de El Salto Web",
       },
     ],
     locale: "es_ES",
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Laboratorio Codex | El Salto Web",
+    title: "Una idea entra. Un artículo sale | El Salto Web",
     description:
-      "Diseña el alcance, la implementación y las pruebas de tu próxima aplicación con Codex.",
+      "Convierte una idea en una publicación lista para revisar y enviar a WordPress.",
     images: [
       "https://elsaltoweb.es/wp-content/uploads/2025/10/laboratorio-ia.webp",
     ],

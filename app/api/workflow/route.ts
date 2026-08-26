@@ -223,408 +223,65 @@ function selectCoverArtDirection(
   ];
 }
 
-const EDITORIAL_PACKAGE_PROMPT = `
-Crea un artículo técnico editorial en español sobre desarrollo web e inteligencia artificial, acompañado de una dirección visual, a partir del briefing proporcionado.
+
+const EDITORIAL_PUBLICATION_PROMPT = `
+Eres editor de una publicación digital en español. A partir del briefing de la persona, crea un artículo completo y una dirección visual para su portada.
 
 OBJETIVO
 
-Transforma la aportación humana del briefing en un caso técnico de producto web plausible.
+Convierte la idea recibida en una publicación autónoma, útil y lista para revisión editorial. El resultado es el artículo final, no un esquema, un plan de escritura ni una explicación de cómo producirlo.
 
-La pieza debe analizar:
-- el problema;
-- el contexto de uso;
-- la solución propuesta;
-- la arquitectura;
-- la interacción;
-- el papel específico de la IA;
-- las decisiones de implementación;
-- las limitaciones;
-- los riesgos.
+Respeta el tipo de contenido y el enfoque indicados en el briefing. Cuando la persona deje esas decisiones a la IA, elige la forma que mejor sirva a la idea.
 
-No escribas una historia ni una pieza narrativa.
-No construyas personajes ficticios, escenas dramatizadas ni situaciones noveladas.
+FIDELIDAD
 
-La aportación humana debe funcionar como requisito, problema o caso de uso real que estructura todo el artículo.
+- Conserva la intención y los hechos aportados por la persona.
+- No inventes experiencias personales, clientes, citas, fuentes, herramientas, estudios, cifras, fechas, métricas ni resultados.
+- Si faltan datos para afirmar algo concreto, formula una observación general honesta o explica el límite sin fingir certeza.
+- No conviertas cada tema en una pieza sobre desarrollo de aplicaciones o sobre la herramienta que ha generado el texto.
+- Menciona marcas, tecnologías o productos solo cuando formen parte de la idea o sean necesarios para comprenderla.
 
-PRINCIPIO CENTRAL
+ESTRUCTURA Y ESTILO
 
-La "chispa aportada por la persona" es el punto de partida técnico del análisis.
+- Escribe en español natural y peninsular salvo que el briefing indique otra variante.
+- Crea un título específico y atractivo, sin clickbait.
+- Abre directamente con el asunto central; evita introducciones genéricas sobre la revolución de la IA.
+- Desarrolla una progresión clara con subtítulos útiles.
+- Prioriza ejemplos, decisiones, matices y pasos concretos según el tipo de contenido.
+- Mantén un tono editorial, humano y preciso. Evita lenguaje de marketing, hype, repeticiones y conclusiones grandilocuentes.
+- Escribe entre 700 y 1.000 palabras, salvo que la idea pida de forma clara una pieza más breve.
+- Cierra de manera natural: con una conclusión útil, una invitación a aplicar lo aprendido o una pregunta relevante. No fuerces una llamada a la acción.
 
-Debes interpretar esa aportación como uno o varios de estos elementos:
+ADAPTACIÓN POR TIPO
 
-- problema de usuario;
-- necesidad;
-- requisito funcional;
-- comportamiento;
-- fricción;
-- oportunidad de automatización;
-- hipótesis de producto;
-- caso de uso.
+- Tutorial o guía: ofrece una secuencia accionable, requisitos cuando existan, advertencias y un resultado esperado.
+- Caso real o enfoque personal: utiliza primera persona únicamente para hechos y vivencias expresamente aportados en el briefing. No completes huecos con ficción.
+- Opinión: presenta una tesis reconocible, argumentos, objeciones y una conclusión razonada.
+- Artículo divulgativo: explica conceptos con claridad y contexto sin simplificarlos en exceso.
+- Enfoque SEO: responde a una intención de búsqueda real con lenguaje natural; no repitas palabras clave artificialmente.
 
-Preserva su significado original.
+FORMATO DEL ARTÍCULO
 
-No la conviertas en:
-- una metáfora;
-- una anécdota;
-- un recurso narrativo;
-- una keyword añadida artificialmente;
-- una excusa para hablar genéricamente de IA.
-
-CASO DE PRODUCTO
-
-A partir del briefing, define un producto o experiencia web concreta.
-
-El artículo debe permitir entender:
-
-- qué problema aborda;
-- quién podría utilizarlo;
-- en qué contexto;
-- cuál sería el flujo principal;
-- qué información introduce el usuario;
-- qué procesa el sistema;
-- qué resultado devuelve;
-- qué parte corresponde a lógica convencional;
-- qué parte corresponde a IA;
-- qué decisiones siguen dependiendo de una persona.
-
-Evita expresiones vagas como:
-
-"plataforma inteligente"
-"experiencia impulsada por IA"
-"sistema revolucionario"
-"solución personalizada"
-
-si no explicas inmediatamente qué hacen técnicamente.
-
-ESTRUCTURA DEL ARTÍCULO
-
-Organiza el contenido alrededor de una estructura técnica similar a esta:
-
-1. Problema
-
-Explica con precisión qué necesidad plantea el briefing y por qué puede convertirse en un problema de producto web.
-
-2. Propuesta de producto
-
-Define qué podría construirse.
-
-Describe:
-- objetivo;
-- usuarios;
-- funcionalidad principal;
-- flujo de interacción;
-- estados importantes de la interfaz.
-
-3. Arquitectura de la solución
-
-Explica una arquitectura plausible.
-
-Cuando sea relevante, aborda:
-
-- frontend;
-- backend;
-- APIs;
-- almacenamiento;
-- autenticación;
-- procesamiento de datos;
-- servicios externos;
-- infraestructura;
-- despliegue.
-
-No añadas tecnologías únicamente para aparentar profundidad técnica.
-
-Cada decisión debe estar relacionada con una necesidad concreta del producto.
-
-4. Papel de la inteligencia artificial
-
-Define exactamente para qué se utiliza IA.
-
-Puede incluir, cuando tenga sentido:
-
-- clasificación;
-- extracción;
-- generación;
-- embeddings;
-- búsqueda semántica;
-- RAG;
-- recomendación;
-- resumen;
-- transformación;
-- visión;
-- análisis de texto;
-- detección de patrones;
-- asistencia contextual.
-
-Explica también qué NO debería delegarse a la IA.
-
-Diferencia entre:
-- reglas deterministas;
-- lógica de aplicación;
-- procesamiento con modelos;
-- decisiones humanas.
-
-5. Flujo de datos
-
-Cuando sea relevante, explica de forma comprensible:
-
-entrada del usuario → validación → procesamiento → modelo → resultado → interfaz
-
-Indica qué datos se almacenan y cuáles podrían procesarse temporalmente.
-
-6. Interfaz y experiencia de usuario
-
-Describe cómo se materializaría la solución en una interfaz web.
-
-Puedes tratar aspectos como:
-
-- formularios;
-- dashboards;
-- edición;
-- estados de carga;
-- streaming;
-- feedback;
-- errores;
-- historial;
-- confirmaciones;
-- accesibilidad;
-- diseño responsive.
-
-La interfaz debe responder al funcionamiento real del sistema.
-
-7. Limitaciones y riesgos
-
-Analiza al menos una limitación importante.
-
-Por ejemplo:
-
-- errores del modelo;
-- alucinaciones;
-- privacidad;
-- coste;
-- latencia;
-- dependencia de proveedores;
-- seguridad;
-- sesgos;
-- accesibilidad;
-- calidad de datos;
-- mantenimiento;
-- escalabilidad.
-
-No presentes la IA como una solución automática o infalible.
-
-8. Implementación viable hoy
-
-Aclara qué partes del producto podrían desarrollarse actualmente con tecnologías existentes.
-
-Distingue claramente cualquier elemento experimental o especulativo.
-
-No inventes:
-- métricas;
-- resultados;
-- estudios;
-- usuarios;
-- herramientas inexistentes;
-- APIs inexistentes;
-- capacidades técnicas no disponibles.
-
-ENFOQUE TÉCNICO
-
-El desarrollo web debe tener peso real en el artículo.
-
-Cuando ayude al caso, puedes discutir decisiones como:
-
-- React;
-- Next.js;
-- Server Components;
-- APIs REST;
-- Server Actions;
-- WebSockets;
-- streaming;
-- bases de datos;
-- almacenamiento vectorial;
-- caché;
-- autenticación;
-- colas;
-- edge functions;
-- observabilidad;
-- rate limiting;
-- arquitectura serverless.
-
-No es obligatorio utilizar estas tecnologías.
-
-Selecciona únicamente las que tengan sentido para el producto descrito.
-
-Evita convertir el artículo en una lista de tecnologías.
-
-IA Y ARQUITECTURA
-
-Si utilizas un modelo generativo, explica:
-
-- qué contexto recibe;
-- qué información proporciona el usuario;
-- qué información recupera el sistema;
-- qué resultado genera;
-- cómo se valida;
-- qué ocurre cuando falla.
-
-Cuando tenga sentido, explica si sería preferible utilizar:
-
-- prompting;
-- structured outputs;
-- function calling;
-- embeddings;
-- RAG;
-- modelos especializados;
-- clasificación convencional;
-- reglas deterministas.
-
-No presupongas que un LLM es siempre la mejor solución.
-
-ESTILO EDITORIAL
-
-Escribe entre 700 y 1.000 palabras.
-
-El tono debe ser:
-
-- técnico;
-- claro;
-- crítico;
-- preciso;
-- accesible para desarrolladores web;
-- editorial, no académico.
-
-Evita:
-
-- storytelling;
-- escenas ficticias;
-- dramatización;
-- metáforas excesivas;
-- introducciones genéricas;
-- lenguaje de marketing;
-- hype sobre inteligencia artificial;
-- tecnosolucionismo;
-- frases como "la IA está revolucionando...";
-- conclusiones grandilocuentes.
-
-El artículo debe parecer escrito por alguien que analiza cómo construir el producto, no por alguien intentando venderlo.
-
-APERTURA
-
-Empieza directamente explicando el problema planteado por el briefing.
-
-No empieces con una historia.
-
-Puedes abrir con:
-- una observación;
-- una limitación;
-- un problema técnico;
-- una necesidad de producto;
-- una contradicción;
-- una pregunta técnica.
-
-FORMATO HTML
-
-Devuelve exclusivamente HTML semántico válido para insertar dentro de una página existente.
+Devuelve article_html como HTML semántico válido para insertar dentro de una página existente.
 
 Utiliza:
-
 - un único <h1>;
-- <section>;
-- <h2>;
-- <p>;
-- <ul><li> cuando ayude a estructurar información técnica.
+- <section>, <h2>, <p>;
+- <ul> o <ol> solo cuando faciliten la lectura;
+- <strong> y <blockquote> con moderación.
 
-No incluyas:
-
-- <html>;
-- <head>;
-- <body>;
-- <style>;
-- <script>;
-- Markdown;
-- bloques de código;
-- comentarios HTML.
-
-No añadas explicaciones fuera del HTML.
-
-CIERRE
-
-Termina con una pregunta técnica o de producto dirigida a la comunidad de desarrollo web.
-
-Debe surgir de alguna decisión o tensión real del caso.
-
-Por ejemplo:
-
-- cuánto automatizar;
-- qué debe seguir bajo control humano;
-- dónde almacenar determinados datos;
-- cuándo utilizar un modelo;
-- cuándo una solución determinista sería mejor.
+No incluyas <html>, <head>, <body>, <style>, <script>, Markdown, comentarios HTML ni bloques de código. No añadas notas sobre el proceso de generación ni una sección de dirección visual dentro del artículo.
 
 DIRECCIÓN VISUAL
 
-Después del artículo incluye:
+Devuelve cover_prompt como una descripción independiente de una única imagen editorial horizontal relacionada directamente con el tema.
 
-<section>
-  <h2>Dirección visual</h2>
-  <p>...</p>
-</section>
+- Describe el sujeto, el entorno, la acción y los objetos significativos.
+- Busca una imagen con una idea visual reconocible, no una ilustración literal de cada frase.
+- No fijes técnica artística, paleta, iluminación ni encuadre; una fase posterior aplicará una dirección visual variable.
+- Evita texto legible, logotipos, marcas de agua y clichés visuales de IA como robots humanoides, cerebros luminosos, hologramas, interfaces flotantes, código decorativo o una persona de espaldas ante un portátil.
 
-Describe una única imagen editorial horizontal relacionada directamente con el producto analizado.
-
-La escena debe representar el uso, el problema o el resultado específico de la aplicación. No centres la imagen en el acto genérico de programar.
-
-Elige como sujeto central uno de estos tipos, según el caso:
-
-- un objeto o conjunto de objetos propios de la actividad;
-- el entorno donde se utilizaría la aplicación;
-- materiales de trabajo, entradas y resultados del flujo;
-- una evidencia física de prueba, accesibilidad o coordinación;
-- una persona usuaria en acción únicamente cuando sea esencial para comprender el caso;
-- una representación material de la arquitectura o del proceso.
-
-Evita utilizar como solución por defecto una persona de espaldas ante un portátil, una oficina doméstica, una pantalla central o un retrato genérico. Una persona desarrollando no explica por sí sola qué aplicación se está construyendo.
-
-La imagen debe comunicar visualmente qué hace la aplicación o qué problema resuelve.
-
-No necesita representar una historia ni una escena emocional.
-
-Prioriza:
-- claridad;
-- contexto técnico;
-- realismo;
-- composición editorial;
-- coherencia con el artículo.
-
-Evita clichés visuales de IA y composiciones repetitivas:
-
-- robots humanoides;
-- cerebros luminosos;
-- hologramas;
-- interfaces flotantes;
-- código binario decorativo;
-- circuitos sobre rostros;
-- estética cyberpunk genérica;
-- texto legible;
-- logotipos;
-- marcas de agua.
-
-El campo cover_prompt debe describir con precisión el sujeto, el entorno, la acción y los objetos significativos. No fijes técnica artística, paleta, iluminación ni encuadre: el generador de portada aplicará una dirección visual variable en una fase posterior.
-
-CRITERIO FINAL
-
-Antes de responder, comprueba internamente:
-
-- ¿El artículo analiza un producto concreto?
-- ¿El problema proviene directamente de la aportación humana?
-- ¿Se entiende cómo funcionaría técnicamente?
-- ¿La IA tiene una función específica y justificada?
-- ¿Se distingue entre IA y lógica convencional?
-- ¿La arquitectura es plausible?
-- ¿Se explican limitaciones reales?
-- ¿Podría un desarrollador imaginar cómo empezar a construirlo?
-
-Si alguna respuesta es no, corrige la pieza antes de entregarla.
+Antes de responder, comprueba internamente que el artículo responde a la idea, que no inventa datos, que el tipo y el tono son coherentes, que contiene un único h1 y que cover_prompt puede entenderse sin leer el briefing.
 `.trim();
 // Mantener sincronizado con las reglas en app/globals.css para vista previa local.
 const IA_GENERATED_INLINE_STYLES = `
@@ -852,7 +509,7 @@ async function generateEditorialPackage(
       messages: [
         {
           role: "system",
-          content: EDITORIAL_PACKAGE_PROMPT,
+          content: EDITORIAL_PUBLICATION_PROMPT,
         },
         {
           role: "user",
@@ -930,7 +587,7 @@ async function generateAiCover(
 ): Promise<CoverAsset> {
   const artDirection = selectCoverArtDirection(editorialDirection, variant);
   const prompt = `
-Crea una portada editorial horizontal original para esta aplicación:
+Crea una portada editorial horizontal original para esta publicación:
 ${editorialDirection}
 
 VARIACIÓN VISUAL OBLIGATORIA: ${artDirection.name}
@@ -941,8 +598,8 @@ VARIACIÓN VISUAL OBLIGATORIA: ${artDirection.name}
 - Luz y textura: ${artDirection.lightAndTexture}.
 
 Reglas de contenido:
-- Representa la función específica de la aplicación mediante su entorno de uso, objetos, materiales, recorrido o evidencia de resultado.
-- Conserva del concepto editorial únicamente el problema, el objeto central y el contexto relevantes. La dirección visual anterior no prevalece sobre la variación obligatoria.
+- Representa el tema específico de la publicación mediante su entorno, objetos, materiales, acción o evidencia de resultado.
+- Conserva del concepto editorial únicamente el asunto, el objeto central y el contexto relevantes. La dirección visual anterior no prevalece sobre la variación obligatoria.
 - No uses por defecto la escena de una persona de espaldas trabajando ante un portátil o monitor.
 - Una pantalla nunca debe ser el único sujeto ni ocupar el centro como una captura de interfaz genérica.
 - Evita oficinas domésticas decorativas, plantas usadas como relleno y fondos con bloques de los colores de marca de la web.
@@ -1025,7 +682,7 @@ async function searchUnsplashCover(
   const searchUrl = new URL("https://api.unsplash.com/search/photos");
   searchUrl.searchParams.set(
     "query",
-    `human technology future ${topic.slice(0, 180)}`
+    `editorial documentary ${topic.slice(0, 180)}`
   );
   searchUrl.searchParams.set("orientation", "landscape");
   searchUrl.searchParams.set("per_page", "10");
