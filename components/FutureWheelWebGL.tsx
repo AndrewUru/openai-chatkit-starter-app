@@ -174,9 +174,11 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
   const displayedRotationRef = useRef(0);
   const animationRef = useRef({ from: 0, to: 0, startedAt: 0, duration: 1 });
   const spinningRef = useRef(spinning);
+  const requestRenderRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     spinningRef.current = spinning;
+    requestRenderRef.current?.();
   }, [spinning]);
 
   useEffect(() => {
@@ -189,6 +191,7 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
       startedAt: performance.now(),
       duration: reduceMotion ? 1 : 1650,
     };
+    requestRenderRef.current?.();
   }, [rotation]);
 
   useEffect(() => {
@@ -203,7 +206,7 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
     const gl = canvas.getContext("webgl", {
       alpha: true,
       antialias: true,
-      powerPreference: "high-performance",
+      powerPreference: "low-power",
     });
     const program = gl ? createProgram(gl) : null;
     const buffer = gl?.createBuffer() ?? null;
@@ -274,7 +277,7 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
       labelLayer.style.transform = cssRotation;
 
       if (gl && program && buffer && !gl.isContextLost()) {
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
         const width = Math.max(1, Math.round(canvas.clientWidth * pixelRatio));
         const height = Math.max(1, Math.round(canvas.clientHeight * pixelRatio));
         if (canvas.width !== width || canvas.height !== height) {
@@ -292,14 +295,18 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
 
-      frame = window.requestAnimationFrame(render);
+      const shouldContinue =
+        progress < 1 || Math.abs(effectStrength - effectTarget) > 0.002;
+      frame = shouldContinue ? window.requestAnimationFrame(render) : 0;
     };
 
     const resume = () => {
       if (isOnScreen && isDocumentVisible && frame === 0) {
+        previousFrame = performance.now();
         frame = window.requestAnimationFrame(render);
       }
     };
+    requestRenderRef.current = resume;
     const observer = new IntersectionObserver(([entry]) => {
       isOnScreen = entry.isIntersecting;
       resume();
@@ -316,6 +323,7 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
       observer.disconnect();
       document.removeEventListener("visibilitychange", handleVisibility);
       canvas.removeEventListener("webglcontextlost", handleContextLoss);
+      requestRenderRef.current = null;
       if (gl && program) gl.deleteProgram(program);
       if (gl && buffer) gl.deleteBuffer(buffer);
     };

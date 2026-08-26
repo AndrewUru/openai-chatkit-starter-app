@@ -52,113 +52,6 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
   background-size: 11px 11px, 13px 13px;
 }
 
-.experience-shell > main,
-.experience-shell > footer {
-  position: relative;
-  z-index: 10;
-}
-
-.fluid-atmosphere {
-  position: fixed;
-  inset: 0;
-
-  z-index: 20;
-
-  overflow: hidden;
-  pointer-events: none;
-
-  opacity: .94;
-
-  mix-blend-mode: multiply;
-
-  isolation: isolate;
-}
-
-.fluid-atmosphere[data-surface="warm"] {
-  opacity: 1;
-  mix-blend-mode: multiply;
-}
-
-.fluid-atmosphere[data-surface="dark"] {
-  opacity: .96;
-  mix-blend-mode: screen;
-}
-
-
-/* ==========================================================
-   AMBIENT COLOR FIELD
-   ========================================================== */
-
-.fluid-atmosphere::before {
-  content: "";
-
-  position: absolute;
-  inset: -20%;
-
-  background:
-    radial-gradient(
-      circle at 12% 20%,
-      rgba(68, 104, 255, .08),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 84% 30%,
-      rgba(255, 92, 53, .065),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 52% 86%,
-      rgba(215, 255, 82, .05),
-      transparent 36%
-    );
-
-  filter: blur(70px);
-
-  opacity: .72;
-
-  transform: scale(1.08);
-
-  pointer-events: none;
-}
-
-
-/* ==========================================================
-   WEBGL
-   ========================================================== */
-
-.fluid-atmosphere-canvas {
-  position: absolute;
-  inset: 0;
-
-  display: block;
-
-  width: 100%;
-  height: 100%;
-
-  opacity: .92;
-
-  filter:
-    saturate(1.24)
-    contrast(1.14);
-
-  pointer-events: none;
-}
-
-
-/* ==========================================================
-   REDUCED MOTION
-   ========================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  .fluid-atmosphere {
-    opacity: .78;
-  }
-
-  .fluid-atmosphere-canvas {
-    filter: none;
-  }
-}
-
 .nav-link {
   position: relative;
   font-size: .78rem;
@@ -593,14 +486,12 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 .generated-story .ia-generated p, .generated-story .ia-generated li { color: #272722; font-size: 1.08rem; line-height: 1.82; }
 
 @media (max-width: 520px) {
-  .fluid-atmosphere { opacity: .55; }
   .wheel-number { --wheel-radius: 31vw; width: 2.1rem; height: 2.1rem; }
   .wheel-pointer { top: -.7rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .fluid-atmosphere { opacity: .4; }
   .marquee-band > div { animation: none; }
   .territory-reveal { animation: none; }
   .ai-live-dot, .ai-writing-line::after { animation: none; }

@@ -18,7 +18,6 @@ import type {
   EditorialStreamPackage,
 } from "@/lib/editorial-stream";
 import { Navbar } from "./Navbar";
-import { FluidAtmosphereWebGL } from "./FluidAtmosphereWebGL";
 
 const FutureWheelWebGL = dynamic(
   () =>
@@ -665,10 +664,9 @@ export function ArticleGenerator() {
 
   return (
     <div className="experience-shell min-h-screen text-[#11110f]">
-      <FluidAtmosphereWebGL />
       <Navbar />
 
-      <main data-atmosphere-surface="light">
+      <main>
         <section
           id="inicio"
           className="relative mx-auto w-full max-w-[1440px] px-5 pb-16 pt-16 sm:px-8 lg:px-14 lg:pb-24"
@@ -708,7 +706,6 @@ export function ArticleGenerator() {
 
         <section
           id="experiencia"
-          data-atmosphere-surface="warm"
           className="scroll-mt-6 bg-[#ff5c35] text-[#11110f]"
         >
           <div className="mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-14 lg:py-28">
@@ -892,7 +889,6 @@ export function ArticleGenerator() {
           <section
             ref={generationRef}
             id="generacion"
-            data-atmosphere-surface="dark"
             className="ai-live-workbench scroll-mt-6 bg-[#11110f] text-[#f4f0e6]"
           >
             <div className="mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-14 lg:py-24">
@@ -973,7 +969,6 @@ export function ArticleGenerator() {
         {showSurprise ? (
           <section
             id="surprise-panel"
-            data-atmosphere-surface="dark"
             className="bg-[#11110f] text-[#f4f0e6]"
           >
             <div className="mx-auto grid w-full max-w-[1440px] gap-14 px-5 py-20 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-14 lg:py-24">
@@ -1048,7 +1043,6 @@ export function ArticleGenerator() {
         <section
           ref={resultRef}
           id="resultado"
-          data-atmosphere-surface="light"
           className="scroll-mt-6 bg-[#f4f0e6]"
         >
           {state === "success" ? (
@@ -1297,10 +1291,7 @@ export function ArticleGenerator() {
         </section>
       </main>
 
-      <footer
-        data-atmosphere-surface="dark"
-        className="flex flex-col justify-between gap-5 border-t border-white/20 bg-[#11110f] px-5 py-8 text-xs uppercase tracking-[0.16em] text-white/50 sm:flex-row sm:px-8 lg:px-14"
-      >
+      <footer className="flex flex-col justify-between gap-5 border-t border-white/20 bg-[#11110f] px-5 py-8 text-xs uppercase tracking-[0.16em] text-white/50 sm:flex-row sm:px-8 lg:px-14">
         <span>El Salto Web · AI Lab</span>
         <span>Experimento construido con Next.js + Codex · 2026</span>
       </footer>
