@@ -142,91 +142,103 @@ type CoverArtDirection = {
 
 const COVER_ART_DIRECTIONS: CoverArtDirection[] = [
   {
-    name: "Tech zine recortado",
+    name: "Editorial suizo",
     medium:
-      "collage digital de fotografías recortadas, pegatinas, trazos de rotulador y textura de fotocopia",
+      "diseño editorial minimalista con fotografía limpia, tipografía sans serif contemporánea y composición basada en retícula",
     composition:
-      "sujeto recortado en gran formato, titular inclinado y elementos gráficos que invaden los bordes",
-    palette: "azul eléctrico, lima ácido, negro tinta y blanco roto",
+      "un único elemento visual protagonista, titular alineado con precisión y mucho espacio negativo alrededor",
+    palette:
+      "blanco, negro, gris cálido y un único color de acento muy controlado",
     people:
-      "gestos espontáneos, manos u objetos en acción; nunca una pose corporativa ante un portátil",
+      "retratos naturales y sobrios, mirada espontánea o gesto cotidiano; nunca pose corporativa",
     lightAndTexture:
-      "flash directo, grano visible, bordes imperfectos y energía de fanzine digital",
+      "luz natural suave, contraste moderado, fondos limpios y textura prácticamente imperceptible",
   },
+
   {
-    name: "Thumbnail social maximalista",
+    name: "Objeto editorial",
     medium:
-      "fotografía expresiva combinada con formas 2D, emojis abstractos y stickers tecnológicos",
+      "fotografía de estudio minimalista de un único objeto relacionado conceptualmente con el tema",
     composition:
-      "primer plano con emoción clara, titular enorme en dos líneas y contraste pensado para verse en tamaño pequeño",
-    palette: "coral brillante, cian, amarillo señal y negro",
+      "objeto aislado con escala generosa, encuadre preciso y titular pequeño integrado en el espacio negativo",
+    palette:
+      "blanco roto, carbón, gris piedra y tonos naturales del objeto",
     people:
-      "si aparece una persona, expresión natural y divertida vinculada al tema; sin gesto exagerado de clickbait",
+      "sin personas; una mano puede aparecer únicamente cuando sea necesaria para aportar contexto o escala",
     lightAndTexture:
-      "luz frontal nítida, sombras duras de recorte y acabado gráfico muy limpio",
+      "luz lateral suave, sombras naturales, materiales reales y acabado fotográfico limpio",
   },
+
   {
-    name: "Juguete 3D retrofuturista",
+    name: "Retrato contemporáneo",
     medium:
-      "render 3D táctil con objetos tecnológicos convertidos en juguetes de plástico y gel translúcido",
+      "fotografía editorial contemporánea con tratamiento cercano a revista de diseño, cultura y tecnología",
     composition:
-      "objeto protagonista grande, perspectiva dinámica y titular integrado como pieza física de la escena",
-    palette: "violeta intenso, naranja mandarina, azul hielo y plata",
+      "retrato amplio o primer plano acompañado por un titular breve, con composición asimétrica y mucho aire",
+    palette:
+      "tonos neutros, piel natural, negro y un acento cromático extraído de la propia fotografía",
     people:
-      "sin personas reales; se permiten avatares o manos 3D simples cuando ayuden a explicar la acción",
+      "expresiones relajadas, gestos reales y situaciones vinculadas al tema; evitar poses artificiales",
     lightAndTexture:
-      "brillos de plástico, sombras suaves, reflejos cromados y acabado juguetón",
+      "luz natural o de estudio muy difusa, profundidad suave y grano fotográfico extremadamente sutil",
   },
+
   {
-    name: "Interfaz punk",
+    name: "Tipografía protagonista",
     medium:
-      "composición gráfica inspirada en interfaces tempranas, ventanas pixeladas y tipografía de póster",
+      "composición editorial puramente tipográfica inspirada en publicaciones contemporáneas de diseño",
     composition:
-      "capas de paneles rotos, cursores y barras abstractas alrededor de un titular frontal muy legible",
-    palette: "negro, verde terminal, rosa neón y crema",
+      "titular de gran escala ocupando buena parte del formato, acompañado por pequeños datos o elementos secundarios",
+    palette:
+      "blanco, negro y un único tono de acento",
     people:
-      "sin retrato corporativo; solo siluetas, manos o fragmentos fotográficos si aportan tensión humana",
+      "sin personas ni ilustraciones salvo que sean absolutamente necesarias",
     lightAndTexture:
-      "píxel visible, ruido digital, bordes duros y pequeños fallos de registro",
+      "superficies planas, bordes precisos, sin efectos decorativos ni texturas innecesarias",
   },
+
   {
-    name: "Macro tech con humor",
+    name: "Tecnología silenciosa",
     medium:
-      "fotografía macro de un objeto cotidiano alterado con una intervención tecnológica inesperada",
+      "fotografía minimalista de hardware, pantallas, componentes o espacios tecnológicos tratados como objetos editoriales",
     composition:
-      "recorte extremo, detalle protagonista y titular compacto ocupando el espacio negativo",
-    palette: "acero, azul eléctrico, rojo tomate y amarillo cálido",
+      "detalle técnico aislado, encuadre arquitectónico y texto reducido situado fuera del foco principal",
+    palette:
+      "negro, plata, blanco frío, gris grafito y pequeños acentos provenientes del propio dispositivo",
     people:
-      "sin retratos; una mano o un gesto puede introducir escala y una nota de humor",
+      "sin retratos; manos o siluetas solo cuando ayuden a comprender la interacción",
     lightAndTexture:
-      "flash de estudio, reflejos intensos, textura hiperreal y contraste alto",
+      "reflejos suaves, metal, cristal, luz ambiental y contraste preciso sin estética futurista exagerada",
   },
+
   {
-    name: "Póster rave digital",
+    name: "Arquitectura digital",
     medium:
-      "póster digital cinético con tipografía protagonista, distorsión óptica y formas vectoriales",
+      "composición abstracta basada en geometría, interfaces simplificadas y estructuras modulares",
     composition:
-      "titular gigante como centro, diagonales rápidas y un símbolo visual específico del tema",
-    palette: "negro profundo, blanco, lima fluorescente y azul ultramar",
+      "bloques, líneas o paneles organizados mediante una retícula estricta con un foco visual claramente definido",
+    palette:
+      "blanco roto, negro, gris y un color funcional de acento",
     people:
-      "sin personas; el ritmo tipográfico y el símbolo temático llevan toda la energía",
+      "sin personas; la estructura visual comunica el concepto",
     lightAndTexture:
-      "alto contraste, desenfoque direccional, tramado y brillo de pantalla",
+      "formas planas, sombras mínimas, líneas finas y acabado extremadamente limpio",
   },
+
   {
-    name: "Scrapbook de internet",
+    name: "Editorial conceptual",
     medium:
-      "mezcla de capturas abstractas, notas adhesivas, iconos dibujados y fotografía casual",
+      "fotografía conceptual minimalista donde una escena sencilla representa visualmente la idea principal del contenido",
     composition:
-      "capas superpuestas como un escritorio caótico, con titular manuscrito-digital muy claro y un foco visual dominante",
-    palette: "crema, azul navegador, rosa chicle y verde menta",
+      "una sola metáfora visual, pocos elementos y gran cantidad de espacio negativo reservado para el titular",
+    palette:
+      "colores naturales y desaturados con uno o dos tonos dominantes",
     people:
-      "fragmentos espontáneos de manos o expresiones solo si conectan directamente con la historia",
+      "personas únicamente cuando formen parte esencial de la idea, mostradas de forma cotidiana y no publicitaria",
     lightAndTexture:
-      "textura de escáner, cinta adhesiva, garabatos y pequeñas imperfecciones de compresión",
+      "luz natural, materiales reales, sombras suaves y tratamiento editorial sobrio",
   },
 ];
-
 function selectCoverArtDirection(
   editorialDirection: string,
   variant: number
