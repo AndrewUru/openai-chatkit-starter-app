@@ -21,7 +21,6 @@ import {
   IDEA_TERRITORIES,
   type DiscoveredIdea,
 } from "@/lib/idea-discovery";
-import { Navbar } from "./Navbar";
 
 const FutureWheelWebGL = dynamic(
   () =>
@@ -94,29 +93,6 @@ const EDITORIAL_FOCUSES: EditorialOption[] = [
     id: "seo",
     label: "SEO",
     instruction: "orientado a búsqueda, con intención clara y lenguaje natural",
-  },
-];
-
-const TOPIC_EXAMPLES = [
-  {
-    label: "IA y desarrollo",
-    prompt: "Cómo estoy utilizando IA para automatizar tareas en WordPress",
-  },
-  {
-    label: "Mi proyecto",
-    prompt: "Lo que he aprendido creando mi primer producto digital con IA",
-  },
-  {
-    label: "Una experiencia",
-    prompt: "Una decisión difícil que mejoró la forma en que trabajo con clientes",
-  },
-  {
-    label: "Un tutorial",
-    prompt: "Cómo preparar una publicación de WordPress desde una idea inicial",
-  },
-  {
-    label: "Una opinión",
-    prompt: "Por qué automatizar no debería significar perder el criterio humano",
   },
 ];
 
@@ -669,185 +645,49 @@ export function ArticleGenerator() {
 
   return (
     <div className="experience-shell min-h-screen text-[#11110f]">
-      <Navbar />
-
       <main>
-        <section
-          id="inicio"
-          className="relative mx-auto w-full max-w-[1440px] px-5 pb-16 pt-16 sm:px-8 lg:px-14 lg:pb-24"
-        >
-          <p className="mb-8 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.24em]">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#ff5c35]" />
-            El Salto Web · AI Lab
-          </p>
-          <div className="grid items-end gap-10 lg:grid-cols-[1.35fr_0.65fr]">
-            <h1 className="max-w-5xl font-serif text-[clamp(4rem,9.5vw,9rem)] leading-[0.79] tracking-[-0.075em]">
-              Una idea entra.
-              <span className="mt-3 block pl-[6vw] italic text-[#4468ff]">
-                Un artículo sale.
+        <section id="experiencia" className="studio-workspace">
+          <header className="studio-header">
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#11110f] text-xs font-black text-[#d7ff52]">
+                ES
               </span>
-            </h1>
-            <div className="border-l-2 border-[#11110f] pl-6 lg:mb-2">
-              <p className="text-xl leading-snug">
-                Gira la ruleta o trae tu propia idea. La IA investiga, escribe y
-                diseña la portada; tú decides si se publica.
-              </p>
-              <a
-                href="#ruleta"
-                className="mt-8 inline-flex items-center gap-3 border-b-2 border-[#11110f] pb-1 text-sm font-bold uppercase tracking-[0.16em] transition hover:text-[#4468ff]"
-              >
-                Girar la ruleta
-                <span aria-hidden="true">↓</span>
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <div className="marquee-band" aria-hidden="true">
-          <div>
-            IDEA · CONTENIDO · PORTADA · REVISIÓN · WORDPRESS · IDEA · CONTENIDO · PORTADA · REVISIÓN · WORDPRESS ·
-          </div>
-        </div>
-
-        <section
-          id="ruleta"
-          className="scroll-mt-6 bg-[#11110f] text-[#f4f0e6]"
-        >
-          <div className="mx-auto grid min-h-[85vh] w-full max-w-[1440px] items-center gap-14 px-5 py-20 sm:px-8 lg:grid-cols-[0.72fr_1.28fr] lg:px-14 lg:py-24">
-            <div>
-              <p className="step-label text-[#d7ff52]">01 / Radar de ideas</p>
-              <h2 className="mt-7 max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                Gira. La IA investiga el resto.
-              </h2>
-              <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/60">
-                Cada giro explora la web en tiempo real y encuentra un ángulo
-                editorial nuevo. Seis territorios, posibilidades infinitas.
-              </p>
-              <div className="mt-10 grid max-w-lg grid-cols-2 gap-x-6 gap-y-3 border-t border-white/20 pt-6 text-xs uppercase tracking-[0.14em] text-white/45 sm:grid-cols-3">
-                {IDEA_TERRITORIES.map((territory) => (
-                  <p key={territory.id}>
-                    <span className="mr-2 text-[#d7ff52]">{territory.number}</span>
-                    {territory.title}
-                  </p>
-                ))}
+              <div>
+                <p className="text-sm font-black uppercase tracking-[-0.02em]">
+                  El Salto Web
+                </p>
+                <p className="font-mono text-[.62rem] uppercase tracking-[.16em] text-black/45">
+                  Estudio editorial con IA
+                </p>
               </div>
             </div>
+            <p className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-black/45 sm:flex">
+              <span className="h-2 w-2 rounded-full bg-[#50c8a8]" />
+              Listo para crear
+            </p>
+          </header>
 
-            <div className="flex flex-col items-center">
-              <div className="wheel-stage">
-                <div className="wheel-pointer" aria-hidden="true" />
-                <FutureWheelWebGL
-                  labels={SURPRISE_NUMBERS}
-                  rotation={wheelRotation}
-                  spinning={isSpinning}
-                />
-                <button
-                  type="button"
-                  onClick={spinWheel}
-                  disabled={isSpinning || isDiscoveringIdea}
-                  className="wheel-trigger"
-                  aria-label="Girar la ruleta y buscar una idea editorial nueva"
+          <div className="studio-grid">
+            <div className="studio-form-panel">
+              <div className="max-w-2xl">
+                <p className="step-label text-[#4468ff]">Crear publicación</p>
+                <h1 className="mt-4 font-serif text-[clamp(3rem,6vw,5.8rem)] leading-[.88] tracking-[-.06em]">
+                  Empieza con una idea.
+                </h1>
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-black/55">
+                  Escríbela tú o deja que la ruleta encuentre un ángulo editorial
+                  y lo coloque aquí.
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="mt-10 flex flex-1 flex-col">
+                <label
+                  htmlFor="editorial-idea"
+                  className="text-xs font-black uppercase tracking-[.16em]"
                 >
-                  <span>
-                    {isSpinning
-                      ? "Girando"
-                      : isDiscoveringIdea
-                      ? "Buscando"
-                      : "Girar"}
-                  </span>
-                  <span aria-hidden="true" className="text-xl">↻</span>
-                </button>
-              </div>
-
-              <div aria-live="polite" className="mt-10 min-h-48 w-full max-w-2xl">
-                {selectedSurprise ? (
-                  <div className="territory-reveal">
-                    <div className="flex items-start justify-between gap-6">
-                      <p className="font-mono text-sm text-[#d7ff52]">
-                        {selectedSurprise.number} / {selectedSurprise.territory}
-                      </p>
-                      <p className="max-w-xs text-right text-xs uppercase tracking-[0.16em] text-white/45">
-                        {selectedSurprise.signal}
-                      </p>
-                    </div>
-                    <h3 className="mt-5 font-serif text-4xl tracking-[-0.04em] sm:text-6xl">
-                      {selectedSurprise.title}
-                    </h3>
-                    <p className="mt-5 max-w-xl text-base leading-relaxed text-white/65">
-                      {selectedSurprise.prompt}
-                    </p>
-                    {selectedSurprise.sources.length ? (
-                      <div className="mt-6 flex flex-wrap gap-2" aria-label="Fuentes encontradas">
-                        {selectedSurprise.sources.map((source, index) => (
-                          <a
-                            key={source.url}
-                            href={source.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="idea-source-chip"
-                          >
-                            <span className="text-white/45">
-                              {String(index + 1).padStart(2, "0")}
-                            </span>
-                            <span className="max-w-44 truncate">{source.title}</span>
-                            <span aria-hidden="true">↗</span>
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
-                    <a
-                      href="#experiencia"
-                      className="mt-7 inline-flex border-b border-[#d7ff52] pb-1 text-sm font-bold text-[#d7ff52]"
-                    >
-                      Desarrollar esta idea ↓
-                    </a>
-                  </div>
-                ) : ideaError ? (
-                  <div role="alert" className="border-t border-[#ff5c35] pt-5 text-center text-sm text-[#ff9b82]">
-                    {ideaError}
-                  </div>
-                ) : (
-                  <div className="border-t border-white/25 pt-5 text-center text-sm text-white/40">
-                    {isDiscoveringIdea ? (
-                      <p className="flex items-center justify-center gap-3">
-                        <span className="ai-live-dot" aria-hidden="true" />
-                        Buscando señales, fuentes y un ángulo que merezca un artículo…
-                      </p>
-                    ) : (
-                      <p>Un giro nunca devuelve exactamente la misma idea.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section
-          id="experiencia"
-          className="scroll-mt-6 bg-[#ff5c35] text-[#11110f]"
-        >
-          <div className="mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-14 lg:py-28">
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-10 lg:grid-cols-[0.58fr_1.42fr]">
-                <div>
-                  <p className="step-label">02 / Tu dirección</p>
-                  <h2 className="mt-7 max-w-xl font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                    ¿Qué quieres contar?
-                  </h2>
-                  <p className="mt-6 max-w-md text-lg leading-relaxed text-black/65">
-                    Una idea, un tema, una experiencia o una pregunta bastan.
-                    No necesitas escribir un prompt ni tener el artículo pensado.
-                  </p>
-                </div>
-
-                <div className="self-end">
-                  <label
-                    htmlFor="editorial-idea"
-                    className="block text-sm font-bold uppercase tracking-[0.16em]"
-                  >
-                    Cuéntanos tu idea
-                  </label>
+                  Tu idea
+                </label>
+                <div className="studio-textarea-wrap mt-3">
                   <textarea
                     id="editorial-idea"
                     value={topic}
@@ -855,143 +695,204 @@ export function ArticleGenerator() {
                       setTopic(event.target.value);
                       setError("");
                     }}
-                    placeholder="Quiero escribir sobre cómo estoy utilizando IA para automatizar tareas en WordPress…"
+                    placeholder="¿Sobre qué quieres escribir?"
                     disabled={state === "loading" || isRefreshingCover}
-                    rows={4}
+                    rows={5}
                     required
-                    className="mt-5 w-full resize-none border-0 border-b-2 border-[#11110f] bg-transparent px-0 py-4 font-serif text-3xl leading-tight outline-none placeholder:text-black/35 focus:border-white disabled:opacity-60 sm:text-4xl"
+                    className="studio-textarea"
                   />
-
-                  <div className="mt-5 flex flex-wrap gap-2" aria-label="Ejemplos de ideas">
-                    {TOPIC_EXAMPLES.map((example) => (
-                      <button
-                        key={example.label}
-                        type="button"
-                        onClick={() => {
-                          setTopic(example.prompt);
-                          setError("");
-                        }}
-                        disabled={state === "loading" || isRefreshingCover}
-                        className="idea-chip"
-                      >
-                        {example.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="mt-6 flex items-center gap-2 text-sm font-semibold">
-                    <span aria-hidden="true">✓</span>
-                    No se publicará nada sin tu confirmación.
-                  </p>
+                  <span className="absolute bottom-4 right-4 font-mono text-[.65rem] uppercase tracking-[.12em] text-black/35">
+                    {topic.trim().length} caracteres
+                  </span>
                 </div>
-              </div>
 
-              <div className="mt-16 border-t-2 border-black pt-8">
-                <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
-                  <div>
-                    <p className="step-label">03 / Dirección opcional</p>
-                    <p className="mt-3 max-w-xl text-sm leading-relaxed text-black/65">
-                      Elige el tipo y el enfoque si quieres tener más control.
-                      Si no, dejaremos que la IA decida.
+                {selectedSurprise ? (
+                  <div className="mt-3 flex items-center justify-between gap-4 border-l-2 border-[#4468ff] pl-3 text-xs">
+                    <p className="font-semibold">
+                      Idea de la ruleta · {selectedSurprise.territory}
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSurprise(null);
+                        setTopic("");
+                      }}
+                      className="font-bold text-black/45 transition hover:text-black"
+                    >
+                      Limpiar
+                    </button>
                   </div>
+                ) : null}
+
+                <div className="mt-6 border-t border-black/15 pt-5">
                   <button
                     type="button"
                     onClick={() => setShowDirection((current) => !current)}
                     aria-expanded={showDirection}
                     aria-controls="editorial-direction"
-                    className="direction-toggle"
+                    className="flex w-full items-center justify-between text-left text-xs font-black uppercase tracking-[.14em]"
                   >
-                    {showDirection ? "Ocultar opciones" : "Elegir dirección"}
-                    <span aria-hidden="true">{showDirection ? "−" : "+"}</span>
+                    Afinar formato y tono
+                    <span aria-hidden="true" className="text-lg">
+                      {showDirection ? "−" : "+"}
+                    </span>
+                  </button>
+
+                  {showDirection ? (
+                    <div id="editorial-direction" className="mt-5 grid gap-5">
+                      <fieldset>
+                        <legend className="font-mono text-[.65rem] uppercase tracking-[.12em] text-black/45">
+                          Formato
+                        </legend>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {CONTENT_TYPES.map((option) => {
+                            const isSelected = selectedContentTypeId === option.id;
+                            return (
+                              <button
+                                key={option.id}
+                                type="button"
+                                aria-pressed={isSelected}
+                                onClick={() =>
+                                  setSelectedContentTypeId((current) =>
+                                    current === option.id ? null : option.id
+                                  )
+                                }
+                                className={`editorial-option ${isSelected ? "is-selected" : ""}`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </fieldset>
+
+                      <fieldset>
+                        <legend className="font-mono text-[.65rem] uppercase tracking-[.12em] text-black/45">
+                          Tono
+                        </legend>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {EDITORIAL_FOCUSES.map((option) => {
+                            const isSelected = selectedFocusId === option.id;
+                            return (
+                              <button
+                                key={option.id}
+                                type="button"
+                                aria-pressed={isSelected}
+                                onClick={() =>
+                                  setSelectedFocusId((current) =>
+                                    current === option.id ? null : option.id
+                                  )
+                                }
+                                className={`editorial-option ${isSelected ? "is-selected" : ""}`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </fieldset>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mt-auto pt-8">
+                  <button
+                    type="submit"
+                    disabled={state === "loading" || isRefreshingCover || !topic.trim()}
+                    className="studio-create-button"
+                  >
+                    <span>{state === "loading" ? "Creando…" : "Crear publicación"}</span>
+                    <span aria-hidden="true" className="text-xl">→</span>
+                  </button>
+                  <p className="mt-3 text-center text-xs text-black/45">
+                    Se genera un borrador. Nada se publica sin tu confirmación.
+                  </p>
+                  {state === "error" ? (
+                    <p role="alert" className="mt-4 border-l-4 border-[#ff5c35] pl-4 text-sm font-semibold">
+                      {error}
+                    </p>
+                  ) : null}
+                </div>
+              </form>
+            </div>
+
+            <aside id="ruleta" className="studio-wheel-panel">
+              <div className="flex w-full items-start justify-between gap-4">
+                <div>
+                  <p className="step-label text-[#d7ff52]">¿Sin idea?</p>
+                  <h2 className="mt-3 font-serif text-4xl leading-none tracking-[-.045em] sm:text-5xl">
+                    Gira la ruleta.
+                  </h2>
+                </div>
+                <p className="max-w-40 text-right text-xs leading-relaxed text-white/45">
+                  Investiga una señal real y la convierte en punto de partida.
+                </p>
+              </div>
+
+              <div className="my-auto flex flex-col items-center py-8">
+                <div className="wheel-stage studio-wheel-stage">
+                  <div className="wheel-pointer" aria-hidden="true" />
+                  <FutureWheelWebGL
+                    labels={SURPRISE_NUMBERS}
+                    rotation={wheelRotation}
+                    spinning={isSpinning}
+                  />
+                  <button
+                    type="button"
+                    onClick={spinWheel}
+                    disabled={isSpinning || isDiscoveringIdea}
+                    className="wheel-trigger"
+                    aria-label="Girar la ruleta y buscar una idea editorial nueva"
+                  >
+                    <span>
+                      {isSpinning
+                        ? "Girando"
+                        : isDiscoveringIdea
+                        ? "Buscando"
+                        : "Girar"}
+                    </span>
+                    <span aria-hidden="true" className="text-xl">↻</span>
                   </button>
                 </div>
 
-                {showDirection ? (
-                  <div id="editorial-direction" className="mt-8 grid gap-8 lg:grid-cols-2">
-                    <fieldset>
-                      <legend className="text-sm font-bold uppercase tracking-[0.14em]">
-                        Tipo de contenido
-                      </legend>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {CONTENT_TYPES.map((option) => {
-                          const isSelected = selectedContentTypeId === option.id;
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              aria-pressed={isSelected}
-                              onClick={() =>
-                                setSelectedContentTypeId((current) =>
-                                  current === option.id ? null : option.id
-                                )
-                              }
-                              className={`editorial-option ${isSelected ? "is-selected" : ""}`}
-                            >
-                              {option.label}
-                            </button>
-                          );
-                        })}
+                <div aria-live="polite" className="mt-7 min-h-24 w-full max-w-xl">
+                  {selectedSurprise ? (
+                    <div className="studio-idea-result">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="font-mono text-[.68rem] uppercase tracking-[.12em] text-[#d7ff52]">
+                          {selectedSurprise.number} · {selectedSurprise.territory}
+                        </p>
+                        <p className="truncate text-right text-[.68rem] uppercase tracking-[.1em] text-white/35">
+                          {selectedSurprise.signal}
+                        </p>
                       </div>
-                    </fieldset>
-
-                    <fieldset>
-                      <legend className="text-sm font-bold uppercase tracking-[0.14em]">
-                        Enfoque
-                      </legend>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {EDITORIAL_FOCUSES.map((option) => {
-                          const isSelected = selectedFocusId === option.id;
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              aria-pressed={isSelected}
-                              onClick={() =>
-                                setSelectedFocusId((current) =>
-                                  current === option.id ? null : option.id
-                                )
-                              }
-                              className={`editorial-option ${isSelected ? "is-selected" : ""}`}
-                            >
-                              {option.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </fieldset>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedContentTypeId(null);
-                        setSelectedFocusId(null);
-                      }}
-                      className="w-fit border-b border-black pb-1 text-sm font-bold"
-                    >
-                      Dejar que la IA decida
-                    </button>
-                  </div>
-                ) : null}
+                      <h3 className="mt-3 font-serif text-2xl leading-tight tracking-[-.03em] sm:text-3xl">
+                        {selectedSurprise.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-white/55">
+                        La idea ya está en el formulario. Puedes editarla antes de crear.
+                      </p>
+                    </div>
+                  ) : ideaError ? (
+                    <p role="alert" className="border-l-2 border-[#ff5c35] pl-3 text-sm text-[#ff9b82]">
+                      {ideaError}
+                    </p>
+                  ) : (
+                    <p className="text-center text-sm text-white/40">
+                      {isDiscoveringIdea
+                        ? "Buscando una idea y fuentes actuales…"
+                        : "Pulsa el centro para descubrir tu próxima publicación."}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="mt-12 flex justify-end border-t border-black/30 pt-8">
-                <button
-                  type="submit"
-                  disabled={state === "loading" || isRefreshingCover || !topic.trim()}
-                  className="create-button"
-                >
-                  {state === "loading" ? "Generando…" : "Generar publicación"}
-                  <span aria-hidden="true">↗</span>
-                </button>
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 border-t border-white/15 pt-4 font-mono text-[.58rem] uppercase tracking-[.1em] text-white/35">
+                {IDEA_TERRITORIES.map((territory) => (
+                  <span key={territory.id}>{territory.title}</span>
+                ))}
               </div>
-
-              {state === "error" ? (
-                <p role="alert" className="mt-8 border-l-4 border-[#11110f] pl-4 font-semibold">
-                  {error}
-                </p>
-              ) : null}
-            </form>
+            </aside>
           </div>
         </section>
 
@@ -1330,11 +1231,6 @@ export function ArticleGenerator() {
           ) : null}
         </section>
       </main>
-
-      <footer className="flex flex-col justify-between gap-5 border-t border-white/20 bg-[#11110f] px-5 py-8 text-xs uppercase tracking-[0.16em] text-white/50 sm:flex-row sm:px-8 lg:px-14">
-        <span>El Salto Web · AI Lab</span>
-        <span>Experimento construido con Next.js + Codex · 2026</span>
-      </footer>
     </div>
   );
 }
