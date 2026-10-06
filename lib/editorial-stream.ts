@@ -14,6 +14,7 @@ export const editorialStreamSchema = z.object({
 export type EditorialStreamPackage = z.infer<typeof editorialStreamSchema>;
 
 export type EditorialStreamEvent =
+  | { type: "status"; phase: "researching" | "writing" }
   | {
       type: "partial";
       data: Partial<EditorialStreamPackage>;

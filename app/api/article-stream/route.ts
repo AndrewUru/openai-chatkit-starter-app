@@ -49,44 +49,6 @@ export async function POST(request: Request) {
     baseURL: `${apiBase}/v1`,
   });
 
-  let streamError: Error | null = null;
-  const result = streamText({
-    model: openai.responses(textModel),
-    system: EDITORIAL_PUBLICATION_PROMPT,
-    prompt: [
-      "BRIEFING EDITORIAL:",
-      creativeBrief,
-      "",
-      "SEÑALES VISUALES SELECCIONADAS POR LA PERSONA:",
-      visualSignals,
-    ].join("\n"),
-    tools: {
-      web_search: openai.tools.webSearch({
-        externalWebAccess: true,
-        searchContextSize: "high",
-        userLocation: {
-          type: "approximate",
-          country: "ES",
-          timezone: "Europe/Madrid",
-        },
-      }),
-    },
-    prepareStep: ({ stepNumber }) =>
-      stepNumber === 0
-        ? {
-            toolChoice: { type: "tool", toolName: "web_search" },
-            activeTools: ["web_search"],
-          }
-        : { toolChoice: "none", activeTools: [] },
-    stopWhen: stepCountIs(3),
-    output: Output.object({ schema: editorialStreamSchema }),
-    onError({ error }) {
-      streamError =
-        error instanceof Error ? error : new Error("La generación se interrumpió.");
-      console.error("Error en el streaming editorial:", error);
-    },
-  });
-
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -95,6 +57,47 @@ export async function POST(request: Request) {
       };
 
       try {
+        let streamError: Error | null = null;
+        const result = streamText({
+          model: openai.responses(textModel),
+          abortSignal: request.signal,
+          system: EDITORIAL_PUBLICATION_PROMPT,
+          prompt: [
+            "BRIEFING EDITORIAL:",
+            creativeBrief,
+            "",
+            "SEÑALES VISUALES SELECCIONADAS POR LA PERSONA:",
+            visualSignals,
+          ].join("\n"),
+          tools: {
+            web_search: openai.tools.webSearch({
+              externalWebAccess: true,
+              searchContextSize: "high",
+              userLocation: {
+                type: "approximate",
+                country: "ES",
+                timezone: "Europe/Madrid",
+              },
+            }),
+          },
+          prepareStep: ({ stepNumber }) => {
+            send({ type: "status", phase: stepNumber === 0 ? "researching" : "writing" });
+            return stepNumber === 0
+              ? {
+                  toolChoice: { type: "tool", toolName: "web_search" },
+                  activeTools: ["web_search"],
+                }
+              : { toolChoice: "none", activeTools: [] };
+          },
+          stopWhen: stepCountIs(3),
+          output: Output.object({ schema: editorialStreamSchema }),
+          onError({ error }) {
+            streamError =
+              error instanceof Error ? error : new Error("La generación se interrumpió.");
+            console.error("Error en el streaming editorial:", error);
+          },
+        });
+
         for await (const partial of result.partialOutputStream) {
           send({ type: "partial", data: partial });
         }

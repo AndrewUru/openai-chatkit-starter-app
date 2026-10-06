@@ -121,6 +121,9 @@ export function ArticleGenerator() {
   const [showDirection, setShowDirection] = useState(false);
   const [selectedSurprise, setSelectedSurprise] =
     useState<DiscoveredIdea | null>(null);
+  const [ideaElapsedSeconds, setIdeaElapsedSeconds] = useState(0);
+  const [discoveryTerritory, setDiscoveryTerritory] = useState("");
+  const [generationPhase, setGenerationPhase] = useState<"researching" | "writing" | "finalizing">("researching");
   const [ideaError, setIdeaError] = useState("");
   const [isDiscoveringIdea, setIsDiscoveringIdea] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
@@ -210,6 +213,16 @@ export function ArticleGenerator() {
     return () => window.clearInterval(interval);
   }, [isRefreshingCover]);
 
+  useEffect(() => {
+    if (!isDiscoveringIdea) return;
+    const startedAt = Date.now();
+    setIdeaElapsedSeconds(0);
+    const timer = window.setInterval(() => {
+      setIdeaElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [isDiscoveringIdea]);
+
   const spinWheel = useCallback(async () => {
     if (isSpinning || isDiscoveringIdea) return;
 
@@ -224,6 +237,8 @@ export function ArticleGenerator() {
     const targetPosition = (330 - index * 60 + 360) % 360;
     const landingDistance = (targetPosition - currentPosition + 360) % 360;
 
+    setDiscoveryTerritory(territory.title);
+    setIdeaElapsedSeconds(0);
     setIsSpinning(true);
     setIsDiscoveringIdea(true);
     setSelectedSurprise(null);
@@ -320,6 +335,7 @@ export function ArticleGenerator() {
       const workflowController = new AbortController();
       workflowAbortRef.current = workflowController;
 
+      setGenerationPhase("researching");
       setState("loading");
       setError("");
       setArticle("");
@@ -369,7 +385,12 @@ export function ArticleGenerator() {
           if (event.type === "error") {
             throw new Error(event.message);
           }
+          if (event.type === "status") {
+            setGenerationPhase(event.phase);
+            return;
+          }
           if (event.data.article_html) {
+            setGenerationPhase("writing");
             setLiveArticleHtml(event.data.article_html);
           }
           if (event.data.cover_prompt) {
@@ -397,6 +418,7 @@ export function ArticleGenerator() {
 
         const generatedCoverPrompt =
           streamedPackage.cover_prompt?.trim() || visualBrief;
+        setGenerationPhase("finalizing");
         const finalizeResponse = await fetch(
           `/api/workflow?key=${encodeURIComponent(PUBLIC_KEY)}`,
           {
@@ -618,21 +640,18 @@ export function ArticleGenerator() {
 
   const liveWordCount = countWords(liveArticleHtml);
   const liveHeading = extractHeading(liveArticleHtml);
-  const generationProgress = liveCoverDirection
-    ? 94
-    : Math.min(88, 10 + Math.round(liveWordCount / 10));
-
-  const loadingMessage = (() => {
-    if (!liveArticleHtml) return "Investigando fuentes en la web";
-    if (liveWordCount < 120) return "Encontrando el ángulo editorial";
-    if (!liveCoverDirection) return "Escribiendo en directo";
-    return "Definiendo la dirección visual";
-  })();
-
-  const loadingHint =
-    liveArticleHtml
-      ? "Ya puedes leer la publicación mientras la IA continúa escribiendo."
-      : "Las primeras palabras aparecerán cuando la IA haya contrastado el ángulo editorial.";
+  const generationSteps = ["Investigar fuentes", "Redactar artículo", "Preparar borrador"];
+  const activeGenerationStep = generationPhase === "researching" ? 0 : generationPhase === "writing" ? 1 : 2;
+  const loadingMessage = generationPhase === "researching"
+    ? "Buscando y contrastando fuentes en la web"
+    : generationPhase === "writing"
+    ? "Redactando tu publicación"
+    : "Preparando el borrador para revisión";
+  const loadingHint = generationPhase === "researching"
+    ? "La IA está investigando el tema. El texto aparecerá aquí cuando comience la redacción."
+    : generationPhase === "writing"
+    ? "El artículo llega en directo. Puedes leerlo mientras se completa."
+    : "El texto está completo. Estamos aplicando el formato final.";
 
   const elapsedLabel = `${String(Math.floor(elapsedSeconds / 60)).padStart(
     2,
@@ -798,7 +817,7 @@ export function ArticleGenerator() {
                 <div className="mt-auto pt-8">
                   <button
                     type="submit"
-                    disabled={state === "loading" || isRefreshingCover || !topic.trim()}
+                    disabled={state === "loading" || isDiscoveringIdea || isRefreshingCover || !topic.trim()}
                     className="studio-create-button"
                   >
                     <span>{state === "loading" ? "Creando…" : "Crear publicación"}</span>
@@ -856,7 +875,28 @@ export function ArticleGenerator() {
                 </div>
 
                 <div aria-live="polite" className="mt-7 min-h-24 w-full max-w-xl">
-                  {selectedSurprise ? (
+                  {isDiscoveringIdea ? (
+                    <div className="idea-search-panel" role="status" aria-busy="true">
+                      <div className="flex items-center gap-4">
+                        <span className="workflow-spinner" aria-hidden="true" />
+                        <div>
+                          <p className="font-mono text-xs uppercase tracking-widest text-[#d7ff52]">
+                            {isSpinning ? "Seleccionando territorio" : "Investigando en la web"}
+                          </p>
+                          <h3 className="mt-2 text-xl font-semibold">
+                            {isSpinning ? "Tu próxima idea está en camino" : `Buscando una idea sobre ${discoveryTerritory}`}
+                          </h3>
+                        </div>
+                      </div>
+                      <p className="mt-4 text-sm leading-relaxed text-white/65">
+                        Consultamos fuentes actuales para preparar una idea con contexto y referencias.
+                      </p>
+                      <div className="workflow-track mt-5" aria-hidden="true"><span /></div>
+                      <p className="mt-3 text-xs text-white/50">
+                        {ideaElapsedSeconds} s de búsqueda · {ideaElapsedSeconds >= 30 ? "La investigación sigue en curso. Algunas fuentes tardan más en responder." : "La idea aparecerá aquí en cuanto está lista."}
+                      </p>
+                    </div>
+                  ) : selectedSurprise ? (
                     <div className="studio-idea-result">
                       <div className="flex items-center justify-between gap-4">
                         <p className="font-mono text-[.68rem] uppercase tracking-[.12em] text-[#d7ff52]">
@@ -914,8 +954,7 @@ export function ArticleGenerator() {
                       La publicación está naciendo ahora.
                     </h2>
                     <p className="mt-6 max-w-md text-base leading-relaxed text-white/55">
-                      No es una animación de espera: cada fragmento que ves llega
-                      del modelo en tiempo real.
+                      La IA investiga el tema, redacta el contenido y prepara un borrador para que lo revises.
                     </p>
                   </div>
 
@@ -933,12 +972,16 @@ export function ArticleGenerator() {
                         {elapsedLabel}
                       </span>
                     </div>
-                    <div className="mt-5 h-1 overflow-hidden bg-white/15">
-                      <div
-                        className="ai-live-progress h-full bg-[#d7ff52]"
-                        style={{ width: `${generationProgress}%` }}
-                      />
-                    </div>
+                    <div className="workflow-track mt-5" aria-hidden="true"><span /></div>
+                    <ol className="generation-steps mt-6" aria-label="Avance de la publicación">
+                      {generationSteps.map((label, index) => (
+                        <li key={label} data-active={index === activeGenerationStep} data-complete={index < activeGenerationStep} aria-current={index === activeGenerationStep ? "step" : undefined}>
+                          <span aria-hidden="true">{index < activeGenerationStep ? "✓" : index === activeGenerationStep ? <span className="workflow-spinner" /> : index + 1}</span>
+                          <span>{label}{index === activeGenerationStep ? " · En curso" : index < activeGenerationStep ? " · Listo" : " · Pendiente"}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    {elapsedSeconds >= 45 ? <p className="mt-5 text-sm text-white/60">La IA sigue trabajando. Este proceso puede tardar unos minutos.</p> : null}
                     <div className="mt-5 grid grid-cols-2 gap-4 font-mono text-xs uppercase tracking-[0.12em] text-white/40">
                       <p>
                         Palabras <span className="block pt-1 text-xl text-white">{liveWordCount}</span>
@@ -964,6 +1007,10 @@ export function ArticleGenerator() {
                     </div>
                   ) : (
                     <div className="space-y-5 px-7 py-12 sm:px-12">
+                      <div role="status" className="mb-10 flex items-center gap-4 text-[#d7ff52]">
+                        <span className="workflow-spinner" aria-hidden="true" />
+                        <span>{loadingMessage}</span>
+                      </div>
                       <div className="ai-writing-line h-12 w-4/5" />
                       <div className="ai-writing-line h-4 w-full" />
                       <div className="ai-writing-line h-4 w-11/12" />
@@ -1067,6 +1114,7 @@ export function ArticleGenerator() {
                       className="absolute inset-0 z-10 grid place-items-center bg-black/70 px-8 text-center text-white"
                     >
                       <div>
+                        <span className="workflow-spinner mx-auto mb-5" aria-hidden="true" />
                         <p className="text-sm font-bold uppercase tracking-[0.16em]">
                           {cover
                             ? "Buscando otra mirada…"

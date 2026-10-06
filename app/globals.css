@@ -712,3 +712,19 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 @media (max-width: 680px) {
   .ia-generated { margin: 1rem 0; padding: 1.25rem; }
 }
+
+/* Visible feedback while discovery and editorial requests are running. */
+.idea-search-panel { padding: 1.5rem; background: #181916; border: 1px solid #d7ff5240; border-radius: .75rem; text-align: left; }
+.workflow-spinner { display: inline-block; flex-shrink: 0; width: 1.75rem; height: 1.75rem; border: 2px solid #d7ff5230; border-top-color: #d7ff52; border-radius: 50%; animation: workflow-spin .9s linear infinite; }
+.workflow-track { height: .25rem; overflow: hidden; background: #ffffff18; border-radius: 1rem; }
+.workflow-track > span { display: block; width: 35%; height: 100%; background: #d7ff52; animation: workflow-scan 1.8s ease-in-out infinite; }
+.generation-steps { display: grid; gap: 1rem; list-style: none; padding: 0; }
+.generation-steps li { display: flex; align-items: center; gap: .75rem; color: #ffffff65; font-size: .85rem; }
+.generation-steps li > span:first-child { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; flex-shrink: 0; }
+.generation-steps li[data-active="true"], .generation-steps li[data-complete="true"] { color: #d7ff52; }
+@keyframes workflow-spin { to { transform: rotate(360deg); } }
+@keyframes workflow-scan { from { transform: translateX(-100%); } to { transform: translateX(390%); } }
+@media (prefers-reduced-motion: reduce) {
+  .workflow-spinner, .workflow-track > span { animation: none; }
+  .workflow-track > span { width: 100%; opacity: .5; }
+}
