@@ -632,14 +632,13 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 }
 
 .ia-cover {
-  max-width: min(900px, 100%);
-  margin: 2rem auto;
+  max-width: min(960px, 100%);
+  margin: 0 auto 3rem;
 }
 .ia-cover img {
   display: block;
   width: 100%;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
+  height: auto;
   border-radius: .5rem;
 }
 .ia-cover figcaption {
@@ -653,10 +652,10 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   max-width: min(780px, 100%);
   margin: 2rem auto;
-  padding: clamp(1.25rem, 4vw, 3rem);
-  background: #111110;
-  border: 1px solid #30302d;
-  border-radius: .5rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
   color: #d4d4cf;
   overflow-wrap: anywhere;
@@ -665,7 +664,7 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 .ia-generated::before, .ia-generated::after, .ia-generated h2::before { content: none; }
 .ia-generated h1 {
   margin: 0 0 2rem;
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.12;
   letter-spacing: -.04em;
   font-weight: 700;
@@ -710,7 +709,37 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 .ia-generated section { margin-top: 2rem; }
 .ia-generated footer { margin-top: 3rem; font-size: .9rem; color: #a3a3a3; }
 @media (max-width: 680px) {
-  .ia-generated { margin: 1rem 0; padding: 1.25rem; }
+  .ia-generated { margin: 1.5rem auto; padding: 0; }
+}
+
+/* WordPress single-post layout, scoped to generated publications. */
+body.single-post:has(main.site-main .ia-generated) {
+  background: #111110;
+  background-image: none;
+  color: #d4d4cf;
+}
+body.single-post main.site-main:has(.ia-generated) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: #111110;
+  color: #d4d4cf;
+}
+body.single-post main.site-main .page-content:has(.ia-generated) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 9rem 2rem 5rem;
+  background: #111110;
+}
+body.single-post main.site-main .page-content .ia-generated { margin: 0 auto; }
+body.single-post main.site-main .page-content .ia-cover { margin: 0 auto 3rem; }
+@media (max-width: 680px) {
+  body.single-post main.site-main .page-content:has(.ia-generated) { padding: 7rem 1.25rem 3rem; }
+  body.single-post main.site-main .page-content .ia-cover { margin-bottom: 2rem; }
 }
 
 /* Visible feedback while discovery and editorial requests are running. */
