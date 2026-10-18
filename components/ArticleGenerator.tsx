@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import type {
   CoverAsset,
@@ -143,9 +144,17 @@ export function ArticleGenerator() {
   const [publishState, setPublishState] = useState<PublishState>("idle");
   const [publishMessage, setPublishMessage] = useState("");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [publishTarget, setPublishTarget] = useState<"draft" | "publish" | null>(null);
+  const [confirmPublish, setConfirmPublish] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [isPublishPanelVisible, setIsPublishPanelVisible] = useState(false);
   const resultRef = useRef<HTMLElement>(null);
   const generationRef = useRef<HTMLElement>(null);
   const articleRef = useRef<HTMLDivElement>(null);
+  const livePageRef = useRef<HTMLDivElement>(null);
+  const followLiveDraftRef = useRef(true);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const publishPanelRef = useRef<HTMLElement>(null);
   const workflowAbortRef = useRef<AbortController | null>(null);
   const ideaAbortRef = useRef<AbortController | null>(null);
   const coverVariantRef = useRef(0);
@@ -173,6 +182,7 @@ export function ArticleGenerator() {
     if (state === "loading") {
       const startedAt = Date.now();
       setElapsedSeconds(0);
+      followLiveDraftRef.current = true;
       const scrollTimer = window.setTimeout(() => {
         generationRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -196,7 +206,43 @@ export function ArticleGenerator() {
     }
 
     setElapsedSeconds(0);
+    if (state === "error") {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
     return undefined;
+  }, [state]);
+
+  // Keep the live draft pinned to the newest text unless the reader scrolled up.
+  useEffect(() => {
+    const page = livePageRef.current;
+    if (page && followLiveDraftRef.current) {
+      page.scrollTop = page.scrollHeight;
+    }
+  }, [liveArticleHtml]);
+
+  useEffect(() => {
+    if (!confirmPublish) return undefined;
+    const timer = window.setTimeout(() => setConfirmPublish(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [confirmPublish]);
+
+  useEffect(() => {
+    if (copyState === "idle") return undefined;
+    const timer = window.setTimeout(() => setCopyState("idle"), 2200);
+    return () => window.clearTimeout(timer);
+  }, [copyState]);
+
+  useEffect(() => {
+    const panel = publishPanelRef.current;
+    if (state !== "success" || !panel) {
+      setIsPublishPanelVisible(false);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(([entry]) =>
+      setIsPublishPanelVisible(entry.isIntersecting)
+    );
+    observer.observe(panel);
+    return () => observer.disconnect();
   }, [state]);
 
   useEffect(() => {
@@ -349,6 +395,8 @@ export function ArticleGenerator() {
       setResultMessage("");
       setPublishedLink(null);
       setPublishState("idle");
+      setPublishTarget(null);
+      setConfirmPublish(false);
       setPublishMessage("");
 
       try {
@@ -593,6 +641,8 @@ export function ArticleGenerator() {
   const publishPiece = useCallback(
     async (status: "draft" | "publish") => {
       if (!article || isRefreshingCover || publishState === "publishing") return;
+      setConfirmPublish(false);
+      setPublishTarget(status);
       setPublishState("publishing");
       setPublishMessage("");
 
@@ -631,6 +681,54 @@ export function ArticleGenerator() {
     [article, cover, isRefreshingCover, publishState]
   );
 
+  const cancelGeneration = useCallback(() => {
+    cancelActiveWorkflow();
+    setLiveArticleHtml("");
+    setLiveCoverDirection("");
+    setState("idle");
+    document
+      .getElementById("experiencia")
+      ?.scrollIntoView({ behavior: "smooth" });
+  }, [cancelActiveWorkflow]);
+
+  const copyArticleHtml = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(article);
+      setCopyState("copied");
+    } catch {
+      setCopyState("error");
+    }
+  }, [article]);
+
+  const startOver = useCallback(() => {
+    if (
+      publishState !== "published" &&
+      !window.confirm(
+        "El borrador actual no se ha enviado a WordPress y se perderá. ¿Quieres empezar otra publicación?"
+      )
+    ) {
+      return;
+    }
+    cancelActiveWorkflow();
+    setSelectedSurprise(null);
+    setTopic("");
+    setArticle("");
+    setLiveArticleHtml("");
+    setLiveCoverDirection("");
+    setCover(null);
+    setCoverPrompt("");
+    setCoverError("");
+    setPublishedLink(null);
+    setPublishState("idle");
+    setPublishTarget(null);
+    setConfirmPublish(false);
+    setPublishMessage("");
+    setState("idle");
+    document
+      .getElementById("experiencia")
+      ?.scrollIntoView({ behavior: "smooth" });
+  }, [cancelActiveWorkflow, publishState]);
+
   const coverPreviewUrl =
     cover?.source === "generated"
       ? `data:${cover.mimeType};base64,${cover.data}`
@@ -662,6 +760,26 @@ export function ArticleGenerator() {
     Math.floor(coverElapsedSeconds / 60)
   ).padStart(2, "0")}:${String(coverElapsedSeconds % 60).padStart(2, "0")}`;
 
+  const studioStatus =
+    state === "loading"
+      ? { label: "Creando publicación", color: "#d7ff52", pulse: true }
+      : isDiscoveringIdea
+      ? { label: "Buscando idea", color: "#4468ff", pulse: true }
+      : publishState === "published"
+      ? { label: "Enviado a WordPress", color: "#50c8a8", pulse: false }
+      : state === "success"
+      ? { label: "Borrador listo para revisar", color: "#ffca3a", pulse: false }
+      : { label: "Listo para crear", color: "#50c8a8", pulse: false };
+
+  const directionSummary =
+    [selectedContentType?.label, selectedFocus?.label]
+      .filter(Boolean)
+      .join(" · ") || "Automático";
+
+  const isPublished = publishState === "published";
+  const publishLocked =
+    isRefreshingCover || publishState === "publishing" || isPublished;
+
   return (
     <div className="experience-shell min-h-screen text-[#11110f]">
       <main>
@@ -680,16 +798,27 @@ export function ArticleGenerator() {
                 </p>
               </div>
             </div>
-            <p className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-black/45 sm:flex">
-              <span className="h-2 w-2 rounded-full bg-[#50c8a8]" />
-              Listo para crear
-            </p>
+            <div className="flex items-center gap-5">
+              <p
+                aria-live="polite"
+                className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-black/45 sm:flex"
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${studioStatus.pulse ? "status-pulse" : ""}`}
+                  style={{ backgroundColor: studioStatus.color }}
+                />
+                {studioStatus.label}
+              </p>
+              <Link href="/flujo" className="nav-link hidden md:inline">
+                Cómo funciona
+              </Link>
+            </div>
           </header>
 
           <div className="studio-grid">
             <div className="studio-form-panel">
               <div className="max-w-2xl">
-                <p className="step-label text-[#4468ff]">Crear publicación</p>
+                <p className="step-label text-[#4468ff]">01 / Crear publicación</p>
                 <h1 className="mt-4 font-serif text-[clamp(3rem,6vw,5.8rem)] leading-[.88] tracking-[-.06em]">
                   Empieza con una idea.
                 </h1>
@@ -713,6 +842,12 @@ export function ArticleGenerator() {
                     onChange={(event) => {
                       setTopic(event.target.value);
                       setError("");
+                    }}
+                    onKeyDown={(event) => {
+                      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                        event.preventDefault();
+                        event.currentTarget.form?.requestSubmit();
+                      }
                     }}
                     placeholder="¿Sobre qué quieres escribir?"
                     disabled={state === "loading" || isRefreshingCover}
@@ -752,8 +887,13 @@ export function ArticleGenerator() {
                     className="flex w-full items-center justify-between text-left text-xs font-black uppercase tracking-[.14em]"
                   >
                     Afinar formato y tono
-                    <span aria-hidden="true" className="text-lg">
-                      {showDirection ? "−" : "+"}
+                    <span className="flex items-center gap-3">
+                      <span className="font-mono text-[.65rem] font-normal normal-case tracking-normal text-black/50">
+                        {directionSummary}
+                      </span>
+                      <span aria-hidden="true" className="text-lg">
+                        {showDirection ? "−" : "+"}
+                      </span>
                     </span>
                   </button>
 
@@ -825,9 +965,12 @@ export function ArticleGenerator() {
                   </button>
                   <p className="mt-3 text-center text-xs text-black/45">
                     Se genera un borrador. Nada se publica sin tu confirmación.
+                    <span className="hidden sm:inline">
+                      {" "}· <kbd className="font-mono">Ctrl</kbd> + <kbd className="font-mono">Enter</kbd> para crear
+                    </span>
                   </p>
                   {state === "error" ? (
-                    <p role="alert" className="mt-4 border-l-4 border-[#ff5c35] pl-4 text-sm font-semibold">
+                    <p ref={errorRef} role="alert" className="mt-4 border-l-4 border-[#ff5c35] pl-4 text-sm font-semibold">
                       {error}
                     </p>
                   ) : null}
@@ -948,7 +1091,7 @@ export function ArticleGenerator() {
                   <div>
                     <p className="step-label flex items-center gap-3 text-[#d7ff52]">
                       <span className="ai-live-dot" aria-hidden="true" />
-                      04 / Investigación y generación
+                      02 / Investigación y generación
                     </p>
                     <h2 className="mt-7 max-w-lg font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
                       La publicación está naciendo ahora.
@@ -990,10 +1133,26 @@ export function ArticleGenerator() {
                         Portada <span className="block pt-1 text-sm text-white">{liveCoverDirection ? "Dirigida" : "Pendiente"}</span>
                       </p>
                     </div>
+                    <button
+                      type="button"
+                      onClick={cancelGeneration}
+                      className="mt-8 border-b border-white/40 pb-1 text-xs font-bold uppercase tracking-[0.14em] text-white/60 transition hover:border-[#ff5c35] hover:text-[#ff9b82]"
+                    >
+                      Cancelar y volver a la idea
+                    </button>
                   </div>
                 </div>
 
-                <div className="ai-live-page" aria-busy="true" aria-live="polite">
+                <div
+                  ref={livePageRef}
+                  onScroll={(event) => {
+                    const page = event.currentTarget;
+                    followLiveDraftRef.current =
+                      page.scrollHeight - page.scrollTop - page.clientHeight < 96;
+                  }}
+                  className="ai-live-page"
+                  aria-busy="true"
+                >
                   <div className="flex items-center justify-between border-b border-black/15 px-5 py-4 font-mono text-[.68rem] uppercase tracking-[0.14em] text-black/45 sm:px-8">
                     <span>Borrador vivo</span>
                     <span className="max-w-[55%] truncate text-right">{liveHeading}</span>
@@ -1033,7 +1192,7 @@ export function ArticleGenerator() {
             <div className="mx-auto w-full max-w-[1200px] px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
               <header className="mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
                 <div>
-                  <p className="step-label text-[#4468ff]">05 / Resultado</p>
+                  <p className="step-label text-[#4468ff]">03 / Resultado</p>
                   <h2 className="mt-5 font-serif text-5xl tracking-[-0.045em] sm:text-7xl">
                     Revisa el contenido y decide qué quieres hacer con él.
                   </h2>
@@ -1182,10 +1341,14 @@ export function ArticleGenerator() {
                 dangerouslySetInnerHTML={{ __html: article }}
               />
 
-              <section className="publish-decision mt-20 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10">
+              <section
+                ref={publishPanelRef}
+                id="publicar"
+                className="publish-decision mt-20 scroll-mt-6 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10"
+              >
                 <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
                   <div>
-                    <p className="step-label text-[#d7ff52]">06 / WordPress</p>
+                    <p className="step-label text-[#d7ff52]">04 / WordPress</p>
                     <h3 className="mt-4 max-w-2xl font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">
                       La última palabra sigue siendo humana.
                     </h3>
@@ -1201,31 +1364,54 @@ export function ArticleGenerator() {
                     <button
                       type="button"
                       onClick={() => publishPiece("draft")}
-                      disabled={
-                        isRefreshingCover || publishState === "publishing"
-                      }
+                      disabled={publishLocked}
                       className="publish-secondary"
                     >
                       {isRefreshingCover
                         ? "Esperando portada…"
+                        : publishState === "publishing" && publishTarget === "draft"
+                        ? "Guardando…"
+                        : isPublished && publishTarget === "draft"
+                        ? "Borrador guardado ✓"
                         : "Guardar como borrador en WordPress"}
                     </button>
                     <button
                       type="button"
-                      onClick={() => publishPiece("publish")}
-                      disabled={
-                        isRefreshingCover || publishState === "publishing"
+                      onClick={() =>
+                        confirmPublish
+                          ? publishPiece("publish")
+                          : setConfirmPublish(true)
                       }
-                      className="publish-primary"
+                      disabled={publishLocked}
+                      className={`publish-primary ${confirmPublish ? "is-confirming" : ""}`}
                     >
                       {isRefreshingCover
                         ? "Preparando portada…"
-                        : publishState === "publishing"
-                        ? "Enviando…"
+                        : publishState === "publishing" && publishTarget === "publish"
+                        ? "Publicando…"
+                        : isPublished && publishTarget === "publish"
+                        ? "Publicado ✓"
+                        : confirmPublish
+                        ? "Confirmar: publicar ya"
                         : "Publicar ahora ↗"}
                     </button>
                   </div>
                 </div>
+
+                {confirmPublish ? (
+                  <p role="status" className="mt-5 text-sm text-[#ffca3a]">
+                    Se hará público en WordPress de inmediato. Pulsa de nuevo para
+                    confirmar o{" "}
+                    <button
+                      type="button"
+                      onClick={() => setConfirmPublish(false)}
+                      className="border-b border-current font-bold"
+                    >
+                      cancelar
+                    </button>
+                    .
+                  </p>
+                ) : null}
 
                 {publishMessage ? (
                   <div
@@ -1253,28 +1439,48 @@ export function ArticleGenerator() {
 
               <button
                 type="button"
-                onClick={() => {
-                  cancelActiveWorkflow();
-                  setSelectedSurprise(null);
-                  setTopic("");
-                  setArticle("");
-                  setLiveArticleHtml("");
-                  setLiveCoverDirection("");
-                  setCover(null);
-                  setCoverPrompt("");
-                  setCoverError("");
-                  setPublishedLink(null);
-                  setPublishState("idle");
-                  setPublishMessage("");
-                  setState("idle");
-                  document
-                    .getElementById("experiencia")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
+                onClick={startOver}
                 className="mx-auto mt-16 flex items-center gap-3 border-b-2 border-black pb-1 text-sm font-bold uppercase tracking-[0.16em]"
               >
                 Crear otra publicación <span aria-hidden="true">↻</span>
               </button>
+            </div>
+          ) : null}
+
+          {state === "success" && !isPublishPanelVisible ? (
+            <div className="result-action-bar" role="region" aria-label="Acciones del borrador">
+              <p className="hidden min-w-0 truncate text-xs text-white/60 sm:block">
+                {isRefreshingCover
+                  ? `Preparando portada · ${coverElapsedLabel}`
+                  : isPublished
+                  ? publishMessage
+                  : "Borrador listo · aún no enviado a WordPress"}
+              </p>
+              <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+                <button
+                  type="button"
+                  onClick={copyArticleHtml}
+                  className="publish-secondary result-action-button"
+                >
+                  {copyState === "copied"
+                    ? "Copiado ✓"
+                    : copyState === "error"
+                    ? "No se pudo copiar"
+                    : "Copiar HTML"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    publishPanelRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    })
+                  }
+                  className="publish-primary result-action-button"
+                >
+                  {isPublished ? "Ver estado ↓" : "Revisar y publicar ↓"}
+                </button>
+              </div>
             </div>
           ) : null}
         </section>
