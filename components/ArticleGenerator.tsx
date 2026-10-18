@@ -1076,7 +1076,7 @@ export function ArticleGenerator() {
                 </p>
               </div>
 
-              <div className="my-auto flex flex-col items-center py-8">
+              <div className="my-auto flex flex-col items-center py-6">
                 <div className="wheel-stage studio-wheel-stage">
                   <div className="wheel-pointer" aria-hidden="true" />
                   <FutureWheelWebGL
@@ -1112,7 +1112,7 @@ export function ArticleGenerator() {
                   </button>
                 </div>
 
-                <div aria-live="polite" className="mt-7 min-h-24 w-full max-w-xl">
+                <div aria-live="polite" className="mt-5 min-h-24 w-full max-w-xl">
                   {isDiscoveringIdea ? (
                     <div className="idea-search-panel" role="status" aria-busy="true">
                       <div className="flex items-center gap-4">
@@ -1191,19 +1191,25 @@ export function ArticleGenerator() {
                 </div>
               </div>
 
-              <fieldset
+              <div
+                role="group"
+                aria-labelledby="territory-picker-label"
                 className="territory-picker"
-                disabled={isSpinning || isDiscoveringIdea}
+                data-disabled={isSpinning || isDiscoveringIdea}
               >
-                <legend className="mb-3 font-mono text-[.62rem] uppercase tracking-[.16em] text-white/45">
+                <p
+                  id="territory-picker-label"
+                  className="mb-3 font-mono text-[.62rem] uppercase tracking-[.16em] text-white/45"
+                >
                   Elige el tipo de pieza
-                </legend>
+                </p>
                 <div className="territory-grid">
                   {IDEA_TERRITORIES.map((territory, index) => (
                     <button
                       key={territory.id}
                       type="button"
                       onClick={() => void spinWheel(index)}
+                      disabled={isSpinning || isDiscoveringIdea}
                       onPointerEnter={() => setPreviewTerritory(index)}
                       onPointerLeave={() => setPreviewTerritory(null)}
                       onFocus={() => setPreviewTerritory(index)}
@@ -1214,18 +1220,11 @@ export function ArticleGenerator() {
                       style={{ "--territory-color": WHEEL_COLORS[index] } as CSSProperties}
                     >
                       <span className="territory-number">{territory.number}</span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-bold text-white">
-                          {territory.title}
-                        </span>
-                        <span className="mt-0.5 block text-[.72rem] leading-snug text-white/50">
-                          {territory.signal}
-                        </span>
-                      </span>
+                      {territory.title}
                     </button>
                   ))}
                 </div>
-              </fieldset>
+              </div>
             </aside>
           </div>
         </section>
