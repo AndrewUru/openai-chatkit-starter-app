@@ -47,7 +47,9 @@ type EditorialOption = {
   instruction: string;
 };
 
-const SURPRISE_NUMBERS = IDEA_TERRITORIES.map((territory) => territory.number);
+const WHEEL_SEGMENTS = IDEA_TERRITORIES.map(({ number, title }) => ({ number, title }));
+// Same order as the sector colors painted by FutureWheelWebGL.
+const WHEEL_COLORS = ["#ff5c35", "#d7ff52", "#4468ff", "#f2a7c3", "#ffca3a", "#50c8a8"];
 
 const CONTENT_TYPES: EditorialOption[] = [
   {
@@ -129,6 +131,8 @@ export function ArticleGenerator() {
   const [isDiscoveringIdea, setIsDiscoveringIdea] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
+  const [previewTerritory, setPreviewTerritory] = useState<number | null>(null);
+  const [landedTerritory, setLandedTerritory] = useState<number | null>(null);
   const [state, setState] = useState<WorkflowState>("idle");
   const [error, setError] = useState("");
   const [article, setArticle] = useState("");
@@ -317,7 +321,8 @@ export function ArticleGenerator() {
     return () => window.clearInterval(timer);
   }, [isDiscoveringIdea]);
 
-  const spinWheel = useCallback(async () => {
+  // Without a target the wheel picks at random; with one it lands on the chosen territory.
+  const spinWheel = useCallback(async (targetIndex?: number) => {
     if (isSpinning || isDiscoveringIdea) return;
 
     cancelActiveWorkflow();
@@ -325,7 +330,8 @@ export function ArticleGenerator() {
 
     const ideaController = new AbortController();
     ideaAbortRef.current = ideaController;
-    const index = Math.floor(Math.random() * IDEA_TERRITORIES.length);
+    const index =
+      targetIndex ?? Math.floor(Math.random() * IDEA_TERRITORIES.length);
     const territory = IDEA_TERRITORIES[index];
     const currentPosition = ((wheelRotation % 360) + 360) % 360;
     const targetPosition = (330 - index * 60 + 360) % 360;
@@ -335,6 +341,8 @@ export function ArticleGenerator() {
     setIdeaElapsedSeconds(0);
     setIsSpinning(true);
     setIsDiscoveringIdea(true);
+    setPreviewTerritory(null);
+    setLandedTerritory(null);
     setSelectedSurprise(null);
     setIdeaError("");
     setState("idle");
@@ -348,6 +356,7 @@ export function ArticleGenerator() {
     const animationDuration = prefersReducedMotion ? 50 : 1700;
     window.setTimeout(() => {
       setIsSpinning(false);
+      setLandedTerritory(index);
     }, animationDuration);
 
     try {
@@ -1055,15 +1064,15 @@ export function ArticleGenerator() {
                 <span />
                 <span />
               </div>
-              <div className="flex w-full items-start justify-between gap-4">
-                <div>
-                  <p className="step-label text-[#d7ff52]">¿Sin idea?</p>
-                  <h2 className="mt-3 font-serif text-4xl leading-none tracking-[-.045em] sm:text-5xl">
-                    Gira la ruleta.
-                  </h2>
-                </div>
-                <p className="max-w-40 text-right text-xs leading-relaxed text-white/45">
-                  Investiga una señal real y la convierte en punto de partida.
+              <div className="w-full">
+                <p className="step-label text-[#d7ff52]">¿Sin idea?</p>
+                <h2 className="mt-3 font-serif text-4xl leading-none tracking-[-.045em] sm:text-5xl">
+                  Gira o elige un número.
+                </h2>
+                <p className="mt-4 max-w-md text-sm leading-relaxed text-white/55">
+                  Cada número es un <strong className="font-semibold text-white/85">tipo de pieza</strong>.
+                  La IA investiga la web y te trae una idea real de ese tipo. Deja que
+                  decida el azar o elige tú.
                 </p>
               </div>
 
@@ -1071,25 +1080,35 @@ export function ArticleGenerator() {
                 <div className="wheel-stage studio-wheel-stage">
                   <div className="wheel-pointer" aria-hidden="true" />
                   <FutureWheelWebGL
-                    labels={SURPRISE_NUMBERS}
+                    segments={WHEEL_SEGMENTS}
                     rotation={wheelRotation}
                     spinning={isSpinning}
+                    highlight={isSpinning ? null : previewTerritory ?? landedTerritory}
+                    onSelect={(index) => void spinWheel(index)}
+                    disabled={isSpinning || isDiscoveringIdea}
                   />
                   <button
                     type="button"
-                    onClick={spinWheel}
+                    onClick={() => void spinWheel()}
                     disabled={isSpinning || isDiscoveringIdea}
                     className="wheel-trigger"
-                    aria-label="Girar la ruleta y buscar una idea editorial nueva"
+                    aria-label="Girar la ruleta al azar y buscar una idea editorial nueva"
                   >
-                    <span>
-                      {isSpinning
-                        ? "Girando"
-                        : isDiscoveringIdea
-                        ? "Buscando"
-                        : "Girar"}
+                    <span className="flex flex-col items-center leading-none">
+                      <span className="flex items-center gap-2">
+                        {isSpinning
+                          ? "Girando"
+                          : isDiscoveringIdea
+                          ? "Buscando"
+                          : "Girar"}
+                        <span aria-hidden="true" className="text-xl">↻</span>
+                      </span>
+                      {!isSpinning && !isDiscoveringIdea ? (
+                        <span className="mt-1.5 text-[.58rem] font-bold tracking-[.14em] text-black/45">
+                          al azar
+                        </span>
+                      ) : null}
                     </span>
-                    <span aria-hidden="true" className="text-xl">↻</span>
                   </button>
                 </div>
 
@@ -1147,21 +1166,66 @@ export function ArticleGenerator() {
                     <p role="alert" className="border-l-2 border-[#ff5c35] pl-3 text-sm text-[#ff9b82]">
                       {ideaError}
                     </p>
+                  ) : previewTerritory !== null ? (
+                    <div className="studio-idea-result" data-preview="true">
+                      <p
+                        className="font-mono text-[.68rem] uppercase tracking-[.12em]"
+                        style={{ color: WHEEL_COLORS[previewTerritory] }}
+                      >
+                        {IDEA_TERRITORIES[previewTerritory].number} ·{" "}
+                        {IDEA_TERRITORIES[previewTerritory].title}
+                      </p>
+                      <h3 className="mt-2 font-serif text-2xl leading-tight tracking-[-.03em]">
+                        {IDEA_TERRITORIES[previewTerritory].signal}.
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-white/55">
+                        {IDEA_TERRITORIES[previewTerritory].instruction}
+                      </p>
+                    </div>
                   ) : (
-                    <p className="text-center text-sm text-white/40">
-                      {isDiscoveringIdea
-                        ? "Buscando una idea y fuentes actuales…"
-                        : "Pulsa el centro para descubrir tu próxima publicación."}
+                    <p className="text-center text-sm leading-relaxed text-white/45">
+                      Pulsa <strong className="text-white/80">Girar</strong> para que decida el
+                      azar, o elige un tipo de pieza aquí abajo.
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 border-t border-white/15 pt-4 font-mono text-[.58rem] uppercase tracking-[.1em] text-white/35">
-                {IDEA_TERRITORIES.map((territory) => (
-                  <span key={territory.id}>{territory.title}</span>
-                ))}
-              </div>
+              <fieldset
+                className="territory-picker"
+                disabled={isSpinning || isDiscoveringIdea}
+              >
+                <legend className="mb-3 font-mono text-[.62rem] uppercase tracking-[.16em] text-white/45">
+                  Elige el tipo de pieza
+                </legend>
+                <div className="territory-grid">
+                  {IDEA_TERRITORIES.map((territory, index) => (
+                    <button
+                      key={territory.id}
+                      type="button"
+                      onClick={() => void spinWheel(index)}
+                      onPointerEnter={() => setPreviewTerritory(index)}
+                      onPointerLeave={() => setPreviewTerritory(null)}
+                      onFocus={() => setPreviewTerritory(index)}
+                      onBlur={() => setPreviewTerritory(null)}
+                      aria-pressed={landedTerritory === index}
+                      aria-label={`${territory.number}, ${territory.title}: ${territory.signal}. Buscar una idea de este tipo.`}
+                      className="territory-option"
+                      style={{ "--territory-color": WHEEL_COLORS[index] } as CSSProperties}
+                    >
+                      <span className="territory-number">{territory.number}</span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-bold text-white">
+                          {territory.title}
+                        </span>
+                        <span className="mt-0.5 block text-[.72rem] leading-snug text-white/50">
+                          {territory.signal}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
             </aside>
           </div>
         </section>

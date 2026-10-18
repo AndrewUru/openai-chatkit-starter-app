@@ -2,10 +2,19 @@
 
 import { CSSProperties, memo, useEffect, useRef } from "react";
 
+export type WheelSegment = {
+  number: string;
+  title: string;
+};
+
 type FutureWheelWebGLProps = {
-  labels: string[];
+  segments: WheelSegment[];
   rotation: number;
   spinning: boolean;
+  /** Sector to light up (hover preview or landed result); null lights none. */
+  highlight?: number | null;
+  onSelect?: (index: number) => void;
+  disabled?: boolean;
 };
 
 const VERTEX_SHADER = `
@@ -26,6 +35,8 @@ uniform vec2 u_resolution;
 uniform float u_rotation;
 uniform float u_time;
 uniform float u_spinning;
+uniform float u_highlight;
+uniform float u_highlightStrength;
 
 const float TAU = 6.28318530718;
 
@@ -86,6 +97,8 @@ void main() {
   float localAngle = fract(sourceAngle / sectorSize);
 
   vec3 color = sectorColor(sector);
+  float isHighlighted = 1.0 - step(0.5, abs(sector - u_highlight));
+  color *= mix(1.0, mix(0.42, 1.08, isHighlighted), u_highlightStrength);
   float paper = hash(floor(gl_FragCoord.xy * 0.58)) - 0.5;
   float pulse = sin(u_time * (0.65 + u_spinning * 1.8) + radius * 14.0 + flowA * 3.0) * 0.018;
   float sweep = pow(max(cos(visualAngle - u_time * (0.22 + u_spinning * 0.9)), 0.0), 18.0);
@@ -164,9 +177,12 @@ function createProgram(gl: WebGLRenderingContext): WebGLProgram | null {
 }
 
 export const FutureWheelWebGL = memo(function FutureWheelWebGL({
-  labels,
+  segments,
   rotation,
   spinning,
+  highlight = null,
+  onSelect,
+  disabled = false,
 }: FutureWheelWebGLProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
@@ -174,12 +190,18 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
   const displayedRotationRef = useRef(0);
   const animationRef = useRef({ from: 0, to: 0, startedAt: 0, duration: 1 });
   const spinningRef = useRef(spinning);
+  const highlightRef = useRef<number | null>(highlight);
   const requestRenderRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     spinningRef.current = spinning;
     requestRenderRef.current?.();
   }, [spinning]);
+
+  useEffect(() => {
+    highlightRef.current = highlight;
+    requestRenderRef.current?.();
+  }, [highlight]);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia(
@@ -219,12 +241,16 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
     let isOnScreen = true;
     let isDocumentVisible = !document.hidden;
     let effectStrength = 0;
+    let highlightStrength = 0;
+    let lastHighlight = -1;
     let previousFrame = performance.now();
     let positionLocation = -1;
     let resolutionLocation: WebGLUniformLocation | null = null;
     let rotationLocation: WebGLUniformLocation | null = null;
     let timeLocation: WebGLUniformLocation | null = null;
     let spinningLocation: WebGLUniformLocation | null = null;
+    let highlightLocation: WebGLUniformLocation | null = null;
+    let highlightStrengthLocation: WebGLUniformLocation | null = null;
 
     if (gl && program && buffer) {
       positionLocation = gl.getAttribLocation(program, "a_position");
@@ -232,6 +258,8 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
       rotationLocation = gl.getUniformLocation(program, "u_rotation");
       timeLocation = gl.getUniformLocation(program, "u_time");
       spinningLocation = gl.getUniformLocation(program, "u_spinning");
+      highlightLocation = gl.getUniformLocation(program, "u_highlight");
+      highlightStrengthLocation = gl.getUniformLocation(program, "u_highlightStrength");
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.bufferData(
         gl.ARRAY_BUFFER,
@@ -263,6 +291,12 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
       const response = effectTarget > effectStrength ? 7.5 : 2.8;
       effectStrength +=
         (effectTarget - effectStrength) * (1 - Math.exp(-response * delta));
+      const highlightTarget = highlightRef.current === null ? 0 : 1;
+      if (highlightRef.current !== null) lastHighlight = highlightRef.current;
+      highlightStrength = reduceMotion
+        ? highlightTarget
+        : highlightStrength +
+          (highlightTarget - highlightStrength) * (1 - Math.exp(-9 * delta));
       const progress = Math.min(
         1,
         Math.max(0, (now - animation.startedAt) / animation.duration)
@@ -292,11 +326,15 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
         gl.uniform1f(rotationLocation, (displayedRotation * Math.PI) / 180);
         gl.uniform1f(timeLocation, reduceMotion ? 0 : now / 1000);
         gl.uniform1f(spinningLocation, effectStrength);
+        gl.uniform1f(highlightLocation, lastHighlight);
+        gl.uniform1f(highlightStrengthLocation, highlightStrength);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
 
       const shouldContinue =
-        progress < 1 || Math.abs(effectStrength - effectTarget) > 0.002;
+        progress < 1 ||
+        Math.abs(effectStrength - effectTarget) > 0.002 ||
+        Math.abs(highlightStrength - highlightTarget) > 0.002;
       frame = shouldContinue ? window.requestAnimationFrame(render) : 0;
     };
 
@@ -330,22 +368,32 @@ export const FutureWheelWebGL = memo(function FutureWheelWebGL({
   }, []);
 
   return (
-    <div className="future-wheel" aria-hidden="true">
+    // Decorative duplicate of the territory list: keyboard and screen readers use that list.
+    <div
+      className="future-wheel"
+      aria-hidden="true"
+      data-highlight={highlight ?? undefined}
+    >
       <div ref={fallbackRef} className="future-wheel-fallback" />
       <canvas ref={canvasRef} className="future-wheel-canvas" />
       <div ref={labelsRef} className="wheel-labels">
-        {labels.map((label, index) => {
+        {segments.map((segment, index) => {
           const angle = index * 60 + 30;
           return (
-            <span
-              key={label}
-              className="wheel-number"
+            <button
+              key={segment.number}
+              type="button"
+              tabIndex={-1}
+              disabled={disabled}
+              onClick={() => onSelect?.(index)}
+              className={`wheel-number ${highlight === index ? "is-highlighted" : ""}`}
               style={
                 { "--wheel-angle": `${angle}deg` } as CSSProperties
               }
             >
-              {label}
-            </span>
+              <span className="wheel-number-index">{segment.number}</span>
+              <span className="wheel-number-title">{segment.title}</span>
+            </button>
           );
         })}
       </div>
