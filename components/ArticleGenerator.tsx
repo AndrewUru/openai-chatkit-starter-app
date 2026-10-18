@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CSSProperties,
   FormEvent,
   useCallback,
   useEffect,
@@ -109,10 +110,7 @@ function countWords(html: string): number {
     .filter(Boolean).length;
 }
 
-function extractHeading(html: string): string {
-  const match = html.match(/<h1[^>]*>([\s\S]*?)(?:<\/h1>|$)/i);
-  return match?.[1]?.replace(/<[^>]*>/g, "").trim() || "La idea está tomando forma";
-}
+const HERO_WORDS = ["Empieza", "con", "una", "idea."];
 
 export function ArticleGenerator() {
   const [topic, setTopic] = useState("");
@@ -155,6 +153,7 @@ export function ArticleGenerator() {
   const followLiveDraftRef = useRef(true);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const publishPanelRef = useRef<HTMLElement>(null);
+  const readingProgressRef = useRef<HTMLSpanElement>(null);
   const workflowAbortRef = useRef<AbortController | null>(null);
   const ideaAbortRef = useRef<AbortController | null>(null);
   const coverVariantRef = useRef(0);
@@ -183,17 +182,16 @@ export function ArticleGenerator() {
       const startedAt = Date.now();
       setElapsedSeconds(0);
       followLiveDraftRef.current = true;
-      const scrollTimer = window.setTimeout(() => {
-        generationRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 180);
+      // The generation theater is a full-screen overlay: lock the page behind it.
+      const root = document.documentElement;
+      const previousOverflow = root.style.overflow;
+      root.style.overflow = "hidden";
+      generationRef.current?.focus({ preventScroll: true });
       const interval = window.setInterval(() => {
         setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
       }, 1000);
       return () => {
-        window.clearTimeout(scrollTimer);
+        root.style.overflow = previousOverflow;
         window.clearInterval(interval);
       };
     }
@@ -242,6 +240,54 @@ export function ArticleGenerator() {
       setIsPublishPanelVisible(entry.isIntersecting)
     );
     observer.observe(panel);
+    return () => observer.disconnect();
+  }, [state]);
+
+  useEffect(() => {
+    const story = articleRef.current;
+    const bar = readingProgressRef.current;
+    if (state !== "success" || !story || !bar) return undefined;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const bounds = story.getBoundingClientRect();
+      const travel = bounds.height - window.innerHeight * 0.6;
+      const progress =
+        travel > 0
+          ? (window.innerHeight * 0.4 - bounds.top) / travel
+          : bounds.top < window.innerHeight * 0.4
+          ? 1
+          : 0;
+      bar.style.transform = `scaleX(${Math.min(1, Math.max(0, progress))})`;
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [state, article]);
+
+  useEffect(() => {
+    const container = resultRef.current;
+    if (state !== "success" || !container) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { rootMargin: "0px 0px -8% 0px" }
+    );
+    container.querySelectorAll(".reveal").forEach((node) => observer.observe(node));
     return () => observer.disconnect();
   }, [state]);
 
@@ -737,7 +783,6 @@ export function ArticleGenerator() {
       : null;
 
   const liveWordCount = countWords(liveArticleHtml);
-  const liveHeading = extractHeading(liveArticleHtml);
   const generationSteps = ["Investigar fuentes", "Redactar artículo", "Preparar borrador"];
   const activeGenerationStep = generationPhase === "researching" ? 0 : generationPhase === "writing" ? 1 : 2;
   const loadingMessage = generationPhase === "researching"
@@ -816,11 +861,29 @@ export function ArticleGenerator() {
           </header>
 
           <div className="studio-grid">
-            <div className="studio-form-panel">
+            <div
+              className="studio-form-panel"
+              onPointerMove={(event) => {
+                const bounds = event.currentTarget.getBoundingClientRect();
+                event.currentTarget.style.setProperty("--mx", `${event.clientX - bounds.left}px`);
+                event.currentTarget.style.setProperty("--my", `${event.clientY - bounds.top}px`);
+              }}
+            >
               <div className="max-w-2xl">
                 <p className="step-label text-[#4468ff]">01 / Crear publicación</p>
-                <h1 className="mt-4 font-serif text-[clamp(3rem,6vw,5.8rem)] leading-[.88] tracking-[-.06em]">
-                  Empieza con una idea.
+                <h1
+                  aria-label={HERO_WORDS.join(" ")}
+                  className="hero-title mt-4 font-serif text-[clamp(3rem,6vw,5.8rem)] leading-[.88] tracking-[-.06em]"
+                >
+                  {HERO_WORDS.map((word, index) => (
+                    <span
+                      key={word}
+                      aria-hidden="true"
+                      style={{ "--i": index } as CSSProperties}
+                    >
+                      {word}{" "}
+                    </span>
+                  ))}
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-black/55">
                   Escríbela tú o deja que la ruleta encuentre un ángulo editorial
@@ -978,7 +1041,15 @@ export function ArticleGenerator() {
               </form>
             </div>
 
-            <aside id="ruleta" className="studio-wheel-panel">
+            <aside
+              id="ruleta"
+              className="studio-wheel-panel"
+              data-active={isSpinning || isDiscoveringIdea}
+            >
+              <div className="wheel-ambient" aria-hidden="true">
+                <span />
+                <span />
+              </div>
               <div className="flex w-full items-start justify-between gap-4">
                 <div>
                   <p className="step-label text-[#d7ff52]">¿Sin idea?</p>
@@ -1055,6 +1126,17 @@ export function ArticleGenerator() {
                       <p className="mt-2 text-sm leading-relaxed text-white/55">
                         La idea ya está en el formulario. Puedes editarla antes de crear.
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const field = document.getElementById("editorial-idea");
+                          field?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          field?.focus({ preventScroll: true });
+                        }}
+                        className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#d7ff52] px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[#11110f] transition hover:bg-white"
+                      >
+                        Usar esta idea <span aria-hidden="true">↓</span>
+                      </button>
                     </div>
                   ) : ideaError ? (
                     <p role="alert" className="border-l-2 border-[#ff5c35] pl-3 text-sm text-[#ff9b82]">
@@ -1083,104 +1165,138 @@ export function ArticleGenerator() {
           <section
             ref={generationRef}
             id="generacion"
-            className="ai-live-workbench scroll-mt-6 bg-[#11110f] text-[#f4f0e6]"
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Generando la publicación"
+            data-phase={generationPhase}
+            className="ai-theater"
           >
-            <div className="mx-auto w-full max-w-[1440px] px-5 py-20 sm:px-8 lg:px-14 lg:py-24">
-              <div className="grid gap-12 lg:grid-cols-[0.55fr_1.45fr]">
-                <div className="flex flex-col justify-between">
-                  <div>
-                    <p className="step-label flex items-center gap-3 text-[#d7ff52]">
-                      <span className="ai-live-dot" aria-hidden="true" />
-                      02 / Investigación y generación
-                    </p>
-                    <h2 className="mt-7 max-w-lg font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-7xl">
-                      La publicación está naciendo ahora.
-                    </h2>
-                    <p className="mt-6 max-w-md text-base leading-relaxed text-white/55">
-                      La IA investiga el tema, redacta el contenido y prepara un borrador para que lo revises.
-                    </p>
-                  </div>
-
-                  <div className="mt-12 border-t border-white/20 pt-5">
-                    <div className="flex items-end justify-between gap-5">
-                      <div>
-                        <p aria-live="polite" className="text-sm font-bold text-[#d7ff52]">
-                          {loadingMessage}
-                        </p>
-                        <p className="mt-2 text-sm leading-relaxed text-white/45">
-                          {loadingHint}
-                        </p>
-                      </div>
-                      <span className="font-mono text-sm tabular-nums text-white/55">
-                        {elapsedLabel}
-                      </span>
-                    </div>
-                    <div className="workflow-track mt-5" aria-hidden="true"><span /></div>
-                    <ol className="generation-steps mt-6" aria-label="Avance de la publicación">
-                      {generationSteps.map((label, index) => (
-                        <li key={label} data-active={index === activeGenerationStep} data-complete={index < activeGenerationStep} aria-current={index === activeGenerationStep ? "step" : undefined}>
-                          <span aria-hidden="true">{index < activeGenerationStep ? "✓" : index === activeGenerationStep ? <span className="workflow-spinner" /> : index + 1}</span>
-                          <span>{label}{index === activeGenerationStep ? " · En curso" : index < activeGenerationStep ? " · Listo" : " · Pendiente"}</span>
-                        </li>
-                      ))}
-                    </ol>
-                    {elapsedSeconds >= 45 ? <p className="mt-5 text-sm text-white/60">La IA sigue trabajando. Este proceso puede tardar unos minutos.</p> : null}
-                    <div className="mt-5 grid grid-cols-2 gap-4 font-mono text-xs uppercase tracking-[0.12em] text-white/40">
-                      <p>
-                        Palabras <span className="block pt-1 text-xl text-white">{liveWordCount}</span>
-                      </p>
-                      <p>
-                        Portada <span className="block pt-1 text-sm text-white">{liveCoverDirection ? "Dirigida" : "Pendiente"}</span>
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={cancelGeneration}
-                      className="mt-8 border-b border-white/40 pb-1 text-xs font-bold uppercase tracking-[0.14em] text-white/60 transition hover:border-[#ff5c35] hover:text-[#ff9b82]"
-                    >
-                      Cancelar y volver a la idea
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  ref={livePageRef}
-                  onScroll={(event) => {
-                    const page = event.currentTarget;
-                    followLiveDraftRef.current =
-                      page.scrollHeight - page.scrollTop - page.clientHeight < 96;
-                  }}
-                  className="ai-live-page"
-                  aria-busy="true"
-                >
-                  <div className="flex items-center justify-between border-b border-black/15 px-5 py-4 font-mono text-[.68rem] uppercase tracking-[0.14em] text-black/45 sm:px-8">
-                    <span>Borrador vivo</span>
-                    <span className="max-w-[55%] truncate text-right">{liveHeading}</span>
-                  </div>
-                  {liveArticleHtml ? (
-                    <div className="generated-story ai-live-story px-5 py-8 sm:px-8 sm:py-10">
-                      <article
-                        className="ia-generated"
-                        dangerouslySetInnerHTML={{ __html: liveArticleHtml }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-5 px-7 py-12 sm:px-12">
-                      <div role="status" className="mb-10 flex items-center gap-4 text-[#d7ff52]">
-                        <span className="workflow-spinner" aria-hidden="true" />
-                        <span>{loadingMessage}</span>
-                      </div>
-                      <div className="ai-writing-line h-12 w-4/5" />
-                      <div className="ai-writing-line h-4 w-full" />
-                      <div className="ai-writing-line h-4 w-11/12" />
-                      <div className="ai-writing-line h-4 w-3/4" />
-                      <div className="ai-writing-line mt-10 h-8 w-2/3" />
-                    </div>
-                  )}
-                </div>
-              </div>
+            <div className="ai-theater-ambient" aria-hidden="true">
+              <span />
+              <span />
+              <span />
             </div>
+            <div className="ai-theater-grain" aria-hidden="true" />
+
+            <header className="ai-theater-top">
+              <p className="step-label flex shrink-0 items-center gap-3 text-[var(--phase)]">
+                <span className="ai-live-dot" aria-hidden="true" />
+                <span className="hidden sm:inline">02 / </span>Generación en directo
+              </p>
+              <p className="ai-theater-topic" title={topic}>
+                «{topic.trim()}»
+              </p>
+              <div className="flex shrink-0 items-center gap-4">
+                <span className="font-mono text-sm tabular-nums text-white/60">
+                  {elapsedLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={cancelGeneration}
+                  className="ai-theater-cancel"
+                >
+                  Cancelar <span aria-hidden="true">×</span>
+                </button>
+              </div>
+            </header>
+
+            <ol className="ai-theater-timeline" aria-label="Avance de la publicación">
+              {generationSteps.map((label, index) => (
+                <li
+                  key={label}
+                  data-active={index === activeGenerationStep}
+                  data-complete={index < activeGenerationStep}
+                  aria-current={index === activeGenerationStep ? "step" : undefined}
+                >
+                  <span className="ai-theater-timeline-bar" aria-hidden="true">
+                    <span />
+                  </span>
+                  <span className="mt-3 flex items-center gap-2">
+                    <span aria-hidden="true" className="font-mono text-[.65rem] opacity-60">
+                      {index < activeGenerationStep ? "✓" : `0${index + 1}`}
+                    </span>
+                    {label}
+                    <span className="sr-only">
+                      {index === activeGenerationStep
+                        ? " · En curso"
+                        : index < activeGenerationStep
+                        ? " · Listo"
+                        : " · Pendiente"}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+
+            <div
+              ref={livePageRef}
+              onScroll={(event) => {
+                const page = event.currentTarget;
+                followLiveDraftRef.current =
+                  page.scrollHeight - page.scrollTop - page.clientHeight < 96;
+              }}
+              className="ai-theater-stage"
+              aria-busy="true"
+            >
+              {liveArticleHtml ? (
+                <div className="ai-live-story ai-theater-story">
+                  <article
+                    className="ia-generated is-streaming"
+                    dangerouslySetInnerHTML={{ __html: liveArticleHtml }}
+                  />
+                </div>
+              ) : (
+                <div className="ai-theater-intro">
+                  <div className="ai-orb" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <h2 key={generationPhase} className="ai-theater-headline">
+                    {loadingMessage}
+                  </h2>
+                  <p className="mt-5 max-w-md text-center text-sm leading-relaxed text-white/50">
+                    {loadingHint}
+                  </p>
+                  <div className="mt-12 w-full max-w-xl space-y-4" aria-hidden="true">
+                    <div className="ai-writing-line h-9 w-4/5" />
+                    <div className="ai-writing-line h-3 w-full" />
+                    <div className="ai-writing-line h-3 w-11/12" />
+                    <div className="ai-writing-line h-3 w-3/4" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <footer className="ai-theater-bottom">
+              <p aria-live="polite" className="min-w-0 truncate">
+                <span className="text-[var(--phase)]">{loadingMessage}</span>
+                {elapsedSeconds >= 45 ? (
+                  <span className="hidden text-white/45 md:inline">
+                    {" "}· Puede tardar unos minutos, la IA sigue trabajando.
+                  </span>
+                ) : null}
+              </p>
+              <div className="flex shrink-0 items-center gap-6 font-mono text-[.68rem] uppercase tracking-[.12em] text-white/45">
+                <span>
+                  <span className="tabular-nums text-white">{liveWordCount}</span> palabras
+                </span>
+                <span className="hidden sm:inline">
+                  Portada{" "}
+                  <span className="text-white">
+                    {liveCoverDirection ? "dirigida" : "pendiente"}
+                  </span>
+                </span>
+              </div>
+            </footer>
           </section>
+        ) : null}
+
+        {state === "success" ? (
+          <div className="reading-progress" aria-hidden="true">
+            <span ref={readingProgressRef} />
+          </div>
         ) : null}
 
         <section
@@ -1190,7 +1306,7 @@ export function ArticleGenerator() {
         >
           {state === "success" ? (
             <div className="mx-auto w-full max-w-[1200px] px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
-              <header className="mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
+              <header className="reveal mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
                 <div>
                   <p className="step-label text-[#4468ff]">03 / Resultado</p>
                   <h2 className="mt-5 font-serif text-5xl tracking-[-0.045em] sm:text-7xl">
@@ -1205,7 +1321,7 @@ export function ArticleGenerator() {
                 </div>
               </header>
 
-              <section className="cover-review mb-20">
+              <section className="reveal cover-review mb-20">
                 <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                   <div>
                     <p className="step-label text-[#ff5c35]">La portada</p>
@@ -1344,7 +1460,7 @@ export function ArticleGenerator() {
               <section
                 ref={publishPanelRef}
                 id="publicar"
-                className="publish-decision mt-20 scroll-mt-6 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10"
+                className="reveal publish-decision mt-20 scroll-mt-6 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10"
               >
                 <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
                   <div>
@@ -1360,6 +1476,16 @@ export function ArticleGenerator() {
                       Nada se enviará a WordPress hasta que elijas una de estas opciones.
                     </p>
                   </div>
+                  {isPublished && publishedLink ? (
+                    <a
+                      href={publishedLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="publish-primary text-center"
+                    >
+                      Ver en WordPress ↗
+                    </a>
+                  ) : (
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
@@ -1396,6 +1522,7 @@ export function ArticleGenerator() {
                         : "Publicar ahora ↗"}
                     </button>
                   </div>
+                  )}
                 </div>
 
                 {confirmPublish ? (
@@ -1468,18 +1595,29 @@ export function ArticleGenerator() {
                     ? "No se pudo copiar"
                     : "Copiar HTML"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    publishPanelRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    })
-                  }
-                  className="publish-primary result-action-button"
-                >
-                  {isPublished ? "Ver estado ↓" : "Revisar y publicar ↓"}
-                </button>
+                {isPublished && publishedLink ? (
+                  <a
+                    href={publishedLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="publish-primary result-action-button text-center"
+                  >
+                    Ver en WordPress ↗
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      publishPanelRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      })
+                    }
+                    className="publish-primary result-action-button"
+                  >
+                    {isPublished ? "Ver estado ↓" : "Revisar y publicar ↓"}
+                  </button>
+                )}
               </div>
             </div>
           ) : null}
