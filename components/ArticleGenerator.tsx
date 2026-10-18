@@ -10,6 +10,7 @@ import {
 } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { EditableStory } from "./EditableStory";
 import dynamic from "next/dynamic";
 import type {
   CoverAsset,
@@ -1451,10 +1452,12 @@ export function ArticleGenerator() {
                 ) : null}
               </section>
 
-              <div
-                ref={articleRef}
-                className="generated-story"
-                dangerouslySetInnerHTML={{ __html: article }}
+              <EditableStory
+                html={article}
+                onChange={setArticle}
+                apiKey={PUBLIC_KEY}
+                disabled={publishState === "publishing" || isPublished}
+                storyRef={articleRef}
               />
 
               <section

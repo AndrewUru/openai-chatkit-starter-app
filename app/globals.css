@@ -531,6 +531,169 @@ button:focus-visible, a:focus-visible, textarea:focus-visible {
 
 @keyframes aura-spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
 
+/* ---------- Edit by selection: floating rewrite toolbar ---------- */
+.rewrite-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin-bottom: 1rem;
+  color: rgba(17,17,15,.55);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.rewrite-hint > span { color: #4468ff; }
+
+.generated-story .ia-generated ::selection { background: rgba(215,255,82,.35); color: #fff; }
+
+.rewrite-source { display: none !important; }
+
+.rewrite-live {
+  border-left: 2px solid #d7ff52;
+  margin-left: -1rem;
+  padding-left: calc(1rem - 2px);
+  background: linear-gradient(90deg, rgba(215,255,82,.08), transparent 70%);
+}
+
+.rewrite-live:empty::before {
+  display: block;
+  height: 1.2rem;
+  margin-block: 1rem;
+  border-radius: .25rem;
+  background: rgba(255,255,255,.08);
+  content: "";
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+
+.rewrite-live > :last-child::after {
+  display: inline-block;
+  width: .5em;
+  height: 1.05em;
+  margin-left: .2em;
+  background: #d7ff52;
+  content: "";
+  vertical-align: -.12em;
+  animation: caret-blink 1s steps(1) infinite;
+}
+
+.rewrite-flash { animation: rewrite-flash 2.4s ease-out both; }
+
+@keyframes rewrite-flash {
+  from { background: rgba(215,255,82,.22); box-shadow: -1rem 0 0 rgba(215,255,82,.22), 1rem 0 0 rgba(215,255,82,.22); }
+  to { background: transparent; box-shadow: none; }
+}
+
+.rewrite-toolbar {
+  position: fixed;
+  z-index: 55;
+  display: grid;
+  width: min(calc(100vw - 2rem), 35rem);
+  gap: .55rem;
+  border: 1px solid rgba(244,240,230,.16);
+  border-radius: 1rem;
+  background: rgba(17,17,15,.96);
+  padding: .6rem;
+  color: #f4f0e6;
+  box-shadow: 0 22px 50px -20px rgba(0,0,0,.75);
+  backdrop-filter: blur(12px);
+  transform: translate(-50%,-100%);
+  animation: toolbar-in 180ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.rewrite-toolbar[data-placement="below"] { transform: translate(-50%,0); }
+
+@keyframes toolbar-in { from { opacity: 0; margin-top: .4rem; } }
+
+.rewrite-chip {
+  border: 1px solid rgba(244,240,230,.2);
+  border-radius: 999px;
+  padding: .45rem .75rem;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.rewrite-chip:hover { border-color: #d7ff52; background: #d7ff52; color: #11110f; }
+
+.rewrite-form {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  border-radius: .7rem;
+  background: rgba(244,240,230,.07);
+  padding: .2rem .25rem .2rem .75rem;
+}
+
+.rewrite-form input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: .5rem 0;
+  color: #f4f0e6;
+  font-size: .9rem;
+  outline: 0;
+}
+
+.rewrite-form input::placeholder { color: rgba(244,240,230,.4); }
+
+.rewrite-form button {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border-radius: .55rem;
+  background: #d7ff52;
+  color: #11110f;
+  font-weight: 900;
+}
+
+.rewrite-form button:disabled { opacity: .3; }
+
+.rewrite-spinner { width: 1.1rem; height: 1.1rem; }
+
+.rewrite-toast {
+  position: fixed;
+  bottom: 5.5rem;
+  left: 50%;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  border-radius: 999px;
+  background: #d7ff52;
+  padding: .55rem .6rem .55rem 1.2rem;
+  color: #11110f;
+  font-size: .82rem;
+  font-weight: 800;
+  box-shadow: 0 16px 36px -16px rgba(17,17,15,.6);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  animation: reveal-up 240ms ease both;
+}
+
+.rewrite-toast[data-kind="error"] { background: #ff5c35; white-space: normal; max-width: calc(100vw - 2rem); }
+
+.rewrite-toast button {
+  border-radius: 999px;
+  background: #11110f;
+  padding: .45rem .9rem;
+  color: #f4f0e6;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.rewrite-toast .workflow-spinner { border-color: rgba(17,17,15,.2); border-top-color: #11110f; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rewrite-toolbar, .rewrite-toast, .rewrite-flash, .rewrite-live:empty::before, .rewrite-live > :last-child::after { animation: none; }
+}
+
 /* ---------- Reading: progress bar and scroll reveals ---------- */
 .reading-progress {
   position: fixed;
