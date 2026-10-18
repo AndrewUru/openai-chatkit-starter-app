@@ -3,6 +3,7 @@
 import {
   CSSProperties,
   FormEvent,
+  Fragment,
   useCallback,
   useEffect,
   useRef,
@@ -877,13 +878,16 @@ export function ArticleGenerator() {
                   className="hero-title mt-4 font-serif text-[clamp(3rem,6vw,5.8rem)] leading-[.88] tracking-[-.06em]"
                 >
                   {HERO_WORDS.map((word, index) => (
-                    <span
-                      key={word}
-                      aria-hidden="true"
-                      style={{ "--i": index } as CSSProperties}
-                    >
-                      {word}{" "}
-                    </span>
+                    // The space lives outside the span: inline-block drops trailing whitespace.
+                    <Fragment key={word}>
+                      {index > 0 ? " " : null}
+                      <span
+                        aria-hidden="true"
+                        style={{ "--i": index } as CSSProperties}
+                      >
+                        {word}
+                      </span>
+                    </Fragment>
                   ))}
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-black/55">

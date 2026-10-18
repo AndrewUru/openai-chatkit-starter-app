@@ -1,4 +1,9 @@
 import type { CoverAsset, GeneratedCover, UnsplashCover } from "@/lib/creative-assets";
+import {
+  extractExcerpt,
+  insertCoverFigure,
+  refreshArticleMeta,
+} from "@/lib/wordpress-article";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -39,8 +44,9 @@ export async function POST(req: Request) {
     ).toString("base64")}`;
 
     let contentHtml = looksLikeHtml(body.content)
-      ? body.content.trim()
+      ? refreshArticleMeta(body.content.trim())
       : toHtml(body.content);
+    const excerpt = extractExcerpt(contentHtml);
     let featuredImageId: number | undefined;
 
     if (body.cover?.source === "generated") {
@@ -51,6 +57,12 @@ export async function POST(req: Request) {
         authHeader
       );
       featuredImageId = uploadedCover.id;
+      await setMediaAltText(
+        uploadedCover.id,
+        body.cover.alt || title,
+        wordpress.baseUrl,
+        authHeader
+      );
       contentHtml = insertGeneratedCover(
         contentHtml,
         uploadedCover,
@@ -71,6 +83,7 @@ export async function POST(req: Request) {
         title,
         content: contentHtml,
         status: body.status ?? DEFAULT_STATUS,
+        excerpt: excerpt || undefined,
         featured_media: featuredImageId,
         categories: [20],
       }),
@@ -173,6 +186,27 @@ async function uploadGeneratedCover(
   return { id: media.id, sourceUrl };
 }
 
+/** Alt text matters for accessibility and image search; a failure here must not block publishing. */
+async function setMediaAltText(
+  mediaId: number,
+  altText: string,
+  baseUrl: string,
+  authHeader: string
+): Promise<void> {
+  try {
+    const response = await fetch(`${baseUrl}/wp-json/wp/v2/media/${mediaId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: authHeader },
+      body: JSON.stringify({ alt_text: altText }),
+    });
+    if (!response.ok) {
+      console.warn("WordPress no aceptó el texto alternativo de la portada", response.status);
+    }
+  } catch (error) {
+    console.warn("No se pudo guardar el texto alternativo de la portada", error);
+  }
+}
+
 function insertGeneratedCover(
   content: string,
   media: UploadedMedia,
@@ -189,7 +223,7 @@ function insertGeneratedCover(
   )}" alt="${escapeAttribute(alt)}" class="wp-image-${media.id}" /></figure>
 <!-- /wp:image -->`;
 
-  return insertCoverAfterStyles(content, figure);
+  return insertCoverFigure(content, figure);
 }
 
 async function trackUnsplashSelection(cover: UnsplashCover): Promise<void> {
@@ -233,14 +267,9 @@ function insertUnsplashCover(content: string, cover: UnsplashCover): string {
   )}">Unsplash</a></figcaption>
 </figure>`;
 
-  return insertCoverAfterStyles(content, figure);
+  return insertCoverFigure(content, figure);
 }
 
-function insertCoverAfterStyles(content: string, figure: string): string {
-  return /<\/style>/i.test(content)
-    ? content.replace(/<\/style>/i, (match) => `${match}\n${figure}`)
-    : `${figure}\n${content}`;
-}
 
 function isHttpUrl(value: string): boolean {
   try {

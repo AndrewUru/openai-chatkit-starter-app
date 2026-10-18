@@ -1,5 +1,6 @@
 import type { CoverAsset, UnsplashCover } from "@/lib/creative-assets";
 import { EDITORIAL_PUBLICATION_PROMPT } from "@/lib/editorial-generation";
+import { buildArticleDocument } from "@/lib/wordpress-article";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -116,10 +117,7 @@ async function runWorkflow(workflow: WorkflowInput) {
 }
 
 function wrapGeneratedArticle(articleHtml: string): string {
-  return `${IA_GENERATED_INLINE_STYLES}
-<article class="ia-generated">
-${articleHtml.trim()}
-</article>`;
+  return buildArticleDocument(articleHtml);
 }
 
 function requireOpenAiKey(apiKey?: string): string {
@@ -255,121 +253,6 @@ function selectCoverArtDirection(
 }
 
 
-// Mantener sincronizado con las reglas en app/globals.css para vista previa local.
-const IA_GENERATED_INLINE_STYLES = `
-<style>
-.ia-cover {
-  max-width: min(960px, 100%);
-  margin: 0 auto 3rem;
-}
-.ia-cover img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: .5rem;
-}
-.ia-cover figcaption {
-  margin-top: .75rem;
-  color: #a3a3a3;
-  font: .85rem/1.6 Arial, sans-serif;
-}
-.ia-cover a { color: #d7ff52; }
-.ia-generated {
-  box-sizing: border-box;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  max-width: min(780px, 100%);
-  margin: 2rem auto;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  color: #d4d4cf;
-  overflow-wrap: anywhere;
-  color-scheme: dark;
-}
-.ia-generated::before, .ia-generated::after, .ia-generated h2::before { content: none; }
-.ia-generated h1 {
-  margin: 0 0 2rem;
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.12;
-  letter-spacing: -.04em;
-  font-weight: 700;
-  color: #fafaf5;
-}
-.ia-generated h2 {
-  margin: 2.5rem 0 1rem;
-  padding: 0;
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  line-height: 1.3;
-  letter-spacing: -.025em;
-  font-weight: 600;
-  color: #fafaf5;
-}
-.ia-generated p { margin: 1rem 0; color: #d4d4cf; font-size: 1.05rem; line-height: 1.85; }
-.ia-generated ul, .ia-generated ol { margin: 1.25rem 0; padding-left: 1.5rem; color: #d4d4cf; }
-.ia-generated li { margin-bottom: .65rem; font-size: 1.05rem; line-height: 1.8; }
-.ia-generated li::marker { color: #d7ff52; }
-.ia-generated strong { color: #fafaf5; }
-.ia-generated a {
-  color: #d7ff52;
-  text-decoration: underline;
-  text-decoration-color: #71852c;
-  text-underline-offset: .2em;
-}
-.ia-generated a:hover { color: #e6ff96; text-decoration-color: currentColor; }
-.ia-generated a:focus-visible, .ia-cover a:focus-visible { outline: 2px solid #d7ff52; outline-offset: 4px; }
-.ia-generated blockquote {
-  margin: 2rem 0;
-  padding: 1rem 1.5rem;
-  background: #1b1b18;
-  border-left: 3px solid #d7ff52;
-  color: #e5e5df;
-}
-.ia-generated figure { margin: 2rem auto; }
-.ia-generated figcaption { margin-top: .75rem; font-size: .9rem; color: #a3a3a3; }
-.ia-generated table { display: block; max-width: 100%; overflow-x: auto; margin: 2rem 0; border-collapse: collapse; }
-.ia-generated table th, .ia-generated table td { padding: .85rem 1rem; border: 1px solid #3b3b36; text-align: left; background: #161614; color: #d4d4cf; }
-.ia-generated table th { background: #252520; font-weight: 600; color: #fafaf5; }
-.ia-generated hr { margin: 2.5rem 0; border: 0; height: 1px; background: #3b3b36; }
-.ia-generated img { display: block; max-width: 100%; height: auto; border-radius: .5rem; margin: 2rem auto; }
-.ia-generated section { margin-top: 2rem; }
-.ia-generated footer { margin-top: 3rem; font-size: .9rem; color: #a3a3a3; }
-@media (max-width: 680px) {
-  .ia-generated { margin: 1.5rem auto; padding: 0; }
-}
-
-/* WordPress single-post layout, scoped to generated publications. */
-body.single-post:has(main.site-main .ia-generated) {
-  background: #111110;
-  background-image: none;
-  color: #d4d4cf;
-}
-body.single-post main.site-main:has(.ia-generated) {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 0;
-  background: #111110;
-  color: #d4d4cf;
-}
-body.single-post main.site-main .page-content:has(.ia-generated) {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 9rem 2rem 5rem;
-  background: #111110;
-}
-body.single-post main.site-main .page-content .ia-generated { margin: 0 auto; }
-body.single-post main.site-main .page-content .ia-cover { margin: 0 auto 3rem; }
-@media (max-width: 680px) {
-  body.single-post main.site-main .page-content:has(.ia-generated) { padding: 7rem 1.25rem 3rem; }
-  body.single-post main.site-main .page-content .ia-cover { margin-bottom: 2rem; }
-}
-</style>
-`.trim();
 async function generateEditorialPackage(
   creativeBrief: string,
   visualSignals: string,
