@@ -1,0 +1,181 @@
+import type { CoverAsset } from "@/lib/creative-assets";
+import { isSameOrigin, verifyContentSignature } from "@/lib/admin-auth";
+import {
+  isCommunityPublishingEnabled,
+  reviewCommunityArticle,
+  visitorContent,
+} from "@/lib/community-review";
+import { rateLimit } from "@/lib/rate-limit";
+import { countWords, sanitizeArticleForPublish } from "@/lib/wordpress-article";
+import {
+  deriveTitleFromContent,
+  getWordPressConfig,
+  publishToWordPress,
+  wordpressAuthHeader,
+  WordPressError,
+} from "@/lib/wordpress-client";
+
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
+const COMMUNITY_TAG = { name: "Comunidad IA", slug: "comunidad-ia" };
+const DAILY_LIMIT = Math.max(0, Number(process.env.COMMUNITY_DAILY_LIMIT ?? 10) || 0);
+const MIN_WORDS = 300;
+const MAX_WORDS = 3_000;
+
+type CommunityPublishBody = {
+  content?: unknown;
+  cover?: CoverAsset;
+  authorName?: unknown;
+  accepted?: unknown;
+};
+
+function reply(status: number, body: Record<string, unknown>) {
+  return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
+}
+
+function reject(reasons: string[], status = 422) {
+  return reply(status, { status: "rejected", reasons });
+}
+
+let cachedTagId: number | null = null;
+
+/** Visitor posts share the editorial category, so a tag marks them for counting and bulk moderation. */
+async function communityTagId(): Promise<number> {
+  if (cachedTagId) return cachedTagId;
+  const wordpress = getWordPressConfig();
+  const headers = { Authorization: wordpressAuthHeader(wordpress), "Content-Type": "application/json" };
+  const found = await fetch(
+    `${wordpress.baseUrl}/wp-json/wp/v2/tags?slug=${COMMUNITY_TAG.slug}&_fields=id`,
+    { headers, cache: "no-store" }
+  );
+  const existing = found.ok ? ((await found.json()) as { id: number }[]) : [];
+  if (existing[0]?.id) return (cachedTagId = existing[0].id);
+
+  const created = await fetch(`${wordpress.baseUrl}/wp-json/wp/v2/tags`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(COMMUNITY_TAG),
+  });
+  if (!created.ok) throw new Error(`No se pudo crear la etiqueta de comunidad (${created.status}).`);
+  return (cachedTagId = ((await created.json()) as { id: number }).id);
+}
+
+/** WordPress is the shared source of truth for the global cap (in-memory counters are per instance). */
+async function communityPostsInLast24h(tagId: number): Promise<number> {
+  const wordpress = getWordPressConfig();
+  const since = Date.now() - 24 * 60 * 60 * 1000;
+  const response = await fetch(
+    `${wordpress.baseUrl}/wp-json/wp/v2/posts?tags=${tagId}&per_page=100&orderby=date&order=desc&status=publish&_fields=date_gmt`,
+    { headers: { Authorization: wordpressAuthHeader(wordpress) }, cache: "no-store" }
+  );
+  if (!response.ok) throw new Error(`No se pudo comprobar el cupo diario (${response.status}).`);
+  const posts = (await response.json()) as { date_gmt?: string }[];
+  return posts.filter((post) => post.date_gmt && Date.parse(`${post.date_gmt}Z`) > since).length;
+}
+
+function cleanAuthorName(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/<[^>]*>/g, "")
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 40);
+}
+
+export async function POST(request: Request) {
+  const publicKey = process.env.PUBLIC_EXPERIMENT_KEY?.trim();
+  if (!publicKey || new URL(request.url).searchParams.get("key") !== publicKey) {
+    return reply(403, { status: "error", reasons: ["Acceso no autorizado."] });
+  }
+  if (!isSameOrigin(request)) {
+    return reply(403, { status: "error", reasons: ["Origen no permitido."] });
+  }
+  if (!isCommunityPublishingEnabled()) {
+    return reply(503, {
+      status: "disabled",
+      reasons: ["La publicación de la comunidad está desactivada en este momento."],
+    });
+  }
+
+  const limited = rateLimit(request, "community");
+  if (limited) {
+    return reply(429, {
+      status: "limit",
+      reasons: ["Has alcanzado el máximo de intentos de publicación por hoy. Vuelve mañana."],
+    });
+  }
+
+  const body = (await request.json().catch(() => ({}))) as CommunityPublishBody;
+  if (body.accepted !== true) {
+    return reject(["Debes aceptar las condiciones de publicación."], 400);
+  }
+  if (typeof body.content !== "string" || !body.content.trim()) {
+    return reject(["Falta el contenido del artículo."], 400);
+  }
+
+  const authorName = cleanAuthorName(body.authorName);
+  const contentHtml = sanitizeArticleForPublish(body.content, { community: { authorName } });
+  if (!/<h1[\s>]/i.test(contentHtml)) {
+    return reject(["El artículo necesita un título."]);
+  }
+  const words = countWords(visitorContent(contentHtml));
+  if (words < MIN_WORDS || words > MAX_WORDS) {
+    return reject([
+      `El artículo debe tener entre ${MIN_WORDS} y ${MAX_WORDS.toLocaleString("es-ES")} palabras (ahora tiene ${words}).`,
+    ]);
+  }
+
+  // Only covers generated by this app (server-signed) or validated Unsplash photos are accepted.
+  let cover: CoverAsset | undefined;
+  if (body.cover?.source === "generated") {
+    if (!verifyContentSignature("cover", body.cover.data, body.cover.signature)) {
+      return reject(["La portada no es válida. Genera una nueva portada desde el laboratorio."]);
+    }
+    cover = body.cover;
+  } else if (body.cover?.source === "unsplash") {
+    cover = body.cover;
+  }
+
+  try {
+    const tagId = await communityTagId();
+    if ((await communityPostsInLast24h(tagId)) >= DAILY_LIMIT) {
+      return reply(429, {
+        status: "limit",
+        reasons: ["Hoy ya se ha completado el cupo de publicaciones de la comunidad. Vuelve mañana."],
+      });
+    }
+
+    const title = deriveTitleFromContent(contentHtml).slice(0, 200);
+    const review = await reviewCommunityArticle({ title, authorName, html: contentHtml });
+    if (!review.approved) {
+      return reject(review.reasons, review.retryable ? 503 : 422);
+    }
+
+    const publishLimited = rateLimit(request, "communityPublish");
+    if (publishLimited) {
+      return reply(429, {
+        status: "limit",
+        reasons: ["Ya has publicado el máximo de artículos por hoy. Vuelve mañana."],
+      });
+    }
+
+    const post = await publishToWordPress({
+      contentHtml,
+      title,
+      status: "publish",
+      cover,
+      tags: [tagId],
+    });
+    console.info("Publicación de comunidad", { id: post.id, title, authorName });
+    return reply(200, { status: "published", post: { link: post.link } });
+  } catch (error) {
+    console.error("Error en la publicación de comunidad", error);
+    const message =
+      error instanceof WordPressError
+        ? "WordPress no pudo guardar el artículo. Inténtalo más tarde."
+        : "No se pudo completar la publicación. Inténtalo más tarde.";
+    return reply(502, { status: "error", reasons: [message] });
+  }
+}

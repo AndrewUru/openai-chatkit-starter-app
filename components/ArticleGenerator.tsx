@@ -152,6 +152,18 @@ export function ArticleGenerator() {
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [isPublishPanelVisible, setIsPublishPanelVisible] = useState(false);
+  // Only the editor (server-side secret, httpOnly cookie) can publish; visitors copy or download.
+  const [isEditor, setIsEditor] = useState(false);
+  const [showEditorLogin, setShowEditorLogin] = useState(false);
+  const [editorSecret, setEditorSecret] = useState("");
+  const [editorLoginState, setEditorLoginState] = useState<"idle" | "checking" | "error">("idle");
+  const [editorLoginMessage, setEditorLoginMessage] = useState("");
+  // Visitor publishing: automatic review on the server, no manual approval.
+  const [communityEnabled, setCommunityEnabled] = useState(false);
+  const [communityAuthor, setCommunityAuthor] = useState("");
+  const [communityAccepted, setCommunityAccepted] = useState(false);
+  const [communityState, setCommunityState] = useState<"idle" | "reviewing" | "rejected" | "error">("idle");
+  const [communityReasons, setCommunityReasons] = useState<string[]>([]);
   const resultRef = useRef<HTMLElement>(null);
   const generationRef = useRef<HTMLElement>(null);
   const articleRef = useRef<HTMLDivElement>(null);
@@ -320,6 +332,18 @@ export function ArticleGenerator() {
     }, 1000);
     return () => window.clearInterval(timer);
   }, [isDiscoveringIdea]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/admin/session", { signal: controller.signal, cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { isEditor?: boolean; communityPublishing?: boolean } | null) => {
+        setIsEditor(Boolean(data?.isEditor));
+        setCommunityEnabled(Boolean(data?.communityPublishing));
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   // Without a target the wheel picks at random; with one it lands on the chosen territory.
   const spinWheel = useCallback(async (targetIndex?: number) => {
@@ -713,6 +737,10 @@ export function ArticleGenerator() {
           }
         );
         const data = (await response.json().catch(() => ({}))) as PublishResponse;
+        if (response.status === 401) {
+          setIsEditor(false);
+          setShowEditorLogin(true);
+        }
         if (!response.ok) {
           throw new Error(
             data.message || data.error || "WordPress no pudo guardar la pieza."
@@ -757,11 +785,114 @@ export function ArticleGenerator() {
     }
   }, [article]);
 
+  const downloadArticleHtml = useCallback(() => {
+    const title =
+      article.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]?.replace(/<[^>]*>/g, "").trim() ||
+      "articulo";
+    const slug =
+      title
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 60) || "articulo";
+    const page = `<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title.replace(/</g, "&lt;")}</title></head>
+<body style="margin:0;padding:3rem 1.25rem;background:#0e0f0f">
+${article}
+</body>
+</html>`;
+    const url = URL.createObjectURL(new Blob([page], { type: "text/html;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slug}.html`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, [article]);
+
+  const loginEditor = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!editorSecret.trim() || editorLoginState === "checking") return;
+      setEditorLoginState("checking");
+      setEditorLoginMessage("");
+      try {
+        const response = await fetch("/api/admin/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ secret: editorSecret }),
+        });
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        if (!response.ok) throw new Error(data.error || "No se pudo iniciar sesión.");
+        setIsEditor(true);
+        setShowEditorLogin(false);
+        setEditorSecret("");
+        setEditorLoginState("idle");
+        setPublishState("idle");
+        setPublishMessage("");
+      } catch (loginError) {
+        setEditorLoginState("error");
+        setEditorLoginMessage(
+          loginError instanceof Error ? loginError.message : "No se pudo iniciar sesión."
+        );
+      }
+    },
+    [editorLoginState, editorSecret]
+  );
+
+  const publishToCommunity = useCallback(async () => {
+    if (!article || !communityAccepted || isRefreshingCover || communityState === "reviewing") return;
+    setCommunityState("reviewing");
+    setCommunityReasons([]);
+    try {
+      const response = await fetch(
+        `/api/community/publish?key=${encodeURIComponent(PUBLIC_KEY)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: article,
+            cover,
+            authorName: communityAuthor,
+            accepted: communityAccepted,
+          }),
+        }
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        status?: string;
+        reasons?: string[];
+        post?: { link?: string };
+      };
+      if (response.ok && data.status === "published") {
+        setCommunityState("idle");
+        setPublishedLink(data.post?.link ?? null);
+        setPublishState("published");
+        setPublishMessage("¡Tu artículo ya está publicado en El Salto Web!");
+        return;
+      }
+      setCommunityState(data.status === "rejected" ? "rejected" : "error");
+      setCommunityReasons(
+        data.reasons?.length ? data.reasons : ["No se pudo publicar. Inténtalo más tarde."]
+      );
+    } catch {
+      setCommunityState("error");
+      setCommunityReasons(["No se pudo conectar con el servidor. Inténtalo de nuevo."]);
+    }
+  }, [article, communityAccepted, communityAuthor, communityState, cover, isRefreshingCover]);
+
+  const logoutEditor = useCallback(async () => {
+    await fetch("/api/admin/session", { method: "DELETE" }).catch(() => undefined);
+    setIsEditor(false);
+    setConfirmPublish(false);
+  }, []);
+
   const startOver = useCallback(() => {
     if (
       publishState !== "published" &&
       !window.confirm(
-        "El borrador actual no se ha enviado a WordPress y se perderá. ¿Quieres empezar otra publicación?"
+        "El artículo actual se perderá si no lo has copiado, descargado o publicado. ¿Quieres empezar otra publicación?"
       )
     ) {
       return;
@@ -780,6 +911,9 @@ export function ArticleGenerator() {
     setPublishTarget(null);
     setConfirmPublish(false);
     setPublishMessage("");
+    setCommunityState("idle");
+    setCommunityReasons([]);
+    setCommunityAccepted(false);
     setState("idle");
     document
       .getElementById("experiencia")
@@ -1534,19 +1668,58 @@ export function ArticleGenerator() {
               >
                 <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
                   <div>
-                    <p className="step-label text-[#d7ff52]">04 / WordPress</p>
+                    <p className="step-label text-[#d7ff52]">
+                      04 / {isEditor ? "WordPress" : "Llévatelo"}
+                    </p>
                     <h3 className="mt-4 max-w-2xl font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">
-                      La última palabra sigue siendo humana.
+                      {isEditor
+                        ? "La última palabra sigue siendo humana."
+                        : "Tu artículo, listo para tu web."}
                     </h3>
                     <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/55">
-                      Guarda un borrador para revisarlo con calma o publícalo ahora
-                      con la portada elegida.
+                      {isEditor
+                        ? "Guarda un borrador para revisarlo con calma o publícalo ahora con la portada elegida."
+                        : "Copia el HTML con sus estilos y pégalo en tu blog (en WordPress, en un bloque «HTML personalizado»), o descárgalo como página."}
                     </p>
                     <p className="mt-3 max-w-xl text-xs leading-relaxed text-white/45">
-                      Nada se enviará a WordPress hasta que elijas una de estas opciones.
+                      {isEditor
+                        ? "Nada se enviará a WordPress hasta que elijas una de estas opciones."
+                        : communityEnabled
+                        ? "También puedes publicarlo en El Salto Web: lo revisamos automáticamente al momento."
+                        : "La publicación en El Salto Web está reservada al equipo editorial."}
                     </p>
                   </div>
-                  {isPublished && publishedLink ? (
+                  {!isEditor && isPublished && publishedLink ? (
+                    <a
+                      href={publishedLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="publish-primary text-center"
+                    >
+                      Ver tu artículo publicado ↗
+                    </a>
+                  ) : !isEditor ? (
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={downloadArticleHtml}
+                        className="publish-secondary"
+                      >
+                        Descargar .html
+                      </button>
+                      <button
+                        type="button"
+                        onClick={copyArticleHtml}
+                        className="publish-primary"
+                      >
+                        {copyState === "copied"
+                          ? "Copiado ✓"
+                          : copyState === "error"
+                          ? "No se pudo copiar"
+                          : "Copiar HTML"}
+                      </button>
+                    </div>
+                  ) : isPublished && publishedLink ? (
                     <a
                       href={publishedLink}
                       target="_blank"
@@ -1595,6 +1768,99 @@ export function ArticleGenerator() {
                   )}
                 </div>
 
+                {!isEditor && communityEnabled && !isPublished ? (
+                  <div className="community-publish">
+                    <p className="step-label text-[#d7ff52]">Publicar en El Salto Web</p>
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60">
+                      Antes de publicarse, una revisión automática comprueba que el
+                      contenido es adecuado: sin spam, sin ataques a personas reales, sin
+                      contenido peligroso y dentro de la temática de la web. Si algo no
+                      encaja, te diremos qué cambiar.
+                    </p>
+                    <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+                      <div className="grid gap-4">
+                        <label className="grid gap-2 text-xs font-bold text-white/70">
+                          Firma (opcional)
+                          <input
+                            value={communityAuthor}
+                            onChange={(event) => setCommunityAuthor(event.target.value)}
+                            maxLength={40}
+                            placeholder="Tu nombre o alias"
+                            disabled={communityState === "reviewing"}
+                            className="rounded-full border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-normal text-white outline-none placeholder:text-white/30 focus:border-[#d7ff52]"
+                          />
+                        </label>
+                        <label className="flex items-start gap-3 text-xs leading-relaxed text-white/60">
+                          <input
+                            type="checkbox"
+                            checked={communityAccepted}
+                            onChange={(event) => setCommunityAccepted(event.target.checked)}
+                            disabled={communityState === "reviewing"}
+                            className="mt-0.5 h-4 w-4 accent-[#d7ff52]"
+                          />
+                          <span>
+                            Confirmo que he revisado el artículo, que es adecuado y acepto que se
+                            publique en El Salto Web con la firma indicada. El Salto Web puede
+                            retirarlo en cualquier momento.
+                          </span>
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={publishToCommunity}
+                        disabled={
+                          !communityAccepted ||
+                          isRefreshingCover ||
+                          communityState === "reviewing"
+                        }
+                        className="publish-primary"
+                      >
+                        {communityState === "reviewing"
+                          ? "Revisando…"
+                          : isRefreshingCover
+                          ? "Esperando portada…"
+                          : "Publicar en El Salto Web ↗"}
+                      </button>
+                    </div>
+
+                    <div aria-live="polite">
+                      {communityState === "reviewing" ? (
+                        <p role="status" className="mt-5 flex items-center gap-3 text-sm text-white/70">
+                          <span className="workflow-spinner rewrite-spinner" aria-hidden="true" />
+                          Revisando tu artículo: moderación de contenido y revisión editorial.
+                          Suele tardar menos de un minuto.
+                        </p>
+                      ) : communityState === "rejected" || communityState === "error" ? (
+                        <div
+                          role="alert"
+                          className={`mt-5 border-l-2 pl-4 text-sm ${
+                            communityState === "rejected"
+                              ? "border-[#ffca3a] text-[#ffe08a]"
+                              : "border-[#ff5c35] text-[#ff9b82]"
+                          }`}
+                        >
+                          <p className="font-bold">
+                            {communityState === "rejected"
+                              ? "Todavía no se puede publicar"
+                              : "No se pudo completar la publicación"}
+                          </p>
+                          <ul className="mt-2 grid gap-1">
+                            {communityReasons.map((reason) => (
+                              <li key={reason}>{reason}</li>
+                            ))}
+                          </ul>
+                          {communityState === "rejected" ? (
+                            <p className="mt-2 text-white/50">
+                              Puedes seleccionar el texto del artículo para corregirlo y volver a
+                              intentarlo.
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
                 {confirmPublish ? (
                   <p role="status" className="mt-5 text-sm text-[#ffca3a]">
                     Se hará público en WordPress de inmediato. Pulsa de nuevo para
@@ -1632,6 +1898,58 @@ export function ArticleGenerator() {
                     ) : null}
                   </div>
                 ) : null}
+
+                <div className="mt-8 border-t border-white/10 pt-4 text-xs text-white/40">
+                  {isEditor ? (
+                    <p>
+                      Sesión de editor activa ·{" "}
+                      <button
+                        type="button"
+                        onClick={logoutEditor}
+                        className="border-b border-current font-bold transition hover:text-white"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </p>
+                  ) : showEditorLogin ? (
+                    <form onSubmit={loginEditor} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <label htmlFor="editor-secret" className="font-bold text-white/60">
+                        Clave de editor
+                      </label>
+                      <input
+                        id="editor-secret"
+                        type="password"
+                        autoComplete="current-password"
+                        value={editorSecret}
+                        onChange={(event) => {
+                          setEditorSecret(event.target.value);
+                          setEditorLoginState("idle");
+                        }}
+                        className="min-w-0 flex-1 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-white outline-none focus:border-[#d7ff52]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!editorSecret.trim() || editorLoginState === "checking"}
+                        className="rounded-full bg-[#f4f0e6] px-4 py-2 font-bold text-[#11110f] disabled:opacity-40"
+                      >
+                        {editorLoginState === "checking" ? "Comprobando…" : "Entrar"}
+                      </button>
+                      {editorLoginState === "error" ? (
+                        <p role="alert" className="text-[#ff9b82]">
+                          {editorLoginMessage}
+                        </p>
+                      ) : null}
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowEditorLogin(true)}
+                      className="border-b border-current transition hover:text-white"
+                    >
+                      ¿Eres del equipo editorial? Accede para publicar
+                    </button>
+                  )}
+                </div>
               </section>
 
               <button
@@ -1651,7 +1969,9 @@ export function ArticleGenerator() {
                   ? `Preparando portada · ${coverElapsedLabel}`
                   : isPublished
                   ? publishMessage
-                  : "Borrador listo · aún no enviado a WordPress"}
+                  : isEditor
+                  ? "Borrador listo · aún no enviado a WordPress"
+                  : "Artículo listo · cópialo o descárgalo"}
               </p>
               <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
                 <button
@@ -1685,7 +2005,11 @@ export function ArticleGenerator() {
                     }
                     className="publish-primary result-action-button"
                   >
-                    {isPublished ? "Ver estado ↓" : "Revisar y publicar ↓"}
+                    {isPublished
+                      ? "Ver estado ↓"
+                      : isEditor || communityEnabled
+                      ? "Revisar y publicar ↓"
+                      : "Descargar ↓"}
                   </button>
                 )}
               </div>

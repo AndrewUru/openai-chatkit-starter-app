@@ -1328,3 +1328,12 @@ body.single-post main.site-main .page-content .ia-cover { margin: 0 auto 3rem; }
   .workflow-spinner, .workflow-track > span { animation: none; }
   .workflow-track > span { width: 100%; opacity: .5; }
 }
+
+/* ---------- Community publishing (visitors) ---------- */
+.community-publish {
+  margin-top: 2rem;
+  border: 1px solid rgba(215,255,82,.25);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(215,255,82,.06), transparent 60%);
+  padding: clamp(1.1rem, 3vw, 1.75rem);
+}

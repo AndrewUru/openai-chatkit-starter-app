@@ -1,6 +1,8 @@
 import type { CoverAsset, UnsplashCover } from "@/lib/creative-assets";
 import { EDITORIAL_PUBLICATION_PROMPT } from "@/lib/editorial-generation";
 import { buildArticleDocument } from "@/lib/wordpress-article";
+import { isAdminRequest, signContent } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -22,6 +24,10 @@ export async function POST(req: Request) {
       return new Response("Acceso no autorizado", { status: 403 });
     }
     const body: WorkflowInput = await req.json();
+    if (body.action !== "finalize" && !isAdminRequest(req)) {
+      const limited = rateLimit(req, body.action === "cover" ? "cover" : "article");
+      if (limited) return limited;
+    }
     const result = await runWorkflow(body);
     return Response.json({
       success: true,
@@ -93,7 +99,12 @@ async function runWorkflow(workflow: WorkflowInput) {
       );
     }
 
-    return { cover };
+    return {
+      cover:
+        cover.source === "generated"
+          ? { ...cover, signature: signContent("cover", cover.data) }
+          : cover,
+    };
   }
 
   const openaiApiKey = requireOpenAiKey(process.env.OPENAI_API_KEY?.trim());

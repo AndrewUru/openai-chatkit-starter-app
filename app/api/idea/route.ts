@@ -1,4 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { isAdminRequest } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { generateText, Output, stepCountIs } from "ai";
 import { z } from "zod";
 import { findIdeaTerritory } from "@/lib/idea-discovery";
@@ -66,6 +68,10 @@ export async function POST(request: Request) {
   const url = new URL(request.url);
   if (url.searchParams.get("key") !== publicKey) {
     return new Response("Acceso no autorizado", { status: 403 });
+  }
+  if (!isAdminRequest(request)) {
+    const limited = rateLimit(request, "idea");
+    if (limited) return limited;
   }
 
   const parsed = requestSchema.safeParse(await request.json());

@@ -1,6 +1,8 @@
 // Shared template for generated publications: the app preview and the
 // WordPress post render the same markup and the same inline styles.
 
+import sanitizeHtml from "sanitize-html";
+
 const LAB_URL = "https://elsaltoweb.es/laboratorio-ia/";
 const COVER_SLOT = "<!--ia-cover-slot-->";
 const WORDS_PER_MINUTE = 220;
@@ -403,6 +405,111 @@ export function refreshArticleMeta(html: string, date = new Date()): string {
       /<span class="ia-reading-time">[^<]*<\/span>/i,
       `<span class="ia-reading-time">${readingTimeLabel(html)}</span>`
     );
+}
+
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    "h1", "h2", "h3", "h4", "p", "ul", "ol", "li", "strong", "em", "b", "i", "u", "s",
+    "blockquote", "a", "section", "div", "span", "aside", "time", "hr", "br", "code",
+    "figure", "figcaption", "table", "thead", "tbody", "tr", "th", "td", "sup", "sub",
+  ],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    time: ["datetime"],
+    "*": ["class"],
+  },
+  allowedClasses: {
+    div: ["ia-kicker", "ia-meta"],
+    span: ["ia-reading-time", "ia-badge"],
+    time: ["ia-date"],
+    section: ["ia-sources"],
+    aside: ["ia-colophon"],
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  allowProtocolRelative: false,
+  transformTags: {
+    a: (tagName, attributes) => ({
+      tagName,
+      attribs: {
+        ...(attributes.href ? { href: attributes.href } : {}),
+        ...(attributes.target === "_blank" ? { target: "_blank" } : {}),
+        rel: "noopener noreferrer",
+      },
+    }),
+  },
+};
+
+/**
+ * Publishing never trusts the HTML sent by the browser: the article body is
+ * reduced to an allowlist and wrapped again in the server's own styles, so a
+ * request cannot smuggle scripts, styles or event handlers into WordPress.
+ */
+export function sanitizeArticleForPublish(
+  html: string,
+  options: { community?: { authorName: string } } = {}
+): string {
+  const open = html.match(/<article\b[^>]*class="ia-generated"[^>]*>/i);
+  const start = open ? (open.index ?? 0) + open[0].length : 0;
+  const end = open ? html.lastIndexOf("</article>") : -1;
+  const inner = end > start ? html.slice(start, end) : html;
+
+  if (options.community) {
+    return `${ARTICLE_STYLES}
+<article class="ia-generated">
+${buildCommunityBody(sanitizeHtml(inner, COMMUNITY_SANITIZE_OPTIONS), options.community.authorName)}
+</article>`;
+  }
+
+  const clean = sanitizeHtml(inner, SANITIZE_OPTIONS)
+    // Nested <article> wrappers are dropped by the allowlist; restore the cover slot after the meta row.
+    .replace(/(<div class="ia-meta">[\s\S]*?<\/div>)/i, `$1\n${COVER_SLOT}`)
+    .trim();
+  return `${ARTICLE_STYLES}
+<article class="ia-generated">
+${clean}
+</article>`;
+}
+
+// Visitor links never pass SEO value: that removes the main incentive for spam.
+const COMMUNITY_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  ...SANITIZE_OPTIONS,
+  transformTags: {
+    a: (tagName, attributes) => ({
+      tagName,
+      attribs: {
+        ...(attributes.href ? { href: attributes.href } : {}),
+        target: "_blank",
+        rel: "nofollow ugc noopener noreferrer",
+      },
+    }),
+  },
+};
+
+function escapeText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Community pieces get their kicker, byline and colophon from the server, never
+ * from the submitted HTML, so the label always says how the piece was reviewed.
+ */
+function buildCommunityBody(cleanInner: string, authorName: string, date = new Date()): string {
+  const body = cleanInner
+    .replace(/<div class="ia-kicker">[\s\S]*?<\/div>/gi, "")
+    .replace(/<div class="ia-meta">[\s\S]*?<\/div>/gi, "")
+    .replace(/<aside class="ia-colophon">[\s\S]*?<\/aside>/gi, "")
+    .trim();
+  const byline = escapeText(authorName.trim() || "Un visitante");
+  const meta = `<div class="ia-meta"><time class="ia-date" datetime="${date.toISOString()}">${formatSpanishDate(date)}</time><span class="ia-reading-time">${readingTimeLabel(body)}</span><span>Por ${byline}</span><span class="ia-badge">Creado con IA · Revisión automática</span></div>`;
+  const colophon = `<aside class="ia-colophon"><span>Esta pieza la creó un visitante en el Laboratorio IA de El Salto Web y se publicó tras una revisión automática de contenido. Si ves algún problema, avísanos y la revisaremos.</span><a href="${LAB_URL}">Crea la tuya →</a></aside>`;
+  const withHeader = body
+    .replace(/<h1[\s>]/i, (match) => `<div class="ia-kicker">Laboratorio IA · Comunidad</div>\n${match}`)
+    .replace(/<\/h1>/i, (match) => `${match}\n${meta}\n${COVER_SLOT}`);
+  return `${withHeader}\n${colophon}`;
 }
 
 export function insertCoverFigure(html: string, figure: string): string {

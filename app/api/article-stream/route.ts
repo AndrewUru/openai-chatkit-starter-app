@@ -1,4 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { isAdminRequest } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { Output, stepCountIs, streamText } from "ai";
 import { EDITORIAL_PUBLICATION_PROMPT } from "@/lib/editorial-generation";
 import {
@@ -23,6 +25,10 @@ export async function POST(request: Request) {
   const url = new URL(request.url);
   if (url.searchParams.get("key") !== publicKey) {
     return new Response("Acceso no autorizado", { status: 403 });
+  }
+  if (!isAdminRequest(request)) {
+    const limited = rateLimit(request, "article");
+    if (limited) return limited;
   }
 
   const body = (await request.json()) as ArticleStreamInput;

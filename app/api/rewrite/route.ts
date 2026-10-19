@@ -1,4 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { isAdminRequest } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { streamText } from "ai";
 
 export const runtime = "nodejs";
@@ -37,6 +39,10 @@ export async function POST(request: Request) {
   const url = new URL(request.url);
   if (url.searchParams.get("key") !== publicKey) {
     return new Response("Acceso no autorizado", { status: 403 });
+  }
+  if (!isAdminRequest(request)) {
+    const limited = rateLimit(request, "rewrite");
+    if (limited) return limited;
   }
 
   const body = (await request.json().catch(() => ({}))) as RewriteInput;
