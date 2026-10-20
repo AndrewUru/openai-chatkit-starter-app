@@ -154,6 +154,8 @@ export function ArticleGenerator() {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [isPublishPanelVisible, setIsPublishPanelVisible] = useState(false);
   const [ceremonyVariant, setCeremonyVariant] = useState<CeremonyVariant | null>(null);
+  // Set on the client: the page is prerendered, so a render-time date would be the build date.
+  const [editionDate, setEditionDate] = useState("");
   // Only the editor (server-side secret, httpOnly cookie) can publish; visitors copy or download.
   const [isEditor, setIsEditor] = useState(false);
   const [showEditorLogin, setShowEditorLogin] = useState(false);
@@ -237,6 +239,12 @@ export function ArticleGenerator() {
       page.scrollTop = page.scrollHeight;
     }
   }, [liveArticleHtml]);
+
+  useEffect(() => {
+    setEditionDate(
+      new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+    );
+  }, []);
 
   useEffect(() => {
     if (!confirmPublish) return undefined;
@@ -1001,17 +1009,16 @@ ${article}
       ) : null}
       <main>
         <section id="experiencia" className="studio-workspace">
-          <header className="studio-header">
+          <header className="studio-header press-masthead">
             <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#11110f] text-xs font-black text-[#d7ff52]">
-                ES
-              </span>
+              <span className="press-masthead-seal">ES</span>
               <div>
-                <p className="text-sm font-black uppercase tracking-[-0.02em]">
-                  El Salto Web
-                </p>
+                <p className="press-masthead-name">El Salto Web</p>
                 <p className="font-mono text-[.62rem] uppercase tracking-[.16em] text-black/45">
                   Estudio editorial con IA
+                  {editionDate ? (
+                    <span className="hidden sm:inline"> · Edición del {editionDate}</span>
+                  ) : null}
                 </p>
               </div>
             </div>
@@ -1073,7 +1080,7 @@ ${article}
                 >
                   Tu idea
                 </label>
-                <div className="studio-textarea-wrap mt-3">
+                <div className="studio-textarea-wrap crop-marks mt-3">
                   <textarea
                     id="editorial-idea"
                     value={topic}
@@ -1225,6 +1232,7 @@ ${article}
                 <span />
                 <span />
               </div>
+              <div className="press-rays" aria-hidden="true" />
               <div className="w-full">
                 <p className="step-label text-[#d7ff52]">¿Sin idea?</p>
                 <h2 className="mt-3 font-serif text-4xl leading-none tracking-[-.045em] sm:text-5xl">
@@ -1296,19 +1304,19 @@ ${article}
                       </p>
                     </div>
                   ) : selectedSurprise ? (
-                    <div className="studio-idea-result">
+                    <div key={selectedSurprise.title} className="studio-idea-result press-wire">
                       <div className="flex items-center justify-between gap-4">
-                        <p className="font-mono text-[.68rem] uppercase tracking-[.12em] text-[#d7ff52]">
-                          {selectedSurprise.number} · {selectedSurprise.territory}
+                        <p className="font-mono text-[.68rem] uppercase tracking-[.12em] text-[#4468ff]">
+                          Teletipo · {selectedSurprise.number} · {selectedSurprise.territory}
                         </p>
-                        <p className="truncate text-right text-[.68rem] uppercase tracking-[.1em] text-white/35">
+                        <p className="truncate text-right font-mono text-[.62rem] uppercase tracking-[.1em] text-black/40">
                           {selectedSurprise.signal}
                         </p>
                       </div>
                       <h3 className="mt-3 font-serif text-2xl leading-tight tracking-[-.03em] sm:text-3xl">
                         {selectedSurprise.title}
                       </h3>
-                      <p className="mt-2 text-sm leading-relaxed text-white/55">
+                      <p className="mt-2 text-sm leading-relaxed text-black/55">
                         La idea ya está en el formulario. Puedes editarla antes de crear.
                       </p>
                       <button
@@ -1318,7 +1326,7 @@ ${article}
                           field?.scrollIntoView({ behavior: "smooth", block: "center" });
                           field?.focus({ preventScroll: true });
                         }}
-                        className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#d7ff52] px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[#11110f] transition hover:bg-white"
+                        className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#11110f] px-4 py-2 text-xs font-black uppercase tracking-[.12em] text-[#d7ff52] transition hover:bg-[#4468ff] hover:text-white"
                       >
                         Usar esta idea <span aria-hidden="true">↓</span>
                       </button>
@@ -1406,6 +1414,7 @@ ${article}
               <span />
               <span />
             </div>
+            <div className="press-rays" aria-hidden="true" />
             <div className="ai-theater-grain" aria-hidden="true" />
 
             <header className="ai-theater-top">
@@ -1442,7 +1451,7 @@ ${article}
                     <span />
                   </span>
                   <span className="mt-3 flex items-center gap-2">
-                    <span aria-hidden="true" className="font-mono text-[.65rem] opacity-60">
+                    <span aria-hidden="true" className="press-step-dot">
                       {index < activeGenerationStep ? "✓" : `0${index + 1}`}
                     </span>
                     {label}
@@ -1477,10 +1486,14 @@ ${article}
                 </div>
               ) : (
                 <div className="ai-theater-intro">
-                  <div className="ai-orb" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
+                  <div className="press-sheet press-sheet-mini" aria-hidden="true">
+                    <div className="press-sheet-cover">
+                      <span className="press-sheet-cover-fallback">ES</span>
+                      <span className="press-sheet-roller" />
+                    </div>
+                    <span className="press-sheet-line" />
+                    <span className="press-sheet-line" />
+                    <span className="press-sheet-line is-short" />
                   </div>
                   <h2 key={generationPhase} className="ai-theater-headline">
                     {loadingMessage}
@@ -1488,12 +1501,6 @@ ${article}
                   <p className="mt-5 max-w-md text-center text-sm leading-relaxed text-white/50">
                     {loadingHint}
                   </p>
-                  <div className="mt-12 w-full max-w-xl space-y-4" aria-hidden="true">
-                    <div className="ai-writing-line h-9 w-4/5" />
-                    <div className="ai-writing-line h-3 w-full" />
-                    <div className="ai-writing-line h-3 w-11/12" />
-                    <div className="ai-writing-line h-3 w-3/4" />
-                  </div>
                 </div>
               )}
             </div>
@@ -1535,9 +1542,17 @@ ${article}
         >
           {state === "success" ? (
             <div className="mx-auto w-full max-w-[1200px] px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
-              <header className="reveal mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
+              <header className="reveal relative mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
+                <span
+                  key={isPublished ? "published" : "proof"}
+                  className="ink-stamp"
+                  data-kind={isPublished ? "published" : "proof"}
+                  aria-hidden="true"
+                >
+                  {isPublished ? "Publicado" : "Galerada"}
+                </span>
                 <div>
-                  <p className="step-label text-[#4468ff]">03 / Resultado</p>
+                  <p className="step-label text-[#4468ff]">03 / Prueba de imprenta</p>
                   <h2 className="mt-5 font-serif text-5xl tracking-[-0.045em] sm:text-7xl">
                     Revisa el contenido y decide qué quieres hacer con él.
                   </h2>
@@ -1545,7 +1560,9 @@ ${article}
                 <div className="max-w-xs text-sm leading-relaxed text-black/60">
                   <p>{resultMessage}</p>
                   <p className="mt-3 font-semibold text-black">
-                    Todavía no se ha enviado a WordPress.
+                    {isPublished
+                      ? "Ya ha salido de la imprenta."
+                      : "Todavía no se ha enviado a WordPress."}
                   </p>
                 </div>
               </header>
@@ -1586,15 +1603,17 @@ ${article}
                   ) : null}
                 </div>
 
+                <div className="crop-marks">
                 <div className="cover-frame">
                   {coverPreviewUrl ? (
                     <Image
+                      key={coverPreviewUrl}
                       src={coverPreviewUrl}
                       alt={cover?.alt || "Portada de la pieza"}
                       fill
                       sizes="(max-width: 768px) 100vw, 1100px"
                       unoptimized={cover?.source === "generated"}
-                      className="object-cover"
+                      className="ink-reveal object-cover"
                     />
                   ) : (
                     <div className="grid h-full place-items-center bg-[#11110f] px-8 text-center text-[#f4f0e6]">
@@ -1617,8 +1636,8 @@ ${article}
                       role="status"
                       className="absolute inset-0 z-10 grid place-items-center bg-black/70 px-8 text-center text-white"
                     >
+                      <span className="press-sheet-roller" aria-hidden="true" />
                       <div>
-                        <span className="workflow-spinner mx-auto mb-5" aria-hidden="true" />
                         <p className="text-sm font-bold uppercase tracking-[0.16em]">
                           {cover
                             ? "Buscando otra mirada…"
@@ -1652,6 +1671,8 @@ ${article}
                   ) : null}
                 </div>
 
+                </div>
+
                 <div className="mt-5 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
@@ -1680,23 +1701,25 @@ ${article}
                 ) : null}
               </section>
 
-              <EditableStory
-                html={article}
-                onChange={setArticle}
-                apiKey={PUBLIC_KEY}
-                disabled={publishState === "publishing" || isPublished}
-                storyRef={articleRef}
-              />
+              <div className="crop-marks">
+                <EditableStory
+                  html={article}
+                  onChange={setArticle}
+                  apiKey={PUBLIC_KEY}
+                  disabled={publishState === "publishing" || isPublished}
+                  storyRef={articleRef}
+                />
+              </div>
 
               <section
                 ref={publishPanelRef}
                 id="publicar"
-                className="reveal publish-decision mt-20 scroll-mt-6 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10"
+                className="reveal publish-decision crop-marks mt-20 scroll-mt-6 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10"
               >
                 <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
                   <div>
                     <p className="step-label text-[#d7ff52]">
-                      04 / {isEditor ? "WordPress" : "Llévatelo"}
+                      04 / {isEditor ? "A la rotativa" : "Llévatelo"}
                     </p>
                     <h3 className="mt-4 max-w-2xl font-serif text-4xl leading-none tracking-[-0.04em] sm:text-5xl">
                       {isEditor
