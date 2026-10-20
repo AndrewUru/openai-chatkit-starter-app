@@ -106,6 +106,30 @@ const EDITORIAL_FOCUSES: EditorialOption[] = [
 const PUBLIC_KEY =
   process.env.NEXT_PUBLIC_PUBLIC_EXPERIMENT_KEY ?? "demo2025";
 
+// Ideas the wheel already offered in this browser, sent back so it moves on.
+const SEEN_IDEAS_KEY = "esw:seen-ideas";
+const MAX_SEEN_IDEAS = 15;
+
+function readSeenIdeas(): string[] {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(SEEN_IDEAS_KEY) ?? "[]");
+    return Array.isArray(stored)
+      ? stored.filter((title): title is string => typeof title === "string").slice(0, MAX_SEEN_IDEAS)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberSeenIdea(title: string) {
+  try {
+    const seen = [title, ...readSeenIdeas().filter((item) => item !== title)];
+    window.localStorage.setItem(SEEN_IDEAS_KEY, JSON.stringify(seen.slice(0, MAX_SEEN_IDEAS)));
+  } catch {
+    // Storage can be unavailable (private mode); the server still avoids published posts.
+  }
+}
+
 function countWords(html: string): number {
   return html
     .replace(/<[^>]*>/g, " ")
@@ -399,7 +423,7 @@ export function ArticleGenerator() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: ideaController.signal,
-          body: JSON.stringify({ territory: territory.id }),
+          body: JSON.stringify({ territory: territory.id, avoid: readSeenIdeas() }),
         }),
         new Promise((resolve) => window.setTimeout(resolve, animationDuration)),
       ]);
@@ -410,6 +434,7 @@ export function ArticleGenerator() {
       }
 
       const idea = (await response.json()) as DiscoveredIdea;
+      rememberSeenIdea(idea.title);
       setSelectedSurprise(idea);
       setTopic(idea.prompt);
     } catch (ideaRequestError) {

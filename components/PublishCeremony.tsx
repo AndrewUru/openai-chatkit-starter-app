@@ -207,7 +207,7 @@ export function PublishCeremony({ variant, phase, title, coverUrl, link, onClose
       <div className="press-ceremony-rays" aria-hidden="true" />
       <canvas ref={canvasRef} className="press-ceremony-confetti" aria-hidden="true" />
 
-      <div className="press-ceremony-body overflow-hidden">
+      <div className="press-ceremony-body">
         <div className="press-sheet" aria-hidden="true">
           <div className="press-sheet-cover">
             {coverUrl ? (

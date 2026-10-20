@@ -1,5 +1,9 @@
 import type { CoverAsset, UnsplashCover } from "@/lib/creative-assets";
-import { EDITORIAL_PUBLICATION_PROMPT } from "@/lib/editorial-generation";
+import {
+  EDITORIAL_PUBLICATION_PROMPT,
+  buildEditorialUserPrompt,
+} from "@/lib/editorial-generation";
+import { getRecentPostTitles } from "@/lib/wordpress-client";
 import { buildArticleDocument } from "@/lib/wordpress-article";
 import { isAdminRequest, signContent } from "@/lib/admin-auth";
 import { rateLimit } from "@/lib/rate-limit";
@@ -167,11 +171,11 @@ const COVER_ART_DIRECTIONS: CoverArtDirection[] = [
   {
     name: "Objeto editorial",
     medium:
-      "fotografía de estudio minimalista de un único objeto relacionado conceptualmente con el tema",
+      "fotografía de estudio minimalista de un único objeto físico que pertenezca de forma inequívoca al tema: el dispositivo, herramienta, pieza o artefacto del que habla la publicación",
     composition:
-      "objeto aislado con escala generosa, encuadre preciso y titular pequeño integrado en el espacio negativo",
+      "objeto aislado con escala generosa, encuadre preciso y titular pequeño integrado en el espacio negativo; nunca un objeto doméstico genérico como una taza, una libreta o un libro",
     palette:
-      "blanco roto, carbón, gris piedra y tonos naturales del objeto",
+      "fondo de color saturado y plano, carbón y los tonos reales del objeto",
     people:
       "sin personas; una mano puede aparecer únicamente cuando sea necesaria para aportar contexto o escala",
     lightAndTexture:
@@ -274,6 +278,7 @@ async function generateEditorialPackage(
     "https://api.openai.com";
   const textModel =
     process.env.OPENAI_TEXT_MODEL?.trim() || "gpt-5.6-luna";
+  const publishedTitles = await getRecentPostTitles(30);
   const response = await fetch(`${apiBase}/v1/chat/completions`, {
     method: "POST",
     headers: {
@@ -289,13 +294,7 @@ async function generateEditorialPackage(
         },
         {
           role: "user",
-          content: [
-            "BRIEFING EDITORIAL:",
-            creativeBrief,
-            "",
-            "SEÑALES VISUALES SELECCIONADAS POR LA PERSONA:",
-            visualSignals,
-          ].join("\n"),
+          content: buildEditorialUserPrompt(creativeBrief, visualSignals, publishedTitles),
         },
       ],
       response_format: {
@@ -387,6 +386,8 @@ Reglas de contenido:
 - No uses por defecto la escena de una persona de espaldas trabajando ante un portátil o monitor.
 - Una pantalla nunca debe ser el único sujeto ni ocupar el centro como una captura de interfaz genérica.
 - Evita oficinas domésticas decorativas, plantas usadas como relleno, logotipos, marcas de agua, robots humanoides, cerebros luminosos y hologramas genéricos.
+- PROHIBIDO: tazas, tazas de café, café, libretas, libros apilados, gafas, lápices, velas y bodegones de escritorio. No los incluyas ni como sujeto ni como atrezo de fondo.
+- Prueba de especificidad: el sujeto central debe ser algo que solo tenga sentido en esta publicación. Si la imagen pudiera ilustrar cualquier otro artículo sobre IA, creatividad o productividad, elige otro sujeto.
 `.trim();
   const apiBase =
     process.env.OPENAI_API_BASE?.trim()?.replace(/\/+$/, "") ||

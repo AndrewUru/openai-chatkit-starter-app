@@ -77,6 +77,7 @@ export async function publishToWordPress(options: {
       detail.raw
     );
   }
+  recentTitlesCache = null;
   return (await response.json().catch(() => ({}))) as { id?: number; link?: string; status?: string };
 }
 
@@ -90,6 +91,62 @@ export function getWordPressConfig() {
     );
   }
   return { username, appPassword, baseUrl };
+}
+
+const RECENT_TITLES_TTL_MS = 10 * 60 * 1000;
+let recentTitlesCache: { titles: string[]; expiresAt: number } | null = null;
+
+/**
+ * Titles of the latest posts (drafts included when credentials allow), so idea
+ * discovery and writing can steer away from what the site already covered.
+ * Best-effort: returns [] when WordPress is unreachable.
+ */
+export async function getRecentPostTitles(limit = 30): Promise<string[]> {
+  if (recentTitlesCache && recentTitlesCache.expiresAt > Date.now()) {
+    return recentTitlesCache.titles.slice(0, limit);
+  }
+
+  const baseUrl = process.env.WORDPRESS_BASE_URL?.trim()?.replace(/\/+$/, "");
+  if (!baseUrl) return [];
+
+  let authHeader: string | undefined;
+  try {
+    authHeader = wordpressAuthHeader(getWordPressConfig());
+  } catch {
+    authHeader = undefined;
+  }
+
+  const url = new URL(`${baseUrl}/wp-json/wp/v2/posts`);
+  url.searchParams.set("per_page", "40");
+  url.searchParams.set("_fields", "title");
+  url.searchParams.set("orderby", "date");
+  if (authHeader) url.searchParams.set("status", "publish,draft,pending,future");
+
+  try {
+    const response = await fetch(url, {
+      headers: authHeader ? { Authorization: authHeader } : undefined,
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return [];
+    const posts = (await response.json()) as Array<{ title?: { rendered?: string } }>;
+    const titles = posts
+      .map((post) => decodeHtmlEntities(post.title?.rendered ?? "").replace(/<[^>]*>/g, "").trim())
+      .filter(Boolean);
+    recentTitlesCache = { titles, expiresAt: Date.now() + RECENT_TITLES_TTL_MS };
+    return titles.slice(0, limit);
+  } catch (error) {
+    console.warn("No se pudieron leer los titulares recientes de WordPress.", error);
+    return [];
+  }
+}
+
+function decodeHtmlEntities(value: string): string {
+  const named: Record<string, string> = { amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " ", hellip: "…" };
+  return value
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&([a-z]+);/gi, (entity, name: string) => named[name.toLowerCase()] ?? entity);
 }
 
 export async function uploadGeneratedCover(

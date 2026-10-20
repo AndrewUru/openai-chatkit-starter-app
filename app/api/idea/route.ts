@@ -3,13 +3,16 @@ import { isAdminRequest } from "@/lib/admin-auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { generateText, Output, stepCountIs } from "ai";
 import { z } from "zod";
-import { findIdeaTerritory } from "@/lib/idea-discovery";
+import { findIdeaTerritory, pickIdeaBeat } from "@/lib/idea-discovery";
+import { getRecentPostTitles } from "@/lib/wordpress-client";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
 
 const requestSchema = z.object({
   territory: z.string().min(1).max(40),
+  // Ideas this visitor has already been shown, so the next spin moves on.
+  avoid: z.array(z.string().max(200)).max(20).optional(),
 });
 
 const ideaSchema = z.object({
@@ -94,6 +97,11 @@ export async function POST(request: Request) {
     "https://api.openai.com";
   const textModel = process.env.OPENAI_TEXT_MODEL?.trim() || "gpt-5.6-luna";
   const openai = createOpenAI({ apiKey, baseURL: `${apiBase}/v1` });
+  const beat = pickIdeaBeat();
+  const recentTitles = await getRecentPostTitles(30);
+  const alreadyCovered = [
+    ...new Set([...recentTitles, ...(parsed.data.avoid ?? [])]),
+  ].slice(0, 45);
   const today = new Intl.DateTimeFormat("es-ES", { dateStyle: "long" }).format(
     new Date()
   );
@@ -126,16 +134,25 @@ Eres un radar editorial para una publicación digital en español sobre tecnolog
 Primero investiga la web. Después propone una sola idea de artículo basada en señales reales y recientes.
 No inventes hechos, cifras, lanzamientos ni fuentes. Evita temas genéricos, titulares de marketing y el tópico de que la IA lo cambiará todo.
 La idea debe ser específica, publicable y suficientemente distinta en cada ejecución.
+Recibirás una lista de piezas ya publicadas o ya propuestas. Tu idea no puede repetir su tema, su tesis ni su ángulo, aunque cambie el titular. Si una idea se parece a alguna de la lista, descártala y busca otra.
+La IA puede aparecer como contexto, pero no la conviertas en protagonista por defecto. Evita en especial estas tesis ya muy repetidas: "la IA propone y la persona decide", "la IA como capa invisible o asistente silencioso", "ya no hace falta ser desarrollador para crear una app" y "la creatividad humana sigue siendo insustituible".
 Escribe en español natural y peninsular.
       `.trim(),
       prompt: [
         `Fecha de la búsqueda: ${today}.`,
         `Territorio: ${territory.title}.`,
         `Dirección: ${territory.instruction}`,
-        `Semilla de novedad: ${crypto.randomUUID()}.`,
+        `Sección de esta tirada: ${beat}. Busca la idea dentro de este ámbito.`,
+        alreadyCovered.length
+          ? `Ya publicado o propuesto (no repitas tema, tesis ni ángulo):\n${alreadyCovered
+              .map((title) => `- ${title}`)
+              .join("\n")}`
+          : "",
         "Busca información actual y devuelve un ángulo que pueda sostener un artículo de 700 a 1.000 palabras.",
         "El briefing debe mencionar qué conviene investigar y qué pregunta central debe responder, sin incluir URLs ni fingir experiencias personales.",
-      ].join("\n"),
+      ]
+        .filter(Boolean)
+        .join("\n"),
     });
 
     const allSources: NormalizedSource[] = [

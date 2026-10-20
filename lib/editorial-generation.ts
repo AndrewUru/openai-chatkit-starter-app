@@ -56,9 +56,34 @@ Devuelve cover_prompt como una descripción independiente de una única imagen h
 
 - Describe el sujeto, el entorno, la acción y los objetos significativos.
 - Empieza siempre con una línea en este formato exacto: TEXTO EN PORTADA: "titular". El titular tendrá entre 3 y 7 palabras, será legible, directo y complementará el título del artículo sin caer en clickbait.
+- Elige un sujeto central concreto y exclusivo de este tema: el objeto, lugar, dispositivo, material o persona en acción del que habla realmente la pieza. Nómbralo de forma explícita.
+- Prueba de especificidad: si la misma imagen pudiera ilustrar otro artículo sobre IA, creatividad o productividad, no es válida; busca otro sujeto.
 - Busca una idea visual reconocible, expresiva y con energía social; no una ilustración literal de cada frase.
 - No fijes técnica artística, paleta, iluminación ni encuadre; una fase posterior aplicará una dirección visual techy variable.
 - Evita logotipos, marcas de agua y clichés visuales de IA como robots humanoides, cerebros luminosos o una persona de espaldas ante un portátil.
+- Prohibido como sujeto o como relleno: tazas, café, libretas, libros apilados, gafas, lápices, plantas, velas y escritorios minimalistas. Son el comodín visual que se está repitiendo en todas las portadas.
 
-Antes de responder, comprueba internamente que el artículo responde a la idea, que no inventa datos, que el tipo y el tono son coherentes, que contiene un único h1 y que cover_prompt puede entenderse sin leer el briefing.
+Antes de responder, comprueba internamente que el artículo responde a la idea, que no inventa datos, que el tipo y el tono son coherentes, que contiene un único h1, que el título no repite uno ya publicado y que cover_prompt puede entenderse sin leer el briefing.
 `.trim();
+
+/** User message shared by the streaming and the one-shot article generators. */
+export function buildEditorialUserPrompt(
+  creativeBrief: string,
+  visualSignals: string,
+  publishedTitles: string[]
+): string {
+  return [
+    "BRIEFING EDITORIAL:",
+    creativeBrief,
+    "",
+    "SEÑALES VISUALES SELECCIONADAS POR LA PERSONA:",
+    visualSignals,
+    ...(publishedTitles.length
+      ? [
+          "",
+          "TITULARES YA PUBLICADOS EN LA WEB (no repitas ninguno ni su tesis; si el tema coincide, aporta un ángulo claramente nuevo):",
+          ...publishedTitles.map((title) => `- ${title}`),
+        ]
+      : []),
+  ].join("\n");
+}

@@ -2,7 +2,11 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { Output, stepCountIs, streamText } from "ai";
-import { EDITORIAL_PUBLICATION_PROMPT } from "@/lib/editorial-generation";
+import {
+  EDITORIAL_PUBLICATION_PROMPT,
+  buildEditorialUserPrompt,
+} from "@/lib/editorial-generation";
+import { getRecentPostTitles } from "@/lib/wordpress-client";
 import {
   editorialStreamSchema,
   type EditorialStreamEvent,
@@ -55,6 +59,7 @@ export async function POST(request: Request) {
     baseURL: `${apiBase}/v1`,
   });
 
+  const publishedTitles = await getRecentPostTitles(30);
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -68,13 +73,7 @@ export async function POST(request: Request) {
           model: openai.responses(textModel),
           abortSignal: request.signal,
           system: EDITORIAL_PUBLICATION_PROMPT,
-          prompt: [
-            "BRIEFING EDITORIAL:",
-            creativeBrief,
-            "",
-            "SEÑALES VISUALES SELECCIONADAS POR LA PERSONA:",
-            visualSignals,
-          ].join("\n"),
+          prompt: buildEditorialUserPrompt(creativeBrief, visualSignals || creativeBrief, publishedTitles),
           tools: {
             web_search: openai.tools.webSearch({
               externalWebAccess: true,

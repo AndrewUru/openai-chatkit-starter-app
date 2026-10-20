@@ -71,6 +71,34 @@ export const IDEA_TERRITORIES: IdeaTerritory[] = [
   },
 ];
 
+// Newsroom beats drawn at random on every spin. A random UUID does not steer a
+// language model; a concrete beat does, and keeps the wheel from circling back
+// to the same "AI and human creativity" piece.
+export const IDEA_BEATS = [
+  "videojuegos y motores de juego",
+  "desarrollo web, navegadores y estándares",
+  "diseño de interfaces y accesibilidad",
+  "privacidad, seguridad y fraude digital",
+  "hardware, dispositivos y electrónica DIY",
+  "código abierto y comunidades de desarrollo",
+  "música, audio y sonido digital",
+  "fotografía, vídeo e imagen",
+  "economía de creadores y plataformas",
+  "educación y aprendizaje con tecnología",
+  "ciencia, datos y visualización",
+  "regulación, derechos digitales y la UE",
+  "sostenibilidad y coste energético de la tecnología",
+  "internet en España y Latinoamérica",
+  "herramientas de productividad y automatización",
+  "historia de la informática y cultura retro",
+  "móvil, apps y tiendas de aplicaciones",
+  "WordPress, CMS y publicación web",
+] as const;
+
+export function pickIdeaBeat(): string {
+  return IDEA_BEATS[Math.floor(Math.random() * IDEA_BEATS.length)];
+}
+
 export function findIdeaTerritory(id: string): IdeaTerritory | undefined {
   return IDEA_TERRITORIES.find((territory) => territory.id === id);
 }
