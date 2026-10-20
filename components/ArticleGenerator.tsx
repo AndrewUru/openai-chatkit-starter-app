@@ -12,6 +12,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { EditableStory } from "./EditableStory";
+import { PublishCeremony, type CeremonyVariant } from "./PublishCeremony";
 import dynamic from "next/dynamic";
 import type {
   CoverAsset,
@@ -152,6 +153,7 @@ export function ArticleGenerator() {
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const [isPublishPanelVisible, setIsPublishPanelVisible] = useState(false);
+  const [ceremonyVariant, setCeremonyVariant] = useState<CeremonyVariant | null>(null);
   // Only the editor (server-side secret, httpOnly cookie) can publish; visitors copy or download.
   const [isEditor, setIsEditor] = useState(false);
   const [showEditorLogin, setShowEditorLogin] = useState(false);
@@ -726,6 +728,7 @@ export function ArticleGenerator() {
       setPublishTarget(status);
       setPublishState("publishing");
       setPublishMessage("");
+      setCeremonyVariant(status);
 
       try {
         const response = await fetch(
@@ -755,6 +758,7 @@ export function ArticleGenerator() {
             : "La pieza ya está publicada en WordPress."
         );
       } catch (publishError) {
+        setCeremonyVariant(null);
         setPublishState("error");
         setPublishMessage(
           publishError instanceof Error
@@ -846,6 +850,7 @@ ${article}
     if (!article || !communityAccepted || isRefreshingCover || communityState === "reviewing") return;
     setCommunityState("reviewing");
     setCommunityReasons([]);
+    setCeremonyVariant("community");
     try {
       const response = await fetch(
         `/api/community/publish?key=${encodeURIComponent(PUBLIC_KEY)}`,
@@ -872,15 +877,22 @@ ${article}
         setPublishMessage("¡Tu artículo ya está publicado en El Salto Web!");
         return;
       }
+      setCeremonyVariant(null);
       setCommunityState(data.status === "rejected" ? "rejected" : "error");
       setCommunityReasons(
         data.reasons?.length ? data.reasons : ["No se pudo publicar. Inténtalo más tarde."]
       );
     } catch {
+      setCeremonyVariant(null);
       setCommunityState("error");
       setCommunityReasons(["No se pudo conectar con el servidor. Inténtalo de nuevo."]);
     }
   }, [article, communityAccepted, communityAuthor, communityState, cover, isRefreshingCover]);
+
+  const closeCeremony = useCallback(() => {
+    setCeremonyVariant(null);
+    publishPanelRef.current?.scrollIntoView({ block: "start" });
+  }, []);
 
   const logoutEditor = useCallback(async () => {
     await fetch("/api/admin/session", { method: "DELETE" }).catch(() => undefined);
@@ -914,6 +926,7 @@ ${article}
     setCommunityState("idle");
     setCommunityReasons([]);
     setCommunityAccepted(false);
+    setCeremonyVariant(null);
     setState("idle");
     document
       .getElementById("experiencia")
@@ -966,12 +979,26 @@ ${article}
       .filter(Boolean)
       .join(" · ") || "Automático";
 
+  const articleTitle =
+    article.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]?.replace(/<[^>]*>/g, "").trim() ||
+    topic.trim();
+
   const isPublished = publishState === "published";
   const publishLocked =
     isRefreshingCover || publishState === "publishing" || isPublished;
 
   return (
     <div className="experience-shell min-h-screen text-[#11110f]">
+      {ceremonyVariant ? (
+        <PublishCeremony
+          variant={ceremonyVariant}
+          phase={isPublished ? "done" : "working"}
+          title={articleTitle}
+          coverUrl={coverPreviewUrl}
+          link={publishedLink}
+          onClose={closeCeremony}
+        />
+      ) : null}
       <main>
         <section id="experiencia" className="studio-workspace">
           <header className="studio-header">
