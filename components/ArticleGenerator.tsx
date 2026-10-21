@@ -1021,7 +1021,7 @@ ${article}
     isRefreshingCover || publishState === "publishing" || isPublished;
 
   return (
-    <div className="experience-shell min-h-screen text-[#11110f]">
+    <div className="experience-shell min-h-screen text-[#f4f0e6]">
       {ceremonyVariant ? (
         <PublishCeremony
           variant={ceremonyVariant}
@@ -1039,7 +1039,7 @@ ${article}
               <span className="press-masthead-seal">ES</span>
               <div>
                 <p className="press-masthead-name">El Salto Web</p>
-                <p className="font-mono text-[.62rem] uppercase tracking-[.16em] text-black/45">
+                <p className="font-mono text-[.62rem] uppercase tracking-[.16em] text-white/45">
                   Estudio editorial con IA
                   {editionDate ? (
                     <span className="hidden sm:inline"> · Edición del {editionDate}</span>
@@ -1050,7 +1050,7 @@ ${article}
             <div className="flex items-center gap-5">
               <p
                 aria-live="polite"
-                className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-black/45 sm:flex"
+                className="hidden items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-white/45 sm:flex"
               >
                 <span
                   className={`h-2 w-2 rounded-full ${studioStatus.pulse ? "status-pulse" : ""}`}
@@ -1074,7 +1074,7 @@ ${article}
               }}
             >
               <div className="max-w-2xl">
-                <p className="step-label text-[#4468ff]">01 / Crear publicación</p>
+                <p className="step-label text-[#7d97ff]">01 / Crear publicación</p>
                 <h1
                   aria-label={HERO_WORDS.join(" ")}
                   className="hero-title mt-4 font-serif text-[clamp(3rem,6vw,5.8rem)] leading-[.88] tracking-[-.06em]"
@@ -1092,7 +1092,7 @@ ${article}
                     </Fragment>
                   ))}
                 </h1>
-                <p className="mt-5 max-w-xl text-base leading-relaxed text-black/55">
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-white/55">
                   Escríbela tú o deja que la ruleta encuentre un ángulo editorial
                   y lo coloque aquí.
                 </p>
@@ -1125,7 +1125,7 @@ ${article}
                     required
                     className="studio-textarea"
                   />
-                  <span className="absolute bottom-4 right-4 font-mono text-[.65rem] uppercase tracking-[.12em] text-black/35">
+                  <span className="absolute bottom-4 right-4 font-mono text-[.65rem] uppercase tracking-[.12em] text-white/35">
                     {topic.trim().length} caracteres
                   </span>
                 </div>
@@ -1141,14 +1141,14 @@ ${article}
                         setSelectedSurprise(null);
                         setTopic("");
                       }}
-                      className="font-bold text-black/45 transition hover:text-black"
+                      className="font-bold text-white/45 transition hover:text-white"
                     >
                       Limpiar
                     </button>
                   </div>
                 ) : null}
 
-                <div className="mt-6 border-t border-black/15 pt-5">
+                <div className="mt-6 border-t border-white/15 pt-5">
                   <button
                     type="button"
                     onClick={() => setShowDirection((current) => !current)}
@@ -1158,7 +1158,7 @@ ${article}
                   >
                     Afinar formato y tono
                     <span className="flex items-center gap-3">
-                      <span className="font-mono text-[.65rem] font-normal normal-case tracking-normal text-black/50">
+                      <span className="font-mono text-[.65rem] font-normal normal-case tracking-normal text-white/50">
                         {directionSummary}
                       </span>
                       <span aria-hidden="true" className="text-lg">
@@ -1170,7 +1170,7 @@ ${article}
                   {showDirection ? (
                     <div id="editorial-direction" className="mt-5 grid gap-5">
                       <fieldset>
-                        <legend className="font-mono text-[.65rem] uppercase tracking-[.12em] text-black/45">
+                        <legend className="font-mono text-[.65rem] uppercase tracking-[.12em] text-white/45">
                           Formato
                         </legend>
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -1196,7 +1196,7 @@ ${article}
                       </fieldset>
 
                       <fieldset>
-                        <legend className="font-mono text-[.65rem] uppercase tracking-[.12em] text-black/45">
+                        <legend className="font-mono text-[.65rem] uppercase tracking-[.12em] text-white/45">
                           Tono
                         </legend>
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -1233,7 +1233,7 @@ ${article}
                     <span>{state === "loading" ? "Creando…" : "Crear publicación"}</span>
                     <span aria-hidden="true" className="text-xl">→</span>
                   </button>
-                  <p className="mt-3 text-center text-xs text-black/45">
+                  <p className="mt-3 text-center text-xs text-white/45">
                     Se genera un borrador. Nada se publica sin tu confirmación.
                     <span className="hidden sm:inline">
                       {" "}· <kbd className="font-mono">Ctrl</kbd> + <kbd className="font-mono">Enter</kbd> para crear
@@ -1563,11 +1563,11 @@ ${article}
         <section
           ref={resultRef}
           id="resultado"
-          className="scroll-mt-6 bg-[#f4f0e6]"
+          className="scroll-mt-6 bg-[#0b0b0a]"
         >
           {state === "success" ? (
             <div className="mx-auto w-full max-w-[1200px] px-5 py-24 sm:px-8 lg:px-14 lg:py-32">
-              <header className="reveal relative mb-14 flex flex-col justify-between gap-8 border-b-2 border-black pb-8 md:flex-row md:items-end">
+              <header className="reveal relative mb-14 flex flex-col justify-between gap-8 border-b-2 border-[#f4f0e6]/70 pb-8 md:flex-row md:items-end">
                 <span
                   key={isPublished ? "published" : "proof"}
                   className="ink-stamp"
@@ -1577,14 +1577,14 @@ ${article}
                   {isPublished ? "Publicado" : "Galerada"}
                 </span>
                 <div>
-                  <p className="step-label text-[#4468ff]">03 / Prueba de imprenta</p>
+                  <p className="step-label text-[#7d97ff]">03 / Prueba de imprenta</p>
                   <h2 className="mt-5 font-serif text-5xl tracking-[-0.045em] sm:text-7xl">
                     Revisa el contenido y decide qué quieres hacer con él.
                   </h2>
                 </div>
-                <div className="max-w-xs text-sm leading-relaxed text-black/60">
+                <div className="max-w-xs text-sm leading-relaxed text-white/60">
                   <p>{resultMessage}</p>
-                  <p className="mt-3 font-semibold text-black">
+                  <p className="mt-3 font-semibold text-white">
                     {isPublished
                       ? "Ya ha salido de la imprenta."
                       : "Todavía no se ha enviado a WordPress."}
@@ -1599,19 +1599,19 @@ ${article}
                     <h3 className="mt-3 font-serif text-4xl tracking-[-0.04em] sm:text-5xl">
                       Un thumbnail hecho para destacar.
                     </h3>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-black/55">
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
                       Titular integrado, composición adaptable a redes y una
                       dirección techy distinta en cada variación.
                     </p>
                   </div>
                   {cover?.source === "unsplash" ? (
-                    <p className="text-xs text-black/55">
+                    <p className="text-xs text-white/55">
                       Foto de{" "}
                       <a
                         href={cover.attribution.photographerUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="border-b border-black/40"
+                        className="border-b border-white/40"
                       >
                         {cover.attribution.photographerName}
                       </a>{" "}
@@ -1620,7 +1620,7 @@ ${article}
                         href={cover.attribution.unsplashUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="border-b border-black/40"
+                        className="border-b border-white/40"
                       >
                         Unsplash
                       </a>
@@ -1641,7 +1641,7 @@ ${article}
                       className="ink-reveal object-cover"
                     />
                   ) : (
-                    <div className="grid h-full place-items-center bg-[#11110f] px-8 text-center text-[#f4f0e6]">
+                    <div className="grid h-full place-items-center bg-[#151513] px-8 text-center text-[#f4f0e6]">
                       <p className="max-w-md font-serif text-3xl">
                         {cover?.source === "none"
                           ? cover.reason
@@ -1715,7 +1715,7 @@ ${article}
                   >
                     Buscar fotografía <span aria-hidden="true">⌕</span>
                   </button>
-                  <p className="text-xs text-black/50">
+                  <p className="text-xs text-white/50">
                     Tú eliges. Nada se publica hasta que lo confirmes.
                   </p>
                 </div>
@@ -1739,7 +1739,7 @@ ${article}
               <section
                 ref={publishPanelRef}
                 id="publicar"
-                className="reveal publish-decision crop-marks mt-20 scroll-mt-6 bg-[#11110f] p-7 text-[#f4f0e6] sm:p-10"
+                className="reveal publish-decision crop-marks mt-20 scroll-mt-6 bg-[#141412] p-7 text-[#f4f0e6] sm:p-10"
               >
                 <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
                   <div>
@@ -2030,7 +2030,7 @@ ${article}
               <button
                 type="button"
                 onClick={startOver}
-                className="mx-auto mt-16 flex items-center gap-3 border-b-2 border-black pb-1 text-sm font-bold uppercase tracking-[0.16em]"
+                className="mx-auto mt-16 flex items-center gap-3 border-b-2 border-[#f4f0e6]/70 pb-1 text-sm font-bold uppercase tracking-[0.16em]"
               >
                 Crear otra publicación <span aria-hidden="true">↻</span>
               </button>
