@@ -83,8 +83,6 @@ export const IDEA_BEATS = [
   "RAG y asistentes que responden a partir de documentos de un negocio",
   "interfaces de voz y asistentes conversacionales para sitios web",
   "automatización de tareas con APIs, webhooks, Google Sheets y herramientas no-code",
-  "Fidelicard como contexto para explorar fidelización digital y tarjetas con QR",
-  "PowerQR como contexto para explorar códigos QR artísticos con IA y biolinks",
   "plataformas multiempresa: almacenes, clientes, agencias y gestión de transportes",
   "inventario y control de herramientas mediante aplicaciones web y móviles",
   "Airtable frente a una aplicación a medida para gestionar un pequeño negocio",
